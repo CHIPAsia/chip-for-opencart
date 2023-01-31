@@ -140,20 +140,6 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><?php echo $entry_viewed_order_status; ?></td>
-                            <td>
-                                <select name="chip_viewed_order_status_id">
-                                    <?php foreach ($order_statuses as $order_status) { ?>
-                                        <?php if ($order_status['order_status_id'] == $chip_viewed_order_status_id) { ?>
-                                            <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
-                                        <?php } else { ?>
-                                            <option value="<?php echo $order_status['order_status_id']; ?>"><?php echo $order_status['name']; ?></option>
-                                        <?php } ?>
-                                    <?php } ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
                             <td><?php echo $entry_error_order_status; ?></td>
                             <td>
                                 <select name="chip_error_order_status_id">

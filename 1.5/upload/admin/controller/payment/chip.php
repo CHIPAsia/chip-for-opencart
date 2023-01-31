@@ -6,18 +6,24 @@ class ControllerPaymentChip extends Controller {
     $this->language->load( 'payment/chip' );
 
     $this->document->setTitle( $this->language->get( 'heading_title' ) );
-    
+
     $this->load->model('setting/setting');
 
     if ( ( $this->request->server['REQUEST_METHOD'] == 'POST' ) && $this->validate() ) {
+      unset($this->request->post['chip_module']);
+
       $this->model_setting_setting->editSetting('chip', $this->request->post);
 
       $this->session->data['success'] = $this->language->get('text_success');
 
       $this->redirect($this->url->link('extension/payment', 'token=' . $this->session->data['token'], 'SSL'));
+    } else {
+      $this->data['error'] = @$this->error;
     }
 
     $this->data['heading_title'] = $this->language->get('heading_title');
+
+    $this->data['text_image_manager'] = $this->language->get('text_image_manager');
 
     $this->data['text_enabled'] = $this->language->get('text_enabled');
     $this->data['text_disabled'] = $this->language->get('text_disabled');
@@ -44,7 +50,6 @@ class ControllerPaymentChip extends Controller {
     $this->data['entry_sort_order'] = $this->language->get('entry_sort_order');
 
     $this->data['entry_created_order_status'] = $this->language->get('entry_created_order_status');
-    $this->data['entry_viewed_order_status'] = $this->language->get('entry_viewed_order_status');
     $this->data['entry_error_order_status'] = $this->language->get('entry_error_order_status');
     $this->data['entry_cancelled_order_status'] = $this->language->get('entry_cancelled_order_status');
     $this->data['entry_overdue_order_status'] = $this->language->get('entry_overdue_order_status');
@@ -193,6 +198,8 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_geo_zone_id'] = $this->config->get('chip_geo_zone_id'); 
     }
 
+    $this->load->model('tool/image');
+
     $logo = $this->config->get('chip_logo');
 
     if (isset($this->request->post['chip_logo']) && file_exists(DIR_IMAGE . $this->request->post['chip_logo'])) {
@@ -226,6 +233,8 @@ class ControllerPaymentChip extends Controller {
     } else {
       $this->data['chip_sort_order'] = $this->config->get('chip_sort_order');
     }
+
+    $this->data['token'] = $this->session->data['token'];
 
     $this->template = 'payment/chip.tpl';
     $this->children = array(
@@ -261,7 +270,7 @@ class ControllerPaymentChip extends Controller {
       return true;
     } else {
       return false;
-    }	
+    }
   }
 
   public function install() {
