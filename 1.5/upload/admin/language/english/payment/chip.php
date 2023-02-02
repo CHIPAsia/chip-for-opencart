@@ -44,3 +44,4 @@ $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';
 $_['error_secret_key_invalid'] = 'Error! CHIP Secret Key is not valid';
 $_['error_brand_id'] = 'Error! You are required to set Brand ID';
 $_['error_public_key'] = 'Error! The public key is not valid';
+$_['error_due_strict_timing'] = 'Error! You are required to set Due Strict Timing';

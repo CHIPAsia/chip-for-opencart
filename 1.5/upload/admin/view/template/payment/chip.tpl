@@ -117,8 +117,16 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><?php echo $entry_due_strict_timing; ?></td>
-                            <td><input type="number" name="chip_due_strict_timing" value="<?php echo $chip_due_strict_timing; ?>"/>
+                            <td><span class="required">*</span> <?php echo $entry_due_strict_timing; ?></td>
+                            <td>
+                            <?php if ($chip_due_strict_timing) { ?>
+                                <input type="number" name="chip_due_strict_timing" value="<?php echo $chip_due_strict_timing; ?>"/>
+                            <?php } else { ?>
+                                <input type="number" name="chip_due_strict_timing" value="60"/>
+                            <?php } ?>
+                            <?php if (isset($error['due_strict_timing'])) { ?>
+                                <span class="error"><?php echo $error['due_strict_timing']; ?></span>
+                            <?php } ?>
                             </td>
                         </tr>
                         <tr>

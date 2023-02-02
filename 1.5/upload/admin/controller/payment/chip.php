@@ -308,6 +308,10 @@ class ControllerPaymentChip extends Controller {
       $this->error['secret_key'] = $this->language->get('error_secret_key');
     }
 
+    if (!$this->request->post['chip_due_strict_timing']) {
+      $this->error['due_strict_timing'] = $this->language->get('error_due_strict_timing');
+    }
+
     if (!$this->request->post['chip_brand_id']) {
       $this->error['brand_id'] = $this->language->get('error_brand_id');
     }
