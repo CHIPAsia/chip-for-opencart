@@ -34,8 +34,8 @@ $_['entry_cancelled_order_status'] = 'Cancelled Order Status:<br /><span class="
 $_['entry_overdue_order_status'] = 'Overdue Order Status:<br /><span class="help">Default to Expired.</span>';
 $_['entry_paid_order_status'] = 'Paid Order Status:<br /><span class="help">Default to Processing.</span>';
 $_['entry_refunded_order_status'] = 'Refunded Order Status:<br /><span class="help">Default to Refunded.</span>';
-$_['entry_allow_notes'] = 'Notes:<br /><span class="help">To display note on checkout page.</span>';
-$_['entry_logo'] = 'Logo:<br /><span class="help">To display logo on checkout page.</span>';
+$_['entry_allow_instruction'] = 'Instruction:<br /><span class="help">To insturction on checkout page.</span>';
+$_['entry_instruction'] = 'CHIP Instructions:<br /><span class="help">This will show on checkout page before customer make payment.</span>';
 
 $_['error_permission'] = 'Warning: You do not have permission to modify CHIP!';
 $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';
