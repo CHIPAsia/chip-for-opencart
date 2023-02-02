@@ -9,7 +9,7 @@ $_['text_all_zones'] = 'All Zones';
 $_['text_browse'] = 'Browse';
 $_['text_clear'] = 'Clear';
 $_['text_payment'] = 'Payment';
-$_['text_chip'] = '<a href="https://www.chip-in.asia/" taget="_blank"><img src="view/image/payment/chip.png" alt="CHIP" title="CHIP" style="height: 20px;" /></a>';
+$_['text_chip'] = '<a href="https://www.chip-in.asia/" taget="_blank"><img src="view/image/payment/chip.png" alt="CHIP" title="CHIP" style="height: 14px;" /></a>';
 
 $_['tab_general'] = 'General';
 $_['tab_order_status'] = 'Order status';
