@@ -61,7 +61,7 @@ class ControllerPaymentChip extends Controller
       'reference'        => $this->session->data['order_id'],
       'platform'         => 'opencart',
       'send_receipt'     => $this->config->get('chip_purchase_send_receipt'),
-      'due'              => time() + (abs( (int) $this->config->get('chip_due_strict_timing') ) * 60),
+      'due'              => time() + (abs( (int) ($this->config->get('chip_due_strict_timing') || 60) ) * 60),
       'brand_id'         => $this->config->get('chip_brand_id'),
       'client'           => [],
       'purchase'         => array(
@@ -147,6 +147,8 @@ class ControllerPaymentChip extends Controller
     }
 
     /* End of shipping information */
+
+    $this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
 
     $purchase = $this->model_payment_chip->create_purchase($params);
 
