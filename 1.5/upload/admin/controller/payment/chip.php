@@ -40,6 +40,8 @@ class ControllerPaymentChip extends Controller {
 
     $this->data['entry_secret_key'] = $this->language->get('entry_secret_key');
     $this->data['entry_brand_id'] = $this->language->get('entry_brand_id');
+    $this->data['entry_webhook_url'] = $this->language->get('entry_webhook_url');
+    $this->data['entry_public_key'] = $this->language->get('entry_public_key');
     $this->data['entry_purchase_send_receipt'] = $this->language->get('entry_purchase_send_receipt');
     $this->data['entry_due_strict'] = $this->language->get('entry_due_strict');
     $this->data['entry_due_strict_timing'] = $this->language->get('entry_callback');
@@ -114,6 +116,12 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_brand_id'] = $this->request->post['chip_brand_id'];
     } else {
       $this->data['chip_brand_id'] = $this->config->get('chip_brand_id');
+    }
+
+    if (isset($this->request->post['chip_public_key'])) {
+      $this->data['chip_public_key'] = $this->request->post['chip_public_key'];
+    } else {
+      $this->data['chip_public_key'] = $this->config->get('chip_public_key');
     }
 
     if (isset($this->request->post['chip_purchase_send_receipt'])) {
@@ -234,6 +242,8 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_sort_order'] = $this->config->get('chip_sort_order');
     }
 
+    $this->data['webhook'] = HTTP_CATALOG . 'index.php?route=payment/chip/callback';
+
     $this->data['token'] = $this->session->data['token'];
 
     $this->template = 'payment/chip.tpl';
@@ -264,6 +274,14 @@ class ControllerPaymentChip extends Controller {
 
     if (!$this->request->post['chip_brand_id']) {
       $this->error['brand_id'] = $this->language->get('error_brand_id');
+    }
+
+    if ($this->request->post['chip_public_key']) {
+      $public_key_validity = openssl_pkey_get_public($this->request->post['chip_public_key']);
+
+      if (!$public_key_validity) {
+        $this->error['public_key'] = $this->language->get('error_public_key');
+      }
     }
 
     if (!$this->error) {

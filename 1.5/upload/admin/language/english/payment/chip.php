@@ -16,8 +16,10 @@ $_['tab_order_status'] = 'Order status';
 $_['tab_api_details'] = 'API details';
 $_['tab_customise'] = 'Customize checkout';
 
-$_['entry_secret_key'] = 'Secret Key';
-$_['entry_brand_id'] = 'Brand ID';
+$_['entry_secret_key'] = 'Secret Key:<br /><span class="help">Secret Key can be retrieved from CHIP Collect Dashboard.</span>';
+$_['entry_brand_id'] = 'Brand ID:<br /><span class="help">Secret Key can be retrieved from CHIP Collect Dashboard.</span>';
+$_['entry_webhook_url'] = 'Webhook URL:<br /><span class="help">Optional: This can be set in the CHIP Collect Dashboard.</span>';
+$_['entry_public_key'] = 'Public Key:<br /><span class="help">Public Key can be retrieved from CHIP Collect Dashboard.</span>';
 $_['entry_purchase_send_receipt'] = 'Purchase Send Receipt';
 $_['entry_due_strict'] = 'Purchase Due Strict';
 $_['entry_due_strict_timing'] = 'Purchase Due Strict Timing';
@@ -37,3 +39,4 @@ $_['entry_logo'] = 'Logo';
 $_['error_permission'] = 'Warning: You do not have permission to modify CHIP!';
 $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';
 $_['error_brand_id'] = 'Error! You are required to set Brand ID';
+$_['error_public_key'] = 'Error! The public key is not valid';

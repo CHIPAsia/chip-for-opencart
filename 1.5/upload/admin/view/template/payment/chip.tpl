@@ -46,6 +46,18 @@
                                 <?php } ?>
                             </td>
                         </tr>
+                        <tr>
+                            <td><?php echo $entry_webhook_url; ?></td>
+                            <td><b><?php echo $webhook; ?></b></td>
+                        </tr>
+                        <tr>
+                            <td><?php echo $entry_public_key; ?></td>
+                            <td><textarea cols="50" rows="10" name="chip_public_key"><?php echo $chip_public_key; ?></textarea>
+                                <?php if (isset($error['public_key'])) { ?>
+                                    <span class="error"><?php echo $error['public_key']; ?></span>
+                                <?php } ?>
+                            </td>
+                        </tr>
                     </table>
                 </div>
 
@@ -279,4 +291,4 @@
         });
     };
     //--></script>
-<?php echo $footer; ?> 
+<?php echo $footer; ?>
