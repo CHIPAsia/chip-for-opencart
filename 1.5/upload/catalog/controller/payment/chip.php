@@ -24,4 +24,143 @@ class ControllerPaymentChip extends Controller
 
     $this->render();
   }
+
+  public function create_purchase() {
+    if ((!$this->cart->hasProducts() && empty($this->session->data['vouchers'])) || (!$this->cart->hasStock() && !$this->config->get('config_stock_checkout'))) {
+      $this->redirect($this->url->link('checkout/cart'));
+    }
+
+    $this->load->model('payment/chip');
+    $this->load->model('checkout/order');
+
+    $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+
+    if (!$this->currency->has('MYR')){
+      $this->language->load('payment/chip');
+      $this->session->data['error'] = $this->language->get('pending_myr_setup');
+      $this->redirect($this->url->link('checkout/checkout', '', 'SSL'));
+    }
+
+    $amount = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
+
+    $products = $this->cart->getProducts();
+    $product_descriptions = array();
+    foreach ($products as $product) {
+      $product_descriptions[] = $product['name'] . " x " . $product['quantity'];
+    }
+
+    $params = array(
+      'success_callback' => $this->url->link('payment/chip/success_callback', '', 'SSL'),
+      'success_redirect' => $this->url->link('payment/chip/success_redirect', '', 'SSL'),
+      'failure_redirect' => $this->url->link('payment/chip/failure_redirect', '', 'SSL'),
+      'cancel_redirect'  => $this->url->link('checkout/checkout', '', 'SSL'),
+      'creator_agent'    => 'OC: 1.0.0',
+      'reference'        => $this->session->data['order_id'],
+      'platform'         => 'opencart',
+      'send_receipt'     => $this->config->get('chip_purchase_send_receipt'),
+      'due'              => time() + (abs( (int) $this->config->get('chip_due_strict_timing') ) * 60),
+      'brand_id'         => $this->config->get('chip_brand_id'),
+      'client'           => [],
+      'purchase'         => array(
+        /* TODO: Add timezone to admin config settings */
+        'timezone'   => 'Asia/Kuala_Lumpur',
+        'currency'   => 'MYR',
+        'due_strict' => $this->config->get('chip_due_strict'),
+        'products'   => array([
+          'name'     => substr(implode($product_descriptions), 0, 256),
+          'price'    => round($amount * 100),
+          'quantity' => '1',
+        ]),
+      ),
+    );
+
+    if ($order_info['email']) {
+      $params['client']['email'] = $order_info['email'];
+    }
+
+    if ($order_info['telephone']) {
+      $params['client']['phone'] = $order_info['telephone'];
+    }
+
+    $params_client_full_name = array();
+    if ($order_info['payment_firstname']) {
+      $params_client_full_name[] = $order_info['payment_firstname'];
+    }
+
+    if ($order_info['payment_lastname']) {
+      $params_client_full_name[] = $order_info['payment_lastname'];
+    }
+
+    $params['client']['full_name'] = substr(implode($params_client_full_name), 0, 30);
+
+    /* Start of payment information */
+
+    $params_client_street_address = array();
+    if ($order_info['payment_address_1']) {
+      $params_client_street_address[] = $order_info['payment_address_1'];
+    }
+
+    if ($order_info['payment_address_2']) {
+      $params_client_street_address[] = $order_info['payment_address_2'];
+    }
+
+    $params['client']['street_address'] = substr(implode($params_client_street_address), 0, 128);
+
+    if ($order_info['payment_postcode']) {
+      $params['client']['zip_code'] = substr($order_info['payment_postcode'], 0, 32);
+    }
+
+    if ($order_info['payment_city']) {
+      $params['client']['city'] = substr($order_info['payment_city'], 0, 128);
+    }
+
+    if ($order_info['payment_iso_code_2']) {
+      $params['client']['country'] = $order_info['payment_iso_code_2'];
+    }
+
+    /* End of payment information */
+    /* Start of shipping information */
+
+    $params_client_shipping_street_address = array();
+    if ($order_info['shipping_address_1']) {
+      $params_client_shipping_street_address[] = $order_info['shipping_address_1'];
+    }
+
+    if ($order_info['shipping_address_2']) {
+      $params_client_shipping_street_address[] = $order_info['shipping_address_2'];
+    }
+
+    $params['client']['shipping_street_address'] = substr(implode($params_client_shipping_street_address), 0, 128);
+
+    if ($order_info['shipping_postcode']) {
+      $params['client']['shipping_zip_code'] = substr($order_info['shipping_postcode'], 0, 32);
+    }
+
+    if ($order_info['shipping_city']) {
+      $params['client']['shipping_city'] = substr($order_info['shipping_city'], 0, 128);
+    }
+
+    if ($order_info['shipping_iso_code_2']) {
+      $params['client']['shipping_country'] = $order_info['shipping_iso_code_2'];
+    }
+
+    /* End of shipping information */
+
+    $purchase = $this->model_payment_chip->create_purchase($params);
+
+    if ( !array_key_exists('id', $purchase) ) {
+      $this->session->data['error'] = print_r($purchase, true);
+
+      /* TODO: Add debug option to admin config settings */
+      if($this->config->get('chip_debug') == 0) {
+        $this->log->write(serialize($purchase));
+      }
+
+      $this->redirect($this->url->link('checkout/checkout', '', 'SSL'));
+    }
+
+    $this->session->data['chip']['purchase_id'] = $purchase['id'];
+
+    header('Location: ' . $purchase['checkout_url']);
+  }
 }
