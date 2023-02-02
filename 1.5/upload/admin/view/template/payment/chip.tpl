@@ -58,6 +58,11 @@
                                 <?php } ?>
                             </td>
                         </tr>
+                        <tr>
+                        <td><?php echo $entry_general_public_key; ?></td>
+                        <td><textarea cols="50" rows="10" name="chip_general_public_key" readonly><?php echo $chip_general_public_key; ?></textarea>
+                        </td>
+                    </tr>
                     </table>
                 </div>
 
@@ -93,6 +98,11 @@
                                     <input type="radio" name="chip_due_strict" value="0" checked="checked"/>
                                     <?php echo $text_no; ?>
                                 <?php } ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><?php echo $entry_due_strict_timing; ?></td>
+                            <td><input type="number" name="chip_due_strict_timing" value="<?php echo $chip_due_strict_timing; ?>"/>
                             </td>
                         </tr>
                         <tr>

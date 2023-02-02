@@ -42,9 +42,10 @@ class ControllerPaymentChip extends Controller {
     $this->data['entry_brand_id'] = $this->language->get('entry_brand_id');
     $this->data['entry_webhook_url'] = $this->language->get('entry_webhook_url');
     $this->data['entry_public_key'] = $this->language->get('entry_public_key');
+    $this->data['entry_general_public_key'] = $this->language->get('entry_general_public_key');
     $this->data['entry_purchase_send_receipt'] = $this->language->get('entry_purchase_send_receipt');
     $this->data['entry_due_strict'] = $this->language->get('entry_due_strict');
-    $this->data['entry_due_strict_timing'] = $this->language->get('entry_callback');
+    $this->data['entry_due_strict_timing'] = $this->language->get('entry_due_strict_timing');
 
     $this->data['entry_total'] = $this->language->get('entry_total');
     $this->data['entry_geo_zone'] = $this->language->get('entry_geo_zone');
@@ -122,6 +123,12 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_public_key'] = $this->request->post['chip_public_key'];
     } else {
       $this->data['chip_public_key'] = $this->config->get('chip_public_key');
+    }
+
+    if (isset($this->request->post['chip_general_public_key'])) {
+      $this->data['chip_general_public_key'] = $this->request->post['chip_general_public_key'];
+    } else {
+      $this->data['chip_general_public_key'] = $this->config->get('chip_general_public_key');
     }
 
     if (isset($this->request->post['chip_purchase_send_receipt'])) {
@@ -268,7 +275,9 @@ class ControllerPaymentChip extends Controller {
       $this->error['warning'] = $this->language->get('error_permission');
     }
 
-    if (!$this->request->post['chip_secret_key']) {
+    if ($this->request->post['chip_secret_key']) {
+      $this->configure_general_public_key();
+    } else {
       $this->error['secret_key'] = $this->language->get('error_secret_key');
     }
 
@@ -300,4 +309,18 @@ class ControllerPaymentChip extends Controller {
 		$this->load->model('payment/chip');
 		$this->model_payment_chip->uninstall();
 	}
+
+  private function configure_general_public_key() {
+    $this->load->model('payment/chip');
+    $this->model_payment_chip->set_keys($this->request->post['chip_secret_key'], '');
+    $general_public_key = str_replace('\n', "\n", $this->model_payment_chip->get_public_key());
+
+    if (empty($general_public_key) OR !openssl_pkey_get_public($general_public_key)){
+      $this->error['secret_key'] = $this->language->get('error_secret_key_invalid');
+      return false;
+    }
+
+    $this->request->post['chip_general_public_key'] = $general_public_key;
+    return true;
+  }
 }
