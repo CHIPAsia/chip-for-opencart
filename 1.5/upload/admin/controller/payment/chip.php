@@ -46,6 +46,8 @@ class ControllerPaymentChip extends Controller {
     $this->data['entry_purchase_send_receipt'] = $this->language->get('entry_purchase_send_receipt');
     $this->data['entry_due_strict'] = $this->language->get('entry_due_strict');
     $this->data['entry_due_strict_timing'] = $this->language->get('entry_due_strict_timing');
+    $this->data['entry_time_zone'] = $this->language->get('entry_time_zone');
+    $this->data['entry_debug'] = $this->language->get('entry_debug');
 
     $this->data['entry_total'] = $this->language->get('entry_total');
     $this->data['entry_geo_zone'] = $this->language->get('entry_geo_zone');
@@ -201,6 +203,27 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_allow_instruction'] = $this->request->post['chip_allow_instruction'];
     } else {
       $this->data['chip_allow_instruction'] = $this->config->get('chip_allow_instruction');
+    }
+
+    if (isset($this->request->post['chip_debug'])) {
+      $this->data['chip_debug'] = $this->request->post['chip_debug'];
+    } else {
+      $this->data['chip_debug'] = $this->config->get('chip_debug');
+    }
+
+    $modified_time_zones = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
+
+    if (($key = array_search('Asia/Kuala_Lumpur', $modified_time_zones)) !== false) {
+      unset($modified_time_zones[$key]);
+      array_unshift($modified_time_zones, 'Asia/Kuala_Lumpur');
+    }
+
+    $this->data['time_zones'] = $modified_time_zones;
+
+    if (isset($this->request->post['chip_time_zone'])) {
+      $this->data['chip_time_zone'] = $this->request->post['chip_time_zone'];
+    } else {
+      $this->data['chip_time_zone'] = $this->config->get('chip_time_zone');
     }
 
     $this->load->model('localisation/order_status');

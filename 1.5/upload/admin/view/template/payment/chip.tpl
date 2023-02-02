@@ -69,6 +69,22 @@
                 <div id="tab-general">
                     <table class="form">
                         <tr>
+                            <td><?php echo $entry_debug; ?></td>
+                            <td>
+                                <?php if ($chip_debug) { ?>
+                                    <input type="radio" name="chip_debug" value="1" checked="checked"/>
+                                    <?php echo $text_yes; ?>
+                                    <input type="radio" name="chip_debug" value="0"/>
+                                    <?php echo $text_no; ?>
+                                <?php } else { ?>
+                                    <input type="radio" name="chip_debug" value="1"/>
+                                    <?php echo $text_yes; ?>
+                                    <input type="radio" name="chip_debug" value="0" checked="checked"/>
+                                    <?php echo $text_no; ?>
+                                <?php } ?>
+                            </td>
+                        </tr>
+                        <tr>
                             <td><?php echo $entry_purchase_send_receipt; ?></td>
                             <td>
                                 <?php if ($chip_purchase_send_receipt) { ?>
@@ -119,6 +135,20 @@
                                     <option value="<?php echo $geo_zone['geo_zone_id']; ?>" selected="selected"><?php echo $geo_zone['name']; ?></option>
                                     <?php } else { ?>
                                     <option value="<?php echo $geo_zone['geo_zone_id']; ?>"><?php echo $geo_zone['name']; ?></option>
+                                    <?php } ?>
+                                    <?php } ?>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><?php echo $entry_time_zone; ?></td>
+                            <td>
+                                <select name="chip_time_zone">
+                                    <?php foreach ($time_zones as $time_zone) { ?>
+                                    <?php if ($time_zone == $chip_time_zone) { ?>
+                                    <option value="<?php echo $time_zone; ?>" selected="selected"><?php echo $time_zone; ?></option>
+                                    <?php } else { ?>
+                                    <option value="<?php echo $time_zone; ?>"><?php echo $time_zone; ?></option>
                                     <?php } ?>
                                     <?php } ?>
                                 </select>

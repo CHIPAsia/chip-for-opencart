@@ -36,6 +36,8 @@ $_['entry_paid_order_status'] = 'Paid Order Status:<br /><span class="help">Defa
 $_['entry_refunded_order_status'] = 'Refunded Order Status:<br /><span class="help">Default to Refunded.</span>';
 $_['entry_allow_instruction'] = 'Instruction:<br /><span class="help">To insturction on checkout page.</span>';
 $_['entry_instruction'] = 'CHIP Instructions:<br /><span class="help">This will show on checkout page before customer make payment.</span>';
+$_['entry_time_zone'] = 'Time Zone:<br /><span class="help">This will dictate the timestamp zone on the invoice and receipt.</span>';
+$_['entry_debug'] = 'Debug logging:';
 
 $_['error_permission'] = 'Warning: You do not have permission to modify CHIP!';
 $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';

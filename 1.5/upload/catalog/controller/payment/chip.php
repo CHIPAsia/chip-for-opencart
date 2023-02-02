@@ -42,6 +42,9 @@ class ControllerPaymentChip extends Controller
     }
 
     $amount = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
+    if ($order_info['currency_code'] == 'MYR') {
+      $amount = $order_info['total'];
+    }
 
     $products = $this->cart->getProducts();
     $product_descriptions = array();
@@ -54,7 +57,7 @@ class ControllerPaymentChip extends Controller
       'success_redirect' => $this->url->link('payment/chip/success_redirect', '', 'SSL'),
       'failure_redirect' => $this->url->link('payment/chip/failure_redirect', '', 'SSL'),
       'cancel_redirect'  => $this->url->link('checkout/checkout', '', 'SSL'),
-      'creator_agent'    => 'OC: 1.0.0',
+      'creator_agent'    => 'OC15: 1.0.0',
       'reference'        => $this->session->data['order_id'],
       'platform'         => 'opencart',
       'send_receipt'     => $this->config->get('chip_purchase_send_receipt'),
@@ -62,8 +65,7 @@ class ControllerPaymentChip extends Controller
       'brand_id'         => $this->config->get('chip_brand_id'),
       'client'           => [],
       'purchase'         => array(
-        /* TODO: Add timezone to admin config settings */
-        'timezone'   => 'Asia/Kuala_Lumpur',
+        'timezone'   => $this->config->get('chip_time_zone'),
         'currency'   => 'MYR',
         'due_strict' => $this->config->get('chip_due_strict'),
         'products'   => array([
@@ -151,15 +153,14 @@ class ControllerPaymentChip extends Controller
     if ( !array_key_exists('id', $purchase) ) {
       $this->session->data['error'] = print_r($purchase, true);
 
-      /* TODO: Add debug option to admin config settings */
-      if($this->config->get('chip_debug') == 0) {
+      if($this->config->get('chip_debug') == 1) {
         $this->log->write(serialize($purchase));
       }
 
       $this->redirect($this->url->link('checkout/checkout', '', 'SSL'));
     }
 
-    $this->session->data['chip']['purchase_id'] = $purchase['id'];
+    $this->session->data['chip'] = $purchase;
 
     header('Location: ' . $purchase['checkout_url']);
   }
