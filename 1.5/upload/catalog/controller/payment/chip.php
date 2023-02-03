@@ -88,11 +88,11 @@ class ControllerPaymentChip extends Controller
       );
     }
 
-    if ($order_info['email']) {
+    if (!empty($order_info['email'])) {
       $params['client']['email'] = $order_info['email'];
     }
 
-    if ($order_info['telephone']) {
+    if (!empty($order_info['telephone'])) {
       $params['client']['phone'] = $order_info['telephone'];
     }
 
@@ -105,30 +105,34 @@ class ControllerPaymentChip extends Controller
       $params_client_full_name[] = ' ' . $order_info['payment_lastname'];
     }
 
-    $params['client']['full_name'] = substr(implode($params_client_full_name), 0, 30);
+    if (!empty(trim(implode($params_client_full_name)))){
+      $params['client']['full_name'] = substr(implode($params_client_full_name), 0, 30);
+    }
 
     /* Start of payment information */
 
     $params_client_street_address = array();
-    if ($order_info['payment_address_1']) {
+    if (!empty($order_info['payment_address_1'])) {
       $params_client_street_address[] = $order_info['payment_address_1'];
     }
 
-    if ($order_info['payment_address_2']) {
+    if (!empty($order_info['payment_address_2'])) {
       $params_client_street_address[] = $order_info['payment_address_2'];
     }
 
-    $params['client']['street_address'] = substr(implode($params_client_street_address), 0, 128);
+    if (!empty($params_client_street_address)){
+      $params['client']['street_address'] = substr(implode($params_client_street_address), 0, 128);
+    }
 
-    if ($order_info['payment_postcode']) {
+    if (!empty($order_info['payment_postcode'])) {
       $params['client']['zip_code'] = substr($order_info['payment_postcode'], 0, 32);
     }
 
-    if ($order_info['payment_city']) {
+    if (!empty($order_info['payment_city'])) {
       $params['client']['city'] = substr($order_info['payment_city'], 0, 128);
     }
 
-    if ($order_info['payment_iso_code_2']) {
+    if (!empty($order_info['payment_iso_code_2'])) {
       $params['client']['country'] = $order_info['payment_iso_code_2'];
     }
 
@@ -136,25 +140,27 @@ class ControllerPaymentChip extends Controller
     /* Start of shipping information */
 
     $params_client_shipping_street_address = array();
-    if ($order_info['shipping_address_1']) {
+    if (!empty($order_info['shipping_address_1'])) {
       $params_client_shipping_street_address[] = $order_info['shipping_address_1'];
     }
 
-    if ($order_info['shipping_address_2']) {
-      $params_client_shipping_street_address[] = $order_info['shipping_address_2'];
+    if (!empty($order_info['shipping_address_2'])) {
+      $params_client_shipping_street_address[] = ' ' . $order_info['shipping_address_2'];
     }
 
-    $params['client']['shipping_street_address'] = substr(implode($params_client_shipping_street_address), 0, 128);
+    if (!empty($params_client_shipping_street_address)) {
+      $params['client']['shipping_street_address'] = substr(implode($params_client_shipping_street_address), 0, 128);
+    }
 
-    if ($order_info['shipping_postcode']) {
+    if (!empty($order_info['shipping_postcode'])) {
       $params['client']['shipping_zip_code'] = substr($order_info['shipping_postcode'], 0, 32);
     }
 
-    if ($order_info['shipping_city']) {
+    if (!empty($order_info['shipping_city'])) {
       $params['client']['shipping_city'] = substr($order_info['shipping_city'], 0, 128);
     }
 
-    if ($order_info['shipping_iso_code_2']) {
+    if (!empty($order_info['shipping_iso_code_2'])) {
       $params['client']['shipping_country'] = $order_info['shipping_iso_code_2'];
     }
 
@@ -187,6 +193,7 @@ class ControllerPaymentChip extends Controller
   }
   public function success_callback() {
     $this->load->model('checkout/order');
+    $this->language->load('payment/chip');
 
     $public_key = $this->config->get('chip_general_public_key');
 
@@ -215,10 +222,11 @@ class ControllerPaymentChip extends Controller
 
     $order_info = $this->model_checkout_order->getOrder($purchase['reference']);
     if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
-      $this->model_checkout_order->confirm($purchase['reference'], $this->config->get('chip_paid_order_status_id'), sprintf('Payment Successful. CHIP receipt: https://gate.chip-in.asia/p/%s/receipt/', $purchase_id), true);
+      $this->model_checkout_order->confirm($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
+      $this->model_checkout_order->update($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
 
       if ($purchase['is_test'] == true) {
-        $this->model_checkout_order->update($purchase['reference'], $this->config->get('chip_paid_order_status_id'), 'The payment made in test mode where it does not involve real payment.');
+        $this->model_checkout_order->update($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('test_mode_disclaimer'));
       }
     }
 
