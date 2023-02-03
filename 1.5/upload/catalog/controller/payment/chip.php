@@ -167,8 +167,8 @@ class ControllerPaymentChip extends Controller
     if ( !array_key_exists('id', $purchase) ) {
       $this->session->data['error'] = print_r($purchase, true);
 
-      if($this->config->get('chip_debug') == 1) {
-        $this->log->write(serialize($purchase));
+      if ($this->config->get('chip_debug')) {
+        $this->log->write('CHIP API /purchase/ failed for order #' . $this->session->data['order_id'] . '. Response Body: ' . json_encode($purchase));
       }
 
       $this->redirect($this->url->link('checkout/checkout', '', 'SSL'));
