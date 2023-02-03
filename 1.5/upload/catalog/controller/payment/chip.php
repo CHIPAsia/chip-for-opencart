@@ -41,15 +41,10 @@ class ControllerPaymentChip extends Controller
       $this->redirect($this->url->link('checkout/checkout', '', 'SSL'));
     }
 
-    $amount = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
-    if ($order_info['currency_code'] == 'MYR') {
-      $amount = $order_info['total'];
-    }
+    $total_override = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
 
-    $products = $this->cart->getProducts();
-    $product_descriptions = array();
-    foreach ($products as $product) {
-      $product_descriptions[] = $product['name'] . " x " . $product['quantity'];
+    if ($order_info['currency_code'] == 'MYR') {
+      $total_override = $order_info['total'];
     }
 
     $params = array(
@@ -65,16 +60,32 @@ class ControllerPaymentChip extends Controller
       'brand_id'         => $this->config->get('chip_brand_id'),
       'client'           => [],
       'purchase'         => array(
-        'timezone'   => $this->config->get('chip_time_zone'),
-        'currency'   => 'MYR',
-        'due_strict' => $this->config->get('chip_due_strict'),
-        'products'   => array([
-          'name'     => substr(implode($product_descriptions), 0, 256),
-          'price'    => round($amount * 100),
-          'quantity' => '1',
-        ]),
+        'total_override' => round($total_override * 100),
+        'timezone'       => $this->config->get('chip_time_zone'),
+        'currency'       => 'MYR',
+        'due_strict'     => $this->config->get('chip_due_strict'),
+        'products'       => array(),
       ),
     );
+
+    $products = $this->cart->getProducts();
+    $subtotal_override = $this->cart->getSubTotal();
+
+    $params['purchase']['subtotal_override'] = round($subtotal_override * 100);
+
+    foreach ($products as $product) {
+      $product_price = $this->currency->convert($product['price'], $this->config->get('config_currency'), 'MYR');
+      if ($order_info['currency_code'] == 'MYR') {
+        $product_price = $product['price'];
+      }
+
+      $params['purchase']['products'][] = array(
+        'name' => substr($product['name'], 0, 256),
+        'quantity' => $product['quantity'],
+        'price' => round($product_price * 100),
+        'category' => $product['product_id']
+      );
+    }
 
     if ($order_info['email']) {
       $params['client']['email'] = $order_info['email'];
