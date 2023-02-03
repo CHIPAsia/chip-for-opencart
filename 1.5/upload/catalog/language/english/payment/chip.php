@@ -12,3 +12,4 @@ $_['payment_successful'] = 'Payment Successful.';
 $_['chip_receipt_url'] = 'CHIP receipt: <a href="https://gate.chip-in.asia/p/%1$s/receipt/" target=_blank>https://gate.chip-in.asia/p/%1$s/receipt/</a>';
 $_['payment_method'] = 'Payment method: ';
 $_['test_mode_disclaimer'] = 'The payment made in test mode where it does not involve real payment.';
+$_['invalid_redirect'] = 'Invalid redirect.';

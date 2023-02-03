@@ -53,9 +53,9 @@ class ControllerPaymentChip extends Controller
 
     $params = array(
       'success_callback' => $this->url->link('payment/chip/success_callback', '', 'SSL'),
-      // 'success_redirect' => $this->url->link('payment/chip/success_redirect', '', 'SSL'),
+      'success_redirect' => $this->url->link('payment/chip/success_redirect', '', 'SSL'),
       // 'failure_redirect' => $this->url->link('payment/chip/failure_redirect', '', 'SSL'),
-      // 'cancel_redirect'  => $this->url->link('checkout/checkout', '', 'SSL'),
+      'cancel_redirect'  => $this->url->link('checkout/checkout', '', 'SSL'),
       'creator_agent'    => 'OC15: 1.0.0',
       'reference'        => $this->session->data['order_id'],
       'platform'         => 'opencart',
@@ -182,13 +182,36 @@ class ControllerPaymentChip extends Controller
 
     $this->session->data['chip'] = $purchase;
 
-    header('Location: ' . $purchase['checkout_url']);
+    $this->redirect($purchase['checkout_url']);
   }
 
   public function callback() {
+    if (empty($this->config->get('chip_public_key'))) {
+      exit;
+    }
+
     $this->load->model('payment/chip');
 
     $public_key = $this->config->get('chip_public_key');
+
+    if (!isset($this->request->server['HTTP_X_SIGNATURE'])) {
+      exit('No HTTP_X_SIGNATURE detected');
+    }
+
+    $HTTP_X_SIGNATURE = $this->request->server['HTTP_X_SIGNATURE'];
+
+    $purchase_json = file_get_contents('php://input');
+
+    if (openssl_verify( $purchase_json,  base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption' ) != 1) {
+      header("HTTP/1.1 401 Unauthorized");
+      exit;
+    }
+
+    $purchase = json_decode($purchase_json, true);
+
+    /* check for supported event type */
+    /* $purchase['event_type'] == 'purchase.paid'; */
+    /* update the payment status accordingly */
     /* yet to be completed */
   }
   public function success_callback() {
@@ -235,5 +258,53 @@ class ControllerPaymentChip extends Controller
     exit;
   }
 
-  /* for redirect, must call $this->cart->clear(); */
+  public function success_redirect() {
+    $this->language->load('payment/chip');
+
+    if (!isset($this->session->data['chip'])) {
+      exit($this->language->get('invalid_redirect'));
+    }
+
+    $purchase_id = $this->session->data['chip']['id'];
+    $order_id = $this->session->data['chip']['reference'];
+
+    $this->load->model('checkout/order');
+    $this->load->model('payment/chip');
+
+    $this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
+    $purchase = $this->model_payment_chip->get_purchase($purchase_id);
+
+    if ( !array_key_exists('id', $purchase) ) {
+      $this->session->data['error'] = print_r($purchase, true);
+
+      if ($this->config->get('chip_debug')) {
+        $this->log->write('CHIP API /purchase/'.$purchase_id. '/ failed for order #' . $order_id . '. Response Body: ' . json_encode($purchase));
+      }
+
+      $this->redirect($this->session->data['chip']['checkout_url'] . 'receipt/');
+    }
+
+    if ($purchase['status'] != 'paid') {
+      exit;
+    }
+
+    unset($this->session->data['chip']);
+    $this->cart->clear();
+
+    $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
+
+    $order_info = $this->model_checkout_order->getOrder($order_id);
+    if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
+      $this->model_checkout_order->confirm($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
+      $this->model_checkout_order->update($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
+
+      if ($purchase['is_test'] == true) {
+        $this->model_checkout_order->update($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('test_mode_disclaimer'));
+      }
+    }
+
+    $this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
+
+    $this->redirect($this->url->link('checkout/success', '', 'SSL'));
+  }
 }

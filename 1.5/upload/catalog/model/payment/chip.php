@@ -38,6 +38,11 @@ class ModelPaymentChip extends Model {
     return $this->call('POST', '/purchases/', $params);
   }
 
+  public function get_purchase($purchase_id)
+  {
+    return $this->call('GET', "/purchases/{$purchase_id}/");
+  }
+
   private function call($method, $route, $params = [])
   {
     $private_key = $this->private_key;
