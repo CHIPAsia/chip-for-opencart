@@ -53,9 +53,9 @@ class ControllerPaymentChip extends Controller
 
     $params = array(
       'success_callback' => $this->url->link('payment/chip/success_callback', '', 'SSL'),
-      'success_redirect' => $this->url->link('payment/chip/success_redirect', '', 'SSL'),
-      'failure_redirect' => $this->url->link('payment/chip/failure_redirect', '', 'SSL'),
-      'cancel_redirect'  => $this->url->link('checkout/checkout', '', 'SSL'),
+      // 'success_redirect' => $this->url->link('payment/chip/success_redirect', '', 'SSL'),
+      // 'failure_redirect' => $this->url->link('payment/chip/failure_redirect', '', 'SSL'),
+      // 'cancel_redirect'  => $this->url->link('checkout/checkout', '', 'SSL'),
       'creator_agent'    => 'OC15: 1.0.0',
       'reference'        => $this->session->data['order_id'],
       'platform'         => 'opencart',
@@ -102,7 +102,7 @@ class ControllerPaymentChip extends Controller
     }
 
     if ($order_info['payment_lastname']) {
-      $params_client_full_name[] = $order_info['payment_lastname'];
+      $params_client_full_name[] = ' ' . $order_info['payment_lastname'];
     }
 
     $params['client']['full_name'] = substr(implode($params_client_full_name), 0, 30);
@@ -178,4 +178,55 @@ class ControllerPaymentChip extends Controller
 
     header('Location: ' . $purchase['checkout_url']);
   }
+
+  public function callback() {
+    $this->load->model('payment/chip');
+
+    $public_key = $this->config->get('chip_public_key');
+    /* yet to be completed */
+  }
+  public function success_callback() {
+    $this->load->model('payment/chip');
+    $this->load->model('checkout/order');
+
+    $public_key = $this->config->get('chip_general_public_key');
+
+    if (!isset($this->request->server['HTTP_X_SIGNATURE'])) {
+      exit('No HTTP_X_SIGNATURE detected');
+    }
+
+    $HTTP_X_SIGNATURE = $this->request->server['HTTP_X_SIGNATURE'];
+
+    $purchase_json = file_get_contents('php://input');
+
+    if (openssl_verify( $purchase_json,  base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption' ) != 1) {
+      header("HTTP/1.1 401 Unauthorized");
+      exit;
+    }
+
+    $purchase = json_decode($purchase_json, true);
+
+    if ($purchase['status'] != 'paid') {
+      exit;
+    }
+
+    $purchase_id = $purchase['id'];
+
+    $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
+
+    $order_info = $this->model_checkout_order->getOrder($purchase['reference']);
+    if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
+      $this->model_checkout_order->confirm($purchase['reference'], $this->config->get('chip_paid_order_status_id'), sprintf('Payment Successful. CHIP receipt: https://gate.chip-in.asia/p/%s/receipt/', $purchase_id), true);
+
+      if ($purchase['is_test'] == true) {
+        $this->model_checkout_order->update($purchase['reference'], $this->config->get('chip_paid_order_status_id'), 'The payment made in test mode where it does not involve real payment.');
+      }
+    }
+
+    $this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
+
+    exit;
+  }
+
+  /* for redirect, must call $this->cart->clear(); */
 }
