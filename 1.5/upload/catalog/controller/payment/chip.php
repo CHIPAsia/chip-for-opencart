@@ -186,7 +186,6 @@ class ControllerPaymentChip extends Controller
     /* yet to be completed */
   }
   public function success_callback() {
-    $this->load->model('payment/chip');
     $this->load->model('checkout/order');
 
     $public_key = $this->config->get('chip_general_public_key');
