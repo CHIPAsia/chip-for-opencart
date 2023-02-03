@@ -79,9 +79,6 @@ class ControllerPaymentChip extends Controller
 
     foreach ($products as $product) {
       $product_price = $this->currency->convert($product['price'], $this->config->get('config_currency'), 'MYR');
-      if ($order_info['currency_code'] == 'MYR') {
-        $product_price = $product['price'];
-      }
 
       $params['purchase']['products'][] = array(
         'name' => substr($product['name'], 0, 256),
