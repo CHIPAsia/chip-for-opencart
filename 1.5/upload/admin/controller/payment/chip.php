@@ -346,6 +346,11 @@ class ControllerPaymentChip extends Controller {
     $this->model_payment_chip->set_keys($this->request->post['chip_secret_key'], '');
     $general_public_key = str_replace('\n', "\n", $this->model_payment_chip->get_public_key());
 
+    if (isset($general_public_key['__all__'])) {
+      $this->error['secret_key'] = implode('. ', $general_public_key['__all__'][0]);
+      return false;
+    }
+
     if (empty($general_public_key) OR !openssl_pkey_get_public($general_public_key)){
       $this->error['secret_key'] = $this->language->get('error_secret_key_invalid');
       return false;
