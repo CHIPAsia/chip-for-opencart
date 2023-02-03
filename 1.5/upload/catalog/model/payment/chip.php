@@ -1,4 +1,4 @@
-<?php 
+<?php
 class ModelPaymentChip extends Model {
   public function getMethod($address, $total) {
     $this->language->load('payment/chip');
@@ -13,11 +13,11 @@ class ModelPaymentChip extends Model {
       $status = true;
     } else {
       $status = false;
-    }	
+    }
 
     $method_data = array();
 
-    if ($status) {  
+    if ($status) {
       $method_data = array(
         'code'       => 'chip',
         'title'      => $this->language->get('text_title'),
