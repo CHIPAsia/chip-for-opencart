@@ -33,18 +33,22 @@ class ControllerPaymentChip extends Controller
     $this->load->model('payment/chip');
     $this->load->model('checkout/order');
 
+    $this->language->load('payment/chip');
+
     $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
 
+    /* Reject if MYR currency is not set up */
+
     if (!$this->currency->has('MYR')){
-      $this->language->load('payment/chip');
       $this->session->data['error'] = $this->language->get('pending_myr_setup');
       $this->redirect($this->url->link('checkout/checkout', '', 'SSL'));
     }
 
     $total_override = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
 
-    if ($order_info['currency_code'] == 'MYR') {
-      $total_override = $order_info['total'];
+    if ($this->config->get('chip_convert_to_processing') == 0 AND $this->config->get('config_currency') != 'MYR') {
+      $this->session->data['error'] = $this->language->get('convert_to_processing_disabled');
+      $this->redirect($this->url->link('checkout/checkout', '', 'SSL'));
     }
 
     $params = array(

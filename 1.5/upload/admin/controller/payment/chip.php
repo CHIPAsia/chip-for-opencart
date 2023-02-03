@@ -48,6 +48,7 @@ class ControllerPaymentChip extends Controller {
     $this->data['entry_due_strict_timing'] = $this->language->get('entry_due_strict_timing');
     $this->data['entry_time_zone'] = $this->language->get('entry_time_zone');
     $this->data['entry_debug'] = $this->language->get('entry_debug');
+    $this->data['entry_convert_to_processing'] = $this->language->get('entry_convert_to_processing');
 
     $this->data['entry_total'] = $this->language->get('entry_total');
     $this->data['entry_geo_zone'] = $this->language->get('entry_geo_zone');
@@ -203,6 +204,12 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_allow_instruction'] = $this->request->post['chip_allow_instruction'];
     } else {
       $this->data['chip_allow_instruction'] = $this->config->get('chip_allow_instruction');
+    }
+
+    if (isset($this->request->post['chip_convert_to_processing'])) {
+      $this->data['chip_convert_to_processing'] = $this->request->post['chip_convert_to_processing'];
+    } else {
+      $this->data['chip_convert_to_processing'] = $this->config->get('chip_convert_to_processing');
     }
 
     if (isset($this->request->post['chip_debug'])) {

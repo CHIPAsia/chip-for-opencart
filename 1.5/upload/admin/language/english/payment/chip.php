@@ -38,6 +38,7 @@ $_['entry_allow_instruction'] = 'Instruction:<br /><span class="help">To insturc
 $_['entry_instruction'] = 'CHIP Instructions:<br /><span class="help">This will show on checkout page before customer make payment.</span>';
 $_['entry_time_zone'] = 'Time Zone:<br /><span class="help">This will dictate the timestamp zone on the invoice and receipt.</span>';
 $_['entry_debug'] = 'Debug logging:';
+$_['entry_convert_to_processing'] = 'Convert To Processing:<br /><span class="help">This to allow payment if the store currency is set to other than MYR.</span>';
 
 $_['error_permission'] = 'Warning: You do not have permission to modify CHIP!';
 $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';
