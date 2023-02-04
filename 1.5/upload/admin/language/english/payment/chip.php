@@ -28,10 +28,6 @@ $_['entry_total'] = 'Total:<br /><span class="help">The checkout total the order
 $_['entry_geo_zone'] = 'Geo Zone:';
 $_['entry_status'] = 'Status:<br /><span class="help">Whether to enable/disable CHIP payment gateway.</span>';
 $_['entry_sort_order'] = 'Sort Order:<br /><span class="help">Payment gateway sorting on checkout page.</span>';
-$_['entry_created_order_status'] = 'Created Order Status:<br /><span class="help">Default to Pending.</span>';
-$_['entry_error_order_status'] = 'Error Order Status:<br /><span class="help">Default to Failed.</span>';
-$_['entry_cancelled_order_status'] = 'Cancelled Order Status:<br /><span class="help">Default to Canceled.</span>';
-$_['entry_overdue_order_status'] = 'Overdue Order Status:<br /><span class="help">Default to Expired.</span>';
 $_['entry_paid_order_status'] = 'Paid Order Status:<br /><span class="help">Default to Processing.</span>';
 $_['entry_refunded_order_status'] = 'Refunded Order Status:<br /><span class="help">Default to Refunded.</span>';
 $_['entry_allow_instruction'] = 'Instruction:<br /><span class="help">To insturction on checkout page.</span>';

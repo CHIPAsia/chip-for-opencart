@@ -202,62 +202,6 @@
                 <div id="tab-status">
                     <table class="form">
                         <tr>
-                            <td><?php echo $entry_created_order_status; ?></td>
-                            <td>
-                                <select name="chip_created_order_status_id">
-                                    <?php foreach ($order_statuses as $order_status) { ?>
-                                        <?php if ($order_status['order_status_id'] == $chip_created_order_status_id) { ?>
-                                            <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
-                                        <?php } else { ?>
-                                            <option value="<?php echo $order_status['order_status_id']; ?>"><?php echo $order_status['name']; ?></option>
-                                        <?php } ?>
-                                    <?php } ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><?php echo $entry_error_order_status; ?></td>
-                            <td>
-                                <select name="chip_error_order_status_id">
-                                    <?php foreach ($order_statuses as $order_status) { ?>
-                                        <?php if ($order_status['order_status_id'] == $chip_error_order_status_id) { ?>
-                                            <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
-                                        <?php } else { ?>
-                                            <option value="<?php echo $order_status['order_status_id']; ?>"><?php echo $order_status['name']; ?></option>
-                                        <?php } ?>
-                                    <?php } ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><?php echo $entry_cancelled_order_status; ?></td>
-                            <td>
-                                <select name="chip_cancelled_order_status_id">
-                                    <?php foreach ($order_statuses as $order_status) { ?>
-                                        <?php if ($order_status['order_status_id'] == $chip_cancelled_order_status_id) { ?>
-                                            <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
-                                        <?php } else { ?>
-                                            <option value="<?php echo $order_status['order_status_id']; ?>"><?php echo $order_status['name']; ?></option>
-                                        <?php } ?>
-                                    <?php } ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><?php echo $entry_overdue_order_status; ?></td>
-                            <td>
-                                <select name="chip_overdue_order_status_id">
-                                    <?php foreach ($order_statuses as $order_status) { ?>
-                                        <?php if ($order_status['order_status_id'] == $chip_overdue_order_status_id) { ?>
-                                            <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
-                                        <?php } else { ?>
-                                            <option value="<?php echo $order_status['order_status_id']; ?>"><?php echo $order_status['name']; ?></option>
-                                        <?php } ?>
-                                    <?php } ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
                             <td><?php echo $entry_paid_order_status; ?></td>
                             <td>
                                 <select name="chip_paid_order_status_id">

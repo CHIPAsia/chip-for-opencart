@@ -55,10 +55,6 @@ class ControllerPaymentChip extends Controller {
     $this->data['entry_status'] = $this->language->get('entry_status');
     $this->data['entry_sort_order'] = $this->language->get('entry_sort_order');
 
-    $this->data['entry_created_order_status'] = $this->language->get('entry_created_order_status');
-    $this->data['entry_error_order_status'] = $this->language->get('entry_error_order_status');
-    $this->data['entry_cancelled_order_status'] = $this->language->get('entry_cancelled_order_status');
-    $this->data['entry_overdue_order_status'] = $this->language->get('entry_overdue_order_status');
     $this->data['entry_paid_order_status'] = $this->language->get('entry_paid_order_status');
     $this->data['entry_refunded_order_status'] = $this->language->get('entry_refunded_order_status');
 
@@ -156,36 +152,6 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_total'] = $this->request->post['chip_total'];
     } else {
       $this->data['chip_total'] = $this->config->get('chip_total'); 
-    } 
-
-    if (isset($this->request->post['chip_created_order_status_id'])) {
-      $this->data['chip_created_order_status_id'] = $this->request->post['chip_created_order_status_id'];
-    } else {
-      $this->data['chip_created_order_status_id'] = $this->config->get('chip_created_order_status_id');
-    }
-
-    if (isset($this->request->post['chip_viewed_order_status_id'])) {
-      $this->data['chip_viewed_order_status_id'] = $this->request->post['chip_viewed_order_status_id'];
-    } else {
-      $this->data['chip_viewed_order_status_id'] = $this->config->get('chip_viewed_order_status_id');
-    }
-
-    if (isset($this->request->post['chip_error_order_status_id'])) {
-      $this->data['chip_error_order_status_id'] = $this->request->post['chip_error_order_status_id'];
-    } else {
-      $this->data['chip_error_order_status_id'] = $this->config->get('chip_error_order_status_id');
-    }
-
-    if (isset($this->request->post['chip_cancelled_order_status_id'])) {
-      $this->data['chip_cancelled_order_status_id'] = $this->request->post['chip_cancelled_order_status_id'];
-    } else {
-      $this->data['chip_cancelled_order_status_id'] = $this->config->get('chip_cancelled_order_status_id');
-    }
-
-    if (isset($this->request->post['chip_overdue_order_status_id'])) {
-      $this->data['chip_overdue_order_status_id'] = $this->request->post['chip_overdue_order_status_id'];
-    } else {
-      $this->data['chip_overdue_order_status_id'] = $this->config->get('chip_overdue_order_status_id');
     }
 
     if (isset($this->request->post['chip_paid_order_status_id'])) {

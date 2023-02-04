@@ -52,10 +52,11 @@ class ControllerPaymentChip extends Controller
     }
 
     $params = array(
+      /* introduce ability to disable success_callback and success_redirect for easier testing */
       'success_callback' => $this->url->link('payment/chip/success_callback', '', 'SSL'),
       'success_redirect' => $this->url->link('payment/chip/success_redirect', '', 'SSL'),
-      // 'failure_redirect' => $this->url->link('payment/chip/failure_redirect', '', 'SSL'),
-      'cancel_redirect'  => $this->url->link('checkout/checkout', '', 'SSL'),
+      'failure_redirect' => $this->url->link('checkout/checkout', '', 'SSL'),
+      'cancel_redirect'  => $this->url->link('checkout/cart', '', 'SSL'),
       'creator_agent'    => 'OC15: 1.0.0',
       'reference'        => $this->session->data['order_id'],
       'platform'         => 'opencart',
@@ -203,15 +204,17 @@ class ControllerPaymentChip extends Controller
     $purchase_json = file_get_contents('php://input');
 
     if (openssl_verify( $purchase_json,  base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption' ) != 1) {
-      header("HTTP/1.1 401 Unauthorized");
+      $this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401 Unauthorized');
       exit;
     }
 
     $purchase = json_decode($purchase_json, true);
 
     /* check for supported event type */
-    /* $purchase['event_type'] == 'purchase.paid'; */
+    /* $purchase['event_type'] == 'purchase.paid' || 'payment.refunded'; */
     /* update the payment status accordingly */
+    /* $this->config->get('chip_paid_order_status_id') */
+    /* $this->config->get('chip_refunded_order_status_id') */
     /* yet to be completed */
   }
   public function success_callback() {
@@ -229,7 +232,7 @@ class ControllerPaymentChip extends Controller
     $purchase_json = file_get_contents('php://input');
 
     if (openssl_verify( $purchase_json,  base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption' ) != 1) {
-      header("HTTP/1.1 401 Unauthorized");
+      $this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401 Unauthorized');
       exit;
     }
 
