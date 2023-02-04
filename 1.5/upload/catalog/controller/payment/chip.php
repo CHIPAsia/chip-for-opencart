@@ -200,6 +200,8 @@ class ControllerPaymentChip extends Controller
     }
 
     $this->load->model('payment/chip');
+    $this->load->model('checkout/order');
+    $this->language->load('payment/chip');
 
     $public_key = $this->config->get('chip_public_key');
 
@@ -218,12 +220,50 @@ class ControllerPaymentChip extends Controller
 
     $purchase = json_decode($purchase_json, true);
 
-    /* check for supported event type */
-    /* $purchase['event_type'] == 'purchase.paid' || 'payment.refunded'; */
-    /* update the payment status accordingly */
-    /* $this->config->get('chip_paid_order_status_id') */
-    /* $this->config->get('chip_refunded_order_status_id') */
-    /* yet to be completed */
+    if (!in_array($purchase['event_type'], array('payment.refunded'))) {
+      exit;
+    }
+
+    if (!array_key_exists('id', $purchase)) {
+      exit;
+    }
+
+    $purchase_id = $purchase['related_to']['id'];
+    $order_id = $purchase['related_to']['reference'];
+
+    if ($purchase['payment']['payment_type'] == 'refund' && $purchase['status'] == 'success') {
+      $order_status_id = $this->config->get('chip_refunded_order_status_id');
+    } else {
+      exit;
+    }
+
+    $order_info = $this->model_checkout_order->getOrder($order_id);
+
+    if (!$order_info) {
+      exit;
+    }
+
+    if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
+      /* do not refund unpaid order */
+      exit;
+    }
+
+    $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
+
+    /* requery to ensure sequential process */
+    $order_info = $this->model_checkout_order->getOrder($order_id);
+
+    if ($order_info['order_status_id'] != $order_status_id) {
+      $this->model_checkout_order->update($order_id, $order_status_id, $this->language->get('payment_refunded') . ' ' . $purchase['payment']['currency'] . ' ' . number_format($purchase['payment']['amount'], 2) . '.');
+
+      if ($purchase['is_test'] == true) {
+        $this->model_checkout_order->update($order_id, $order_status_id, $this->language->get('test_mode_disclaimer'));
+      }
+    }
+
+    $this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
+
+    exit;
   }
   public function success_callback() {
     $this->load->model('checkout/order');
