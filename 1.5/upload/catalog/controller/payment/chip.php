@@ -73,6 +73,14 @@ class ControllerPaymentChip extends Controller
       ),
     );
 
+    if ($this->config->get('chip_disable_success_redirect')) {
+      unset($params['success_redirect']);
+    }
+
+    if ($this->config->get('chip_disable_success_callback')) {
+      unset($params['success_callback']);
+    }
+
     $products = $this->cart->getProducts();
     $subtotal_override = $this->cart->getSubTotal();
 

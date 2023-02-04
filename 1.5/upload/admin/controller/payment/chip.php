@@ -49,6 +49,8 @@ class ControllerPaymentChip extends Controller {
     $this->data['entry_time_zone'] = $this->language->get('entry_time_zone');
     $this->data['entry_debug'] = $this->language->get('entry_debug');
     $this->data['entry_convert_to_processing'] = $this->language->get('entry_convert_to_processing');
+    $this->data['entry_disable_success_redirect'] = $this->language->get('entry_disable_success_redirect');
+    $this->data['entry_disable_success_callback'] = $this->language->get('entry_disable_success_callback');
 
     $this->data['entry_total'] = $this->language->get('entry_total');
     $this->data['entry_geo_zone'] = $this->language->get('entry_geo_zone');
@@ -176,6 +178,18 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_convert_to_processing'] = $this->request->post['chip_convert_to_processing'];
     } else {
       $this->data['chip_convert_to_processing'] = $this->config->get('chip_convert_to_processing');
+    }
+
+    if (isset($this->request->post['chip_disable_success_redirect'])) {
+      $this->data['chip_disable_success_redirect'] = $this->request->post['chip_disable_success_redirect'];
+    } else {
+      $this->data['chip_disable_success_redirect'] = $this->config->get('chip_disable_success_redirect');
+    }
+
+    if (isset($this->request->post['chip_disable_success_callback'])) {
+      $this->data['chip_disable_success_callback'] = $this->request->post['chip_disable_success_callback'];
+    } else {
+      $this->data['chip_disable_success_callback'] = $this->config->get('chip_disable_success_callback');
     }
 
     if (isset($this->request->post['chip_debug'])) {

@@ -35,6 +35,8 @@ $_['entry_instruction'] = 'CHIP Instructions:<br /><span class="help">This will 
 $_['entry_time_zone'] = 'Time Zone:<br /><span class="help">This will dictate the timestamp zone on the invoice and receipt.</span>';
 $_['entry_debug'] = 'Debug logging:';
 $_['entry_convert_to_processing'] = 'Convert To Processing:<br /><span class="help">This to allow payment if the store currency is set to other than MYR.</span>';
+$_['entry_disable_success_redirect'] = 'Disable Success Redirect:<br /><span class="help">Default to No. Only tick yes if you are performing a test.</span>';
+$_['entry_disable_success_callback'] = 'Disable Success Callback:<br /><span class="help">Default to No. Only tick yes if you are performing a test.</span>';
 
 $_['error_permission'] = 'Warning: You do not have permission to modify CHIP!';
 $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';
