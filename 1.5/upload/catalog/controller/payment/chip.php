@@ -52,7 +52,6 @@ class ControllerPaymentChip extends Controller
     }
 
     $params = array(
-      /* introduce ability to disable success_callback and success_redirect for easier testing */
       'success_callback' => $this->url->link('payment/chip/success_callback', '', 'SSL'),
       'success_redirect' => $this->url->link('payment/chip/success_redirect', '', 'SSL'),
       'failure_redirect' => $this->url->link('checkout/checkout', '', 'SSL'),
