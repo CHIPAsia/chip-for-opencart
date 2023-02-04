@@ -15,6 +15,7 @@ $_['tab_general'] = 'General';
 $_['tab_order_status'] = 'Order status';
 $_['tab_api_details'] = 'API details';
 $_['tab_customise'] = 'Customize checkout';
+$_['tab_troubleshooting'] = 'Troubleshooting';
 
 $_['entry_secret_key'] = 'Secret Key:<br /><span class="help">Secret Key can be retrieved from CHIP Collect Dashboard.</span>';
 $_['entry_brand_id'] = 'Brand ID:<br /><span class="help">Secret Key can be retrieved from CHIP Collect Dashboard.</span>';
@@ -22,7 +23,7 @@ $_['entry_webhook_url'] = 'Webhook URL:<br /><span class="help">Optional: This c
 $_['entry_public_key'] = 'Public Key:<br /><span class="help">Public Key can be retrieved from CHIP Collect Dashboard.</span>';
 $_['entry_general_public_key'] = 'General Public Key:<br /><span class="help">This public key will be filled automatically when the secret key is set correctly. It requires no configuration.</span>';
 $_['entry_purchase_send_receipt'] = 'Purchase Send Receipt:';
-$_['entry_due_strict'] = 'Purchase Due Strict:<br /><span class="help">This will prevent payment after passing due strict timing.</span>';
+$_['entry_due_strict'] = 'Purchase Due Strict:<br /><span class="help">This will prevent payment after passing due strict timing. Recommended to set to Yes.</span>';
 $_['entry_due_strict_timing'] = 'Purchase Due Strict Timing:<br /><span class="help">Set due strict timing in minutes. Setting 60 will make the payment timeout in 1 hour. If leave blank, default to 60 minutes</span>';
 $_['entry_total'] = 'Total:<br /><span class="help">The checkout total the order must reach before this payment method becomes active.</span>';
 $_['entry_geo_zone'] = 'Geo Zone:';

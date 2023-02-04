@@ -37,6 +37,7 @@ class ControllerPaymentChip extends Controller {
     $this->data['tab_order_status'] = $this->language->get('tab_order_status');
     $this->data['tab_api_details'] = $this->language->get('tab_api_details');
     $this->data['tab_customise'] = $this->language->get('tab_customise');
+    $this->data['tab_troubleshooting'] = $this->language->get('tab_troubleshooting');
 
     $this->data['entry_secret_key'] = $this->language->get('entry_secret_key');
     $this->data['entry_brand_id'] = $this->language->get('entry_brand_id');

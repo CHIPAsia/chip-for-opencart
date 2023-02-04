@@ -24,6 +24,7 @@
                 <a href="#tab-general"><?php echo $tab_general; ?></a>
                 <a href="#tab-status"><?php echo $tab_order_status; ?></a>
                 <a href="#tab-customise"><?php echo $tab_customise; ?></a>
+                <a href="#tab-troubleshooting"><?php echo $tab_troubleshooting; ?></a>
             </div>
 
             <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form">
@@ -69,22 +70,6 @@
                 <div id="tab-general">
                     <table class="form">
                         <tr>
-                            <td><?php echo $entry_debug; ?></td>
-                            <td>
-                                <?php if ($chip_debug) { ?>
-                                    <input type="radio" name="chip_debug" value="1" checked="checked"/>
-                                    <?php echo $text_yes; ?>
-                                    <input type="radio" name="chip_debug" value="0"/>
-                                    <?php echo $text_no; ?>
-                                <?php } else { ?>
-                                    <input type="radio" name="chip_debug" value="1"/>
-                                    <?php echo $text_yes; ?>
-                                    <input type="radio" name="chip_debug" value="0" checked="checked"/>
-                                    <?php echo $text_no; ?>
-                                <?php } ?>
-                            </td>
-                        </tr>
-                        <tr>
                             <td><?php echo $entry_convert_to_processing; ?></td>
                             <td>
                                 <?php if ($chip_convert_to_processing) { ?>
@@ -96,38 +81,6 @@
                                     <input type="radio" name="chip_convert_to_processing" value="1"/>
                                     <?php echo $text_yes; ?>
                                     <input type="radio" name="chip_convert_to_processing" value="0" checked="checked"/>
-                                    <?php echo $text_no; ?>
-                                <?php } ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><?php echo $entry_disable_success_redirect; ?></td>
-                            <td>
-                                <?php if ($chip_disable_success_redirect) { ?>
-                                    <input type="radio" name="chip_disable_success_redirect" value="1" checked="checked"/>
-                                    <?php echo $text_yes; ?>
-                                    <input type="radio" name="chip_disable_success_redirect" value="0"/>
-                                    <?php echo $text_no; ?>
-                                <?php } else { ?>
-                                    <input type="radio" name="chip_disable_success_redirect" value="1"/>
-                                    <?php echo $text_yes; ?>
-                                    <input type="radio" name="chip_disable_success_redirect" value="0" checked="checked"/>
-                                    <?php echo $text_no; ?>
-                                <?php } ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><?php echo $entry_disable_success_callback; ?></td>
-                            <td>
-                                <?php if ($chip_disable_success_callback) { ?>
-                                    <input type="radio" name="chip_disable_success_callback" value="1" checked="checked"/>
-                                    <?php echo $text_yes; ?>
-                                    <input type="radio" name="chip_disable_success_callback" value="0"/>
-                                    <?php echo $text_no; ?>
-                                <?php } else { ?>
-                                    <input type="radio" name="chip_disable_success_callback" value="1"/>
-                                    <?php echo $text_yes; ?>
-                                    <input type="radio" name="chip_disable_success_callback" value="0" checked="checked"/>
                                     <?php echo $text_no; ?>
                                 <?php } ?>
                             </td>
@@ -292,6 +245,59 @@
                             <?php } ?></td>
                         </tr>
                         <?php } ?>
+                    </table>
+                </div>
+
+                <div id="tab-troubleshooting">
+                    <table class="form">
+                        <tr>
+                            <td><?php echo $entry_debug; ?></td>
+                            <td>
+                                <?php if ($chip_debug) { ?>
+                                    <input type="radio" name="chip_debug" value="1" checked="checked"/>
+                                    <?php echo $text_yes; ?>
+                                    <input type="radio" name="chip_debug" value="0"/>
+                                    <?php echo $text_no; ?>
+                                <?php } else { ?>
+                                    <input type="radio" name="chip_debug" value="1"/>
+                                    <?php echo $text_yes; ?>
+                                    <input type="radio" name="chip_debug" value="0" checked="checked"/>
+                                    <?php echo $text_no; ?>
+                                <?php } ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><?php echo $entry_disable_success_redirect; ?></td>
+                            <td>
+                                <?php if ($chip_disable_success_redirect) { ?>
+                                    <input type="radio" name="chip_disable_success_redirect" value="1" checked="checked"/>
+                                    <?php echo $text_yes; ?>
+                                    <input type="radio" name="chip_disable_success_redirect" value="0"/>
+                                    <?php echo $text_no; ?>
+                                <?php } else { ?>
+                                    <input type="radio" name="chip_disable_success_redirect" value="1"/>
+                                    <?php echo $text_yes; ?>
+                                    <input type="radio" name="chip_disable_success_redirect" value="0" checked="checked"/>
+                                    <?php echo $text_no; ?>
+                                <?php } ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><?php echo $entry_disable_success_callback; ?></td>
+                            <td>
+                                <?php if ($chip_disable_success_callback) { ?>
+                                    <input type="radio" name="chip_disable_success_callback" value="1" checked="checked"/>
+                                    <?php echo $text_yes; ?>
+                                    <input type="radio" name="chip_disable_success_callback" value="0"/>
+                                    <?php echo $text_no; ?>
+                                <?php } else { ?>
+                                    <input type="radio" name="chip_disable_success_callback" value="1"/>
+                                    <?php echo $text_yes; ?>
+                                    <input type="radio" name="chip_disable_success_callback" value="0" checked="checked"/>
+                                    <?php echo $text_no; ?>
+                                <?php } ?>
+                            </td>
+                        </tr>
                     </table>
                 </div>
             </form>
