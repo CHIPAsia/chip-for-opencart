@@ -31,9 +31,21 @@
 
                 <div id="tab-api-details">
                     <table class="form">
+                        <?php foreach ($languages as $language) { ?>
+                        <tr>
+                            <td><span class="required">*</span> <?php echo $entry_payment_name; ?></td>
+                            <td>
+                                <input size="50" name="chip_payment_name_<?php echo $language['language_id']; ?>" value="<?php echo isset(${'chip_payment_name_' . $language['language_id']}) ? ${'chip_payment_name_' . $language['language_id']} : $text_title; ?>">
+                                <img src="view/image/flags/<?php echo $language['image']; ?>" title="<?php echo $language['name']; ?>" style="vertical-align: top;" /><br />
+                                <?php if (isset(${'error_payment_name_' . $language['language_id']})) { ?>
+                                <span class="error"><?php echo ${'error_payment_name_' . $language['language_id']}; ?></span>
+                                <?php } ?>
+                            </td>
+                        </tr>
+                        <?php } ?>
                         <tr>
                             <td><span class="required">*</span> <?php echo $entry_secret_key; ?></td>
-                            <td><input type="text" name="chip_secret_key" value="<?php echo $chip_secret_key; ?>"/>
+                            <td><input size="50" type="text" name="chip_secret_key" value="<?php echo $chip_secret_key; ?>"/>
                                 <?php if (isset($error['secret_key'])) { ?>
                                     <span class="error"><?php echo $error['secret_key']; ?></span>
                                 <?php } ?>
@@ -41,7 +53,7 @@
                         </tr>
                         <tr>
                             <td><span class="required">*</span> <?php echo $entry_brand_id; ?></td>
-                            <td><input type="text" name="chip_brand_id" value="<?php echo $chip_brand_id; ?>"/>
+                            <td><input size="50" type="text" name="chip_brand_id" value="<?php echo $chip_brand_id; ?>"/>
                                 <?php if (isset($error['brand_id'])) { ?>
                                     <span class="error"><?php echo $error['brand_id']; ?></span>
                                 <?php } ?>
@@ -238,10 +250,10 @@
                         <?php foreach ($languages as $language) { ?>
                         <tr>
                           <td><?php echo $entry_instruction; ?></td>
-                          <td><textarea name="chip_<?php echo $language['language_id']; ?>" cols="80" rows="10"><?php echo isset(${'chip_' . $language['language_id']}) ? ${'chip_' . $language['language_id']} : ''; ?></textarea>
+                          <td><textarea name="chip_instruction_<?php echo $language['language_id']; ?>" cols="80" rows="10"><?php echo isset(${'chip_instruction_' . $language['language_id']}) ? ${'chip_instruction_' . $language['language_id']} : ''; ?></textarea>
                             <img src="view/image/flags/<?php echo $language['image']; ?>" title="<?php echo $language['name']; ?>" style="vertical-align: top;" /><br />
-                            <?php if (isset(${'error_chip_' . $language['language_id']})) { ?>
-                            <span class="error"><?php echo ${'error_chip_' . $language['language_id']}; ?></span>
+                            <?php if (isset(${'error_instruction_' . $language['language_id']})) { ?>
+                            <span class="error"><?php echo ${'error_instruction_' . $language['language_id']}; ?></span>
                             <?php } ?></td>
                         </tr>
                         <?php } ?>

@@ -5,8 +5,9 @@ class ControllerPaymentChip extends Controller
     $this->language->load('payment/chip');
 
     $this->data['text_instruction'] = $this->language->get('text_instruction');
-
-    $this->data['chip'] = nl2br($this->config->get('chip_' . $this->config->get('config_language_id')));
+    
+    $this->data['chip_allow_instruction'] = $this->config->get('chip_allow_instruction');
+    $this->data['chip_instruction'] = nl2br($this->config->get('chip_instruction_' . $this->config->get('config_language_id')));
 
     $this->data['button_continue'] = $this->language->get('button_continue');
     $this->data['button_continue_action'] = $this->url->link('payment/chip/create_purchase', '', 'SSL');

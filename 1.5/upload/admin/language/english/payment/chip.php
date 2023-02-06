@@ -2,6 +2,7 @@
 
 $_['heading_title'] = 'CHIP  - Better Payment & Business Solutions';
 
+$_['text_title'] = 'Online Banking / Credit Card / Debit Card (CHIP)';
 $_['text_success'] = 'Success: You have modified CHIP account details!';
 $_['text_enabled'] = 'Enabled';
 $_['text_disabled'] = 'Disabled';
@@ -17,6 +18,7 @@ $_['tab_api_details'] = 'API details';
 $_['tab_customise'] = 'Customize checkout';
 $_['tab_troubleshooting'] = 'Troubleshooting';
 
+$_['entry_payment_name'] = 'Payment Name:<br /><span class="help">Name that will be displayed on checkout page.</span>';
 $_['entry_secret_key'] = 'Secret Key:<br /><span class="help">Secret Key can be retrieved from CHIP Collect Dashboard.</span>';
 $_['entry_brand_id'] = 'Brand ID:<br /><span class="help">Secret Key can be retrieved from CHIP Collect Dashboard.</span>';
 $_['entry_webhook_url'] = 'Webhook URL:<br /><span class="help">Optional: This can be set in the CHIP Collect Dashboard.</span>';
@@ -45,3 +47,5 @@ $_['error_secret_key_invalid'] = 'Error! CHIP Secret Key is not valid';
 $_['error_brand_id'] = 'Error! You are required to set Brand ID';
 $_['error_public_key'] = 'Error! The public key is not valid';
 $_['error_due_strict_timing'] = 'Error! You are required to set Due Strict Timing';
+$_['error_payment_name'] = 'Error! You are required to set Payment Name';
+$_['error_instruction'] = 'Error! You are required to set CHIP Instructions';

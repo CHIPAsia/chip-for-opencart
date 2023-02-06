@@ -8,6 +8,9 @@ class ControllerPaymentChip extends Controller {
     $this->document->setTitle( $this->language->get( 'heading_title' ) );
 
     $this->load->model('setting/setting');
+    $this->load->model('localisation/order_status');
+    $this->load->model('localisation/geo_zone');
+    $this->load->model('localisation/language');
 
     if ( ( $this->request->server['REQUEST_METHOD'] == 'POST' ) && $this->validate() ) {
       unset($this->request->post['chip_module']);
@@ -25,6 +28,7 @@ class ControllerPaymentChip extends Controller {
 
     $this->data['text_image_manager'] = $this->language->get('text_image_manager');
 
+    $this->data['text_title'] = $this->language->get('text_title');
     $this->data['text_enabled'] = $this->language->get('text_enabled');
     $this->data['text_disabled'] = $this->language->get('text_disabled');
     $this->data['text_all_zones'] = $this->language->get('text_all_zones');
@@ -39,6 +43,7 @@ class ControllerPaymentChip extends Controller {
     $this->data['tab_customise'] = $this->language->get('tab_customise');
     $this->data['tab_troubleshooting'] = $this->language->get('tab_troubleshooting');
 
+    $this->data['entry_payment_name'] = $this->language->get('entry_payment_name');
     $this->data['entry_secret_key'] = $this->language->get('entry_secret_key');
     $this->data['entry_brand_id'] = $this->language->get('entry_brand_id');
     $this->data['entry_webhook_url'] = $this->language->get('entry_webhook_url');
@@ -71,6 +76,22 @@ class ControllerPaymentChip extends Controller {
       $this->data['error_warning'] = $this->error['warning'];
     } else {
       $this->data['error_warning'] = '';
+    }
+
+    $languages = $this->model_localisation_language->getLanguages();
+
+    foreach ($languages as $language) {
+      if (isset($this->error['instruction_' . $language['language_id']])) {
+        $this->data['error_instruction_' . $language['language_id']] = $this->error['instruction_' . $language['language_id']];
+      } else {
+        $this->data['error_instruction_' . $language['language_id']] = '';
+      }
+
+      if (isset($this->error['payment_name_' . $language['language_id']])) {
+				$this->data['error_payment_name_' . $language['language_id']] = $this->error['payment_name_' . $language['language_id']];
+			} else {
+				$this->data['error_payment_name_' . $language['language_id']] = '';
+			}
     }
 
     if (isset($this->error['secret_key'])) {
@@ -214,8 +235,6 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_time_zone'] = $this->config->get('chip_time_zone');
     }
 
-    $this->load->model('localisation/order_status');
-
     $this->data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
 
     foreach($this->data['order_statuses'] as $order_status){
@@ -231,27 +250,21 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_geo_zone_id'] = $this->config->get('chip_geo_zone_id'); 
     }
 
-    if (isset($this->request->post['chip_instruction'])) {
-      $this->data['chip_instruction'] = $this->request->post['chip_instruction'];
-    } else {
-      $this->data['chip_instruction'] = $this->config->get('chip_instruction');
+    foreach ($languages as $language) {
+      if (!$this->request->post['chip_instruction_'. $language['language_id']]) {
+        $this->data['chip_instruction_' . $language['language_id']] = $this->request->post['chip_instruction_' . $language['language_id']];
+      } else {
+        $this->data['chip_instruction_' . $language['language_id']] = $this->config->get('chip_instruction_' . $language['language_id']);
+      }
+
+      if (!$this->request->post['chip_payment_name_'. $language['language_id']]) {
+        $this->data['chip_payment_name_' . $language['language_id']] = $this->request->post['chip_payment_name_' . $language['language_id']];
+      } else {
+        $this->data['chip_payment_name_' . $language['language_id']] = $this->config->get('chip_payment_name_' . $language['language_id']);
+      }
     }
 
-    $this->load->model('localisation/language');
-
-		$languages = $this->model_localisation_language->getLanguages();
-
-		foreach ($languages as $language) {
-			if (isset($this->request->post['chip_' . $language['language_id']])) {
-				$this->data['chip_' . $language['language_id']] = $this->request->post['chip_' . $language['language_id']];
-			} else {
-				$this->data['chip_' . $language['language_id']] = $this->config->get('chip_' . $language['language_id']);
-			}
-		}
-
-		$this->data['languages'] = $languages;
-
-    $this->load->model('localisation/geo_zone');
+    $this->data['languages'] = $languages;
 
     $this->data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
 
@@ -287,15 +300,17 @@ class ControllerPaymentChip extends Controller {
 
     $this->load->model('localisation/language');
 
-		$languages = $this->model_localisation_language->getLanguages();
+    $languages = $this->model_localisation_language->getLanguages();
 
     foreach ($languages as $language) {
-			if (isset($this->error['chip_' . $language['language_id']])) {
-				$this->data['error_chip_' . $language['language_id']] = $this->error['chip_' . $language['language_id']];
-			} else {
-				$this->data['error_chip_' . $language['language_id']] = '';
-			}
-		}
+      if (isset($this->request->post['chip_allow_instruction']) && $this->request->post['chip_allow_instruction'] == '1' && !$this->request->post['chip_instruction_'. $language['language_id']]) {
+        $this->error['instruction_' . $language['language_id']] = $this->language->get('error_instruction');
+      }
+
+      if (!$this->request->post['chip_payment_name_'. $language['language_id']]) {
+        $this->error['payment_name_' . $language['language_id']] = $this->language->get('error_payment_name');
+      }
+    }
 
     if ($this->request->post['chip_secret_key']) {
       $this->configure_general_public_key();
@@ -327,14 +342,14 @@ class ControllerPaymentChip extends Controller {
   }
 
   public function install() {
-		$this->load->model('payment/chip');
-		$this->model_payment_chip->install();
-	}
+    $this->load->model('payment/chip');
+    $this->model_payment_chip->install();
+  }
 
-	public function uninstall() {
-		$this->load->model('payment/chip');
-		$this->model_payment_chip->uninstall();
-	}
+  public function uninstall() {
+    $this->load->model('payment/chip');
+    $this->model_payment_chip->uninstall();
+  }
 
   private function configure_general_public_key() {
     $this->load->model('payment/chip');

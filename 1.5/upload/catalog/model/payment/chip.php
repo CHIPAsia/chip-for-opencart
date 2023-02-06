@@ -20,7 +20,7 @@ class ModelPaymentChip extends Model {
     if ($status) {
       $method_data = array(
         'code'       => 'chip',
-        'title'      => $this->language->get('text_title'),
+        'title'      => nl2br($this->config->get('chip_payment_name_' . $this->config->get('config_language_id'))),
         'sort_order' => $this->config->get('chip_sort_order')
       );
     }
