@@ -5,7 +5,7 @@ class ControllerPaymentChip extends Controller
     $this->language->load('payment/chip');
 
     $this->data['text_instruction'] = $this->language->get('text_instruction');
-    
+
     $this->data['chip_allow_instruction'] = $this->config->get('chip_allow_instruction');
     $this->data['chip_instruction'] = nl2br($this->config->get('chip_instruction_' . $this->config->get('config_language_id')));
 
@@ -254,7 +254,7 @@ class ControllerPaymentChip extends Controller
     $order_info = $this->model_checkout_order->getOrder($order_id);
 
     if ($order_info['order_status_id'] != $order_status_id) {
-      $this->model_checkout_order->update($order_id, $order_status_id, $this->language->get('payment_refunded') . ' ' . $purchase['payment']['currency'] . ' ' . number_format($purchase['payment']['amount'], 2) . '.');
+      $this->model_checkout_order->update($order_id, $order_status_id, $this->language->get('payment_refunded') . ' ' . $purchase['payment']['currency'] . ' ' . number_format($purchase['payment']['amount'] / 100, 2) . '.');
 
       if ($purchase['is_test'] == true) {
         $this->model_checkout_order->update($order_id, $order_status_id, $this->language->get('test_mode_disclaimer'));
