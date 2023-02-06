@@ -251,13 +251,13 @@ class ControllerPaymentChip extends Controller {
     }
 
     foreach ($languages as $language) {
-      if (!$this->request->post['chip_instruction_'. $language['language_id']]) {
+      if (isset($this->request->post['chip_instruction_'. $language['language_id']])) {
         $this->data['chip_instruction_' . $language['language_id']] = $this->request->post['chip_instruction_' . $language['language_id']];
       } else {
         $this->data['chip_instruction_' . $language['language_id']] = $this->config->get('chip_instruction_' . $language['language_id']);
       }
 
-      if (!$this->request->post['chip_payment_name_'. $language['language_id']]) {
+      if (isset($this->request->post['chip_payment_name_'. $language['language_id']])) {
         $this->data['chip_payment_name_' . $language['language_id']] = $this->request->post['chip_payment_name_' . $language['language_id']];
       } else {
         $this->data['chip_payment_name_' . $language['language_id']] = $this->config->get('chip_payment_name_' . $language['language_id']);
