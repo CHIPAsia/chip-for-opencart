@@ -7,8 +7,10 @@
         <?php } ?>
     </div>
 
-    <?php if (isset($error['error_warning'])) { ?>
-        <div class="warning"><?php echo $error['error_warning']; ?></div>
+    <?php if (!empty($error)) { ?>
+        <?php foreach ($error as $key => $value) { ?>
+            <div class="warning"><?php echo $value; ?></div>
+        <?php } ?>
     <?php } ?>
 
     <div class="box">
