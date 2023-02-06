@@ -280,7 +280,7 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_sort_order'] = $this->config->get('chip_sort_order');
     }
 
-    $this->data['webhook'] = HTTP_CATALOG . 'index.php?route=payment/chip/callback';
+    $this->data['webhook'] = HTTPS_CATALOG . 'index.php?route=payment/chip/callback';
 
     $this->data['token'] = $this->session->data['token'];
 
