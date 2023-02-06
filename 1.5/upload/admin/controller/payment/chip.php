@@ -106,6 +106,18 @@ class ControllerPaymentChip extends Controller {
       $this->data['error_brand_id'] = '';
     }
 
+    if (isset($this->error['public_key'])) {
+      $this->data['error_public_key'] = $this->error['public_key'];
+    } else {
+      $this->data['error_public_key'] = '';
+    }
+
+    if (isset($this->error['due_strict_timing'])) {
+      $this->data['error_due_strict_timing'] = $this->error['due_strict_timing'];
+    } else {
+      $this->data['error_due_strict_timing'] = '';
+    }
+
     $this->data['breadcrumbs'] = array();
 
     $this->data['breadcrumbs'][] = array(
