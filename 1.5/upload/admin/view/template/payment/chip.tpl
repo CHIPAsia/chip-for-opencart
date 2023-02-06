@@ -187,7 +187,7 @@
                 <div id="tab-status">
                     <table class="form">
                         <tr>
-                            <td><?php echo $entry_paid_order_status; ?></td>
+                            <td><?php echo sprintf($entry_paid_order_status, $config_complete_status_name); ?></td>
                             <td>
                                 <select name="chip_paid_order_status_id">
                                     <?php foreach ($order_statuses as $order_status) { ?>

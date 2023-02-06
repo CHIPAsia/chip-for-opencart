@@ -218,6 +218,13 @@ class ControllerPaymentChip extends Controller {
 
     $this->data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
 
+    foreach($this->data['order_statuses'] as $order_status){
+      if ($order_status['order_status_id'] == $this->config->get('config_complete_status_id')) {
+        $this->data['config_complete_status_name'] = $order_status['name'];
+        break;
+      }
+    }
+
     if (isset($this->request->post['chip_geo_zone_id'])) {
       $this->data['chip_geo_zone_id'] = $this->request->post['chip_geo_zone_id'];
     } else {
