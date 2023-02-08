@@ -253,10 +253,10 @@ class ControllerPaymentChip extends Controller
     $order_info = $this->model_checkout_order->getOrder($order_id);
 
     if ($order_info['order_status_id'] != $order_status_id) {
-      $this->model_checkout_order->update($order_id, $order_status_id, $this->language->get('payment_refunded') . ' ' . $purchase['payment']['currency'] . ' ' . number_format($purchase['payment']['amount'] / 100, 2) . '.');
+      $this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $this->language->get('payment_refunded') . ' ' . $purchase['payment']['currency'] . ' ' . number_format($purchase['payment']['amount'] / 100, 2) . '.');
 
       if ($purchase['is_test'] == true) {
-        $this->model_checkout_order->update($order_id, $order_status_id, $this->language->get('test_mode_disclaimer'));
+        $this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $this->language->get('test_mode_disclaimer'));
       }
     }
 
@@ -295,11 +295,11 @@ class ControllerPaymentChip extends Controller
 
     $order_info = $this->model_checkout_order->getOrder($purchase['reference']);
     if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
-      $this->model_checkout_order->confirm($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
-      $this->model_checkout_order->update($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
+      $this->model_checkout_order->addOrderHistory($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
+      $this->model_checkout_order->addOrderHistory($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
 
       if ($purchase['is_test'] == true) {
-        $this->model_checkout_order->update($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('test_mode_disclaimer'));
+        $this->model_checkout_order->addOrderHistory($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('test_mode_disclaimer'));
       }
     }
 
@@ -344,11 +344,11 @@ class ControllerPaymentChip extends Controller
 
     $order_info = $this->model_checkout_order->getOrder($order_id);
     if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
-      $this->model_checkout_order->confirm($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
-      $this->model_checkout_order->update($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
+      $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
+      $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
 
       if ($purchase['is_test'] == true) {
-        $this->model_checkout_order->update($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('test_mode_disclaimer'));
+        $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('test_mode_disclaimer'));
       }
     }
 

@@ -204,9 +204,9 @@
         <div class="form-group">
         <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo sprintf($help_paid_order_status, $config_complete_status_name); ?>"><?php echo $entry_paid_order_status; ?></span></label>
         <div class="col-sm-10">
-          <select name="chip_paid_status_id" class="form-control">
+          <select name="chip_paid_order_status_id" class="form-control">
           <?php foreach ($order_statuses as $order_status) { ?>
-            <?php if ($order_status['order_status_id'] == $chip_paid_status_id) { ?>
+            <?php if ($order_status['order_status_id'] == $chip_paid_order_status_id) { ?>
               <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
             <?php } else { ?>
               <option value="<?php echo $order_status['order_status_id']; ?>"><?php echo $order_status['name']; ?></option>
@@ -250,7 +250,7 @@
             <label class="col-sm-2 control-label" for="input-instruction-<?php echo $language['language_id']; ?>"><span data-toggle="tooltip" title="<?php echo $help_instruction; ?>"><?php echo $entry_instruction; ?></span></label>
             <div class="col-sm-10">
               <div class="input-group"><span class="input-group-addon"><img src="view/image/flags/<?php echo $language['image']; ?>" title="<?php echo $language['name']; ?>" /></span>
-                <textarea cols="80" rows="10" name="chip_instruction_<?php echo $language['language_id']; ?>" placeholder="<?php echo $entry_instruction; ?>" id="input-instruction-<?php echo $language['language_id']; ?>" class="form-control"><?php echo isset(${'chip_instruction_' . $language['language_id']}) ? ${'chip_instruction_' . $language['language_id']} : $text_title; ?></textarea>
+                <textarea cols="80" rows="10" name="chip_instruction_<?php echo $language['language_id']; ?>" placeholder="<?php echo $entry_instruction; ?>" id="input-instruction-<?php echo $language['language_id']; ?>" class="form-control"><?php echo isset(${'chip_instruction_' . $language['language_id']}) ? ${'chip_instruction_' . $language['language_id']} : ''; ?></textarea>
               </div>
               <?php if (${'error_instruction_' . $language['language_id']}) { ?>
               <div class="text-danger"><?php echo ${'error_instruction_' . $language['language_id']}; ?></div>
