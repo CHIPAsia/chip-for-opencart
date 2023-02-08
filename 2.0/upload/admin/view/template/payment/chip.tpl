@@ -96,43 +96,70 @@
         <div class="form-group">
         <label class="col-sm-2 control-label" for="input-convert-to-processing"><span data-toggle="tooltip" title="<?php echo $help_convert_to_processing; ?>"><?php echo $entry_convert_to_processing; ?></span></label>
         <div class="col-sm-10">
-          <select name="chip_convert_to_processing" id="input-convert-to-processing" class="form-control">
-          <?php if ($chip_convert_to_processing) { ?>
-            <option value="1" selected="selected"><?php echo $text_yes; ?></option>
-            <option value="0"><?php echo $text_no; ?></option>
-          <?php } else { ?>
-            <option value="1"><?php echo $text_yes; ?></option>
-            <option value="0" selected="selected"><?php echo $text_no; ?></option>
-          <?php } ?>
-          </select>
+          <label class="radio-inline">
+            <?php if ($chip_convert_to_processing) { ?>
+            <input type="radio" name="chip_convert_to_processing" value="1" checked="checked" />
+            <?php echo $text_yes; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_convert_to_processing" value="1" />
+            <?php echo $text_yes; ?>
+            <?php } ?>
+          </label>
+          <label class="radio-inline">
+            <?php if (!$chip_convert_to_processing) { ?>
+            <input type="radio" name="chip_convert_to_processing" value="0" checked="checked" />
+            <?php echo $text_no; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_convert_to_processing" value="0" />
+            <?php echo $text_no; ?>
+            <?php } ?>
+          </label>
         </div>
         </div>
         <div class="form-group">
         <label class="col-sm-2 control-label" for="input-purchase-send-receipt"><?php echo $entry_purchase_send_receipt; ?></label>
         <div class="col-sm-10">
-          <select name="chip_purchase_send_receipt" id="input-purchase-send-receipt" class="form-control">
-          <?php if ($chip_purchase_send_receipt) { ?>
-            <option value="1" selected="selected"><?php echo $text_yes; ?></option>
-            <option value="0"><?php echo $text_no; ?></option>
-          <?php } else { ?>
-            <option value="1"><?php echo $text_yes; ?></option>
-            <option value="0" selected="selected"><?php echo $text_no; ?></option>
-          <?php } ?>
-          </select>
+          <label class="radio-inline">
+            <?php if ($chip_purchase_send_receipt) { ?>
+            <input type="radio" name="chip_purchase_send_receipt" value="1" checked="checked" />
+            <?php echo $text_yes; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_purchase_send_receipt" value="1" />
+            <?php echo $text_yes; ?>
+            <?php } ?>
+          </label>
+          <label class="radio-inline">
+            <?php if (!$chip_purchase_send_receipt) { ?>
+            <input type="radio" name="chip_purchase_send_receipt" value="0" checked="checked" />
+            <?php echo $text_no; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_purchase_send_receipt" value="0" />
+            <?php echo $text_no; ?>
+            <?php } ?>
+          </label>
         </div>
         </div>
         <div class="form-group">
         <label class="col-sm-2 control-label" for="input-due-strict"><span data-toggle="tooltip" title="<?php echo $help_due_strict; ?>"><?php echo $entry_due_strict; ?></span></label>
         <div class="col-sm-10">
-          <select name="chip_due_strict" id="input-due-strict" class="form-control">
-          <?php if ($chip_due_strict) { ?>
-            <option value="1" selected="selected"><?php echo $text_yes; ?></option>
-            <option value="0"><?php echo $text_no; ?></option>
-          <?php } else { ?>
-            <option value="1"><?php echo $text_yes; ?></option>
-            <option value="0" selected="selected"><?php echo $text_no; ?></option>
-          <?php } ?>
-          </select>
+          <label class="radio-inline">
+            <?php if ($chip_due_strict) { ?>
+            <input type="radio" name="chip_due_strict" value="1" checked="checked" />
+            <?php echo $text_yes; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_due_strict" value="1" />
+            <?php echo $text_yes; ?>
+            <?php } ?>
+          </label>
+          <label class="radio-inline">
+            <?php if (!$chip_due_strict) { ?>
+            <input type="radio" name="chip_due_strict" value="0" checked="checked" />
+            <?php echo $text_no; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_due_strict" value="0" />
+            <?php echo $text_no; ?>
+            <?php } ?>
+          </label>
         </div>
         </div>
         <div class="form-group required">
@@ -182,15 +209,24 @@
         <div class="form-group">
         <label class="col-sm-2 control-label" for="input-status"><span data-toggle="tooltip" title="<?php echo $help_status; ?>"><?php echo $entry_status; ?></span></label>
         <div class="col-sm-10">
-          <select name="chip_status" id="input-status" class="form-control">
-          <?php if ($chip_status) { ?>
-            <option value="1" selected="selected"><?php echo $text_enabled; ?></option>
-            <option value="0"><?php echo $text_disabled; ?></option>
-          <?php } else { ?>
-            <option value="1"><?php echo $text_enabled; ?></option>
-            <option value="0" selected="selected"><?php echo $text_disabled; ?></option>
-          <?php } ?>
-          </select>
+          <label class="radio-inline">
+            <?php if ($chip_status) { ?>
+            <input type="radio" name="chip_status" value="1" checked="checked" />
+            <?php echo $text_yes; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_status" value="1" />
+            <?php echo $text_yes; ?>
+            <?php } ?>
+          </label>
+          <label class="radio-inline">
+            <?php if (!$chip_status) { ?>
+            <input type="radio" name="chip_status" value="0" checked="checked" />
+            <?php echo $text_no; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_status" value="0" />
+            <?php echo $text_no; ?>
+            <?php } ?>
+          </label>
         </div>
         </div>
         <div class="form-group">
@@ -234,15 +270,24 @@
         <div class="form-group">
         <label class="col-sm-2 control-label" for="input-allow-instruction"><?php echo $entry_allow_instruction; ?></label>
         <div class="col-sm-10">
-          <select name="chip_allow_instruction" id="input-allow-instruction" class="form-control">
-          <?php if ($chip_allow_instruction) { ?>
-            <option value="1" selected="selected"><?php echo $text_yes; ?></option>
-            <option value="0"><?php echo $text_no; ?></option>
-          <?php } else { ?>
-            <option value="1"><?php echo $text_yes; ?></option>
-            <option value="0" selected="selected"><?php echo $text_no; ?></option>
-          <?php } ?>
-          </select>
+          <label class="radio-inline">
+            <?php if ($chip_allow_instruction) { ?>
+            <input type="radio" name="chip_allow_instruction" value="1" checked="checked" />
+            <?php echo $text_yes; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_allow_instruction" value="1" />
+            <?php echo $text_yes; ?>
+            <?php } ?>
+          </label>
+          <label class="radio-inline">
+            <?php if (!$chip_allow_instruction) { ?>
+            <input type="radio" name="chip_allow_instruction" value="0" checked="checked" />
+            <?php echo $text_no; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_allow_instruction" value="0" />
+            <?php echo $text_no; ?>
+            <?php } ?>
+          </label>
         </div>
         </div>
         <?php foreach ($languages as $language) { ?>
@@ -263,43 +308,70 @@
         <div class="form-group">
         <label class="col-sm-2 control-label" for="input-debug"><?php echo $entry_debug; ?></label>
         <div class="col-sm-10">
-          <select name="chip_debug" id="input-debug" class="form-control">
-          <?php if ($chip_debug) { ?>
-            <option value="1" selected="selected"><?php echo $text_yes; ?></option>
-            <option value="0"><?php echo $text_no; ?></option>
-          <?php } else { ?>
-            <option value="1"><?php echo $text_yes; ?></option>
-            <option value="0" selected="selected"><?php echo $text_no; ?></option>
-          <?php } ?>
-          </select>
+          <label class="radio-inline">
+            <?php if ($chip_debug) { ?>
+            <input type="radio" name="chip_debug" value="1" checked="checked" />
+            <?php echo $text_yes; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_debug" value="1" />
+            <?php echo $text_yes; ?>
+            <?php } ?>
+          </label>
+          <label class="radio-inline">
+            <?php if (!$chip_debug) { ?>
+            <input type="radio" name="chip_debug" value="0" checked="checked" />
+            <?php echo $text_no; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_debug" value="0" />
+            <?php echo $text_no; ?>
+            <?php } ?>
+          </label>
         </div>
         </div>
         <div class="form-group">
         <label class="col-sm-2 control-label" for="input-disable-success-redirect"><span data-toggle="tooltip" title="<?php echo $help_disable_success_redirect; ?>"><?php echo $entry_disable_success_redirect; ?></span></label>
         <div class="col-sm-10">
-          <select name="chip_disable_success_redirect" id="input-disable-success-redirect" class="form-control">
-          <?php if ($chip_disable_success_redirect) { ?>
-            <option value="1" selected="selected"><?php echo $text_yes; ?></option>
-            <option value="0"><?php echo $text_no; ?></option>
-          <?php } else { ?>
-            <option value="1"><?php echo $text_yes; ?></option>
-            <option value="0" selected="selected"><?php echo $text_no; ?></option>
-          <?php } ?>
-          </select>
+          <label class="radio-inline">
+            <?php if ($chip_disable_success_redirect) { ?>
+            <input type="radio" name="chip_disable_success_redirect" value="1" checked="checked" />
+            <?php echo $text_yes; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_disable_success_redirect" value="1" />
+            <?php echo $text_yes; ?>
+            <?php } ?>
+          </label>
+          <label class="radio-inline">
+            <?php if (!$chip_disable_success_redirect) { ?>
+            <input type="radio" name="chip_disable_success_redirect" value="0" checked="checked" />
+            <?php echo $text_no; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_disable_success_redirect" value="0" />
+            <?php echo $text_no; ?>
+            <?php } ?>
+          </label>
         </div>
         </div>
         <div class="form-group">
         <label class="col-sm-2 control-label" for="input-disable-success-callback"><span data-toggle="tooltip" title="<?php echo $help_disable_success_callback; ?>"><?php echo $entry_disable_success_callback; ?></span></label>
         <div class="col-sm-10">
-          <select name="chip_disable_success_callback" id="input-disable-success-callback" class="form-control">
-          <?php if ($chip_disable_success_callback) { ?>
-            <option value="1" selected="selected"><?php echo $text_yes; ?></option>
-            <option value="0"><?php echo $text_no; ?></option>
-          <?php } else { ?>
-            <option value="1"><?php echo $text_yes; ?></option>
-            <option value="0" selected="selected"><?php echo $text_no; ?></option>
-          <?php } ?>
-          </select>
+          <label class="radio-inline">
+            <?php if ($chip_disable_success_callback) { ?>
+            <input type="radio" name="chip_disable_success_callback" value="1" checked="checked" />
+            <?php echo $text_yes; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_disable_success_callback" value="1" />
+            <?php echo $text_yes; ?>
+            <?php } ?>
+          </label>
+          <label class="radio-inline">
+            <?php if (!$chip_disable_success_callback) { ?>
+            <input type="radio" name="chip_disable_success_callback" value="0" checked="checked" />
+            <?php echo $text_no; ?>
+            <?php } else { ?>
+            <input type="radio" name="chip_disable_success_callback" value="0" />
+            <?php echo $text_no; ?>
+            <?php } ?>
+          </label>
         </div>
         </div>
       </div>
