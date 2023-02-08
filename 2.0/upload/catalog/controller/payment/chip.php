@@ -25,6 +25,10 @@ class ControllerPaymentChip extends Controller
   }
 
   public function create_purchase() {
+    if ($this->session->data['payment_method']['code'] != 'chip') {
+      exit;
+    }
+
     $this->load->model('payment/chip');
     $this->load->model('checkout/order');
     $this->load->model('account/order');
