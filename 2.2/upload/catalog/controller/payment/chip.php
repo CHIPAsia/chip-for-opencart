@@ -21,6 +21,10 @@ class ControllerPaymentChip extends Controller
   }
 
   public function create_purchase() {
+    if ($this->session->data['payment_method']['code'] != 'chip') {
+      exit;
+    }
+
     $this->load->model('payment/chip');
     $this->load->model('checkout/order');
     $this->load->model('account/order');
@@ -53,7 +57,7 @@ class ControllerPaymentChip extends Controller
       'success_redirect' => $this->url->link('payment/chip/success_redirect', '', true),
       'failure_redirect' => $this->url->link('checkout/checkout', '', true),
       'cancel_redirect'  => $this->url->link('checkout/cart', '', true),
-      'creator_agent'    => 'OC2021: 1.0.0',
+      'creator_agent'    => 'OC22: 1.0.0',
       'reference'        => $this->session->data['order_id'],
       'platform'         => 'opencart',
       'send_receipt'     => $this->config->get('chip_purchase_send_receipt'),
