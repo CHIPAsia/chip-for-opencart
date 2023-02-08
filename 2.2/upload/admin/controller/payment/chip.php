@@ -318,12 +318,6 @@ class ControllerPaymentChip extends Controller {
 
     $data['token'] = $this->session->data['token'];
 
-    $this->template = 'payment/chip.tpl';
-    $this->children = array(
-      'common/header',
-      'common/footer'
-    );
-
     $data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
