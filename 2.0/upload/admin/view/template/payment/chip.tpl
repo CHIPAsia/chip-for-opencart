@@ -15,7 +15,7 @@
   </div>
   <div class="container-fluid">
   <?php if (!empty($error)) { ?>
-    <?php foreach ($error as $key => $value) {
+    <?php foreach ($error as $key => $value) { ?>
     <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $value; ?>
       <button type="button" class="close" data-dismiss="alert">&times;</button>
     </div>
@@ -42,7 +42,7 @@
             <label class="col-sm-2 control-label" for="input-payment-name-<?php echo $language['language_id']; ?>"><span data-toggle="tooltip" title="<?php echo $help_payment_name; ?>"><?php echo $entry_payment_name; ?></span></label>
             <div class="col-sm-10">
               <div class="input-group"><span class="input-group-addon"><img src="view/image/flags/<?php echo $language['image']; ?>" title="<?php echo $language['name']; ?>" /></span>
-                <input type="text" name="chip_payment_name_<?php echo $language['language_id']; ?>" placeholder="<?php echo $entry_payment_name; ?>" id="input-payment-name-<?php echo $language['language_id']; ?>" class="form-control"><?php echo isset(${'chip_payment_name_' . $language['language_id']}) ? ${'chip_payment_name_' . $language['language_id']} : $text_title; ?>
+                <input type="text" name="chip_payment_name_<?php echo $language['language_id']; ?>" placeholder="<?php echo $entry_payment_name; ?>" id="input-payment-name-<?php echo $language['language_id']; ?>" class="form-control" value="<?php echo isset(${'chip_payment_name_' . $language['language_id']}) ? ${'chip_payment_name_' . $language['language_id']} : $text_title; ?>">
               </div>
               <?php if (${'error_payment_name_' . $language['language_id']}) { ?>
               <div class="text-danger"><?php echo ${'error_payment_name_' . $language['language_id']}; ?></div>
@@ -202,7 +202,7 @@
       </div>
       <div class="tab-pane" id="tab-order-status">
         <div class="form-group">
-        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $help_paid_order_status; ?>"><?php echo $entry_paid_order_status; ?></span></label>
+        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo sprintf($help_paid_order_status, $config_complete_status_name); ?>"><?php echo $entry_paid_order_status; ?></span></label>
         <div class="col-sm-10">
           <select name="chip_paid_status_id" class="form-control">
           <?php foreach ($order_statuses as $order_status) { ?>

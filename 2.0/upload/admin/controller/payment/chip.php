@@ -267,10 +267,18 @@ class ControllerPaymentChip extends Controller {
 
     $data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
 
+    $complete_order_status_ids = $this->config->get('config_complete_status');
+
     foreach($data['order_statuses'] as $order_status){
-      if ($order_status['order_status_id'] == $this->config->get('config_complete_status_id')) {
-        $data['config_complete_status_name'] = $order_status['name'];
-        break;
+      foreach($complete_order_status_ids as $complete_order_status_id) {
+        if ($order_status['order_status_id'] == $complete_order_status_id) {
+          if (isset($data['config_complete_status_name'])) {
+            $data['config_complete_status_name'] .= ' / ' . $order_status['name'];
+          } else {
+            $data['config_complete_status_name'] = $order_status['name'];
+          }
+          break;
+        }
       }
     }
 
@@ -319,8 +327,6 @@ class ControllerPaymentChip extends Controller {
       'common/header',
       'common/footer'
     );
-
-    $this->response->setOutput($this->render());
 
     $data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
