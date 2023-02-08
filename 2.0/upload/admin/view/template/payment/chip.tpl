@@ -33,7 +33,7 @@
       <li><a href="#tab-general" data-toggle="tab"><?php echo $tab_general; ?></a></li>
       <li><a href="#tab-order-status" data-toggle="tab"><?php echo $tab_order_status; ?></a></li>
       <li><a href="#tab-checkout" data-toggle="tab"><?php echo $tab_checkout; ?></a></li>
-      <li><a href="#tab-troubleshoot" data-toggle="tab"><?php echo $tab_troubleshooting; ?></a></li>
+      <li><a href="#tab-troubleshoot" data-toggle="tab"><?php echo $tab_troubleshoot; ?></a></li>
       </ul>
       <div class="tab-content">
       <div class="tab-pane active" id="tab-api">
@@ -250,7 +250,7 @@
             <label class="col-sm-2 control-label" for="input-instruction-<?php echo $language['language_id']; ?>"><span data-toggle="tooltip" title="<?php echo $help_instruction; ?>"><?php echo $entry_instruction; ?></span></label>
             <div class="col-sm-10">
               <div class="input-group"><span class="input-group-addon"><img src="view/image/flags/<?php echo $language['image']; ?>" title="<?php echo $language['name']; ?>" /></span>
-                <input type="text" name="chip_instruction_<?php echo $language['language_id']; ?>" placeholder="<?php echo $entry_instruction; ?>" id="input-instruction-<?php echo $language['language_id']; ?>" class="form-control"><?php echo isset(${'chip_instruction_' . $language['language_id']}) ? ${'chip_instruction_' . $language['language_id']} : $text_title; ?>
+                <textarea cols="80" rows="10" name="chip_instruction_<?php echo $language['language_id']; ?>" placeholder="<?php echo $entry_instruction; ?>" id="input-instruction-<?php echo $language['language_id']; ?>" class="form-control"><?php echo isset(${'chip_instruction_' . $language['language_id']}) ? ${'chip_instruction_' . $language['language_id']} : $text_title; ?></textarea>
               </div>
               <?php if (${'error_instruction_' . $language['language_id']}) { ?>
               <div class="text-danger"><?php echo ${'error_instruction_' . $language['language_id']}; ?></div>
@@ -259,7 +259,7 @@
           </div>
         <?php } ?>
       </div>
-      <div class="tab-pane" id="tab-troubleshooting">
+      <div class="tab-pane" id="tab-troubleshoot">
         <div class="form-group">
         <label class="col-sm-2 control-label" for="input-debug"><?php echo $entry_debug; ?></label>
         <div class="col-sm-10">

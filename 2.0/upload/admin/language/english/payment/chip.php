@@ -17,7 +17,7 @@ $_['tab_general'] = 'General';
 $_['tab_order_status'] = 'Order status';
 $_['tab_api_details'] = 'API details';
 $_['tab_checkout'] = 'Customize checkout';
-$_['tab_troubleshooting'] = 'Troubleshooting';
+$_['tab_troubleshoot'] = 'Troubleshoot';
 
 $_['entry_payment_name'] = 'Payment Name';
 $_['entry_secret_key'] = 'Secret Key';
