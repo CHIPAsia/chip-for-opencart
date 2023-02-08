@@ -27,16 +27,14 @@ class ControllerPaymentChip extends Controller
   }
 
   public function create_purchase() {
-    if ((!$this->cart->hasProducts() && empty($this->session->data['vouchers'])) || (!$this->cart->hasStock() && !$this->config->get('config_stock_checkout'))) {
-      $this->redirect($this->url->link('checkout/cart'));
-    }
-
     $this->load->model('payment/chip');
     $this->load->model('checkout/order');
+    $this->load->model('account/order');
 
     $this->language->load('payment/chip');
 
     $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+    $products = $this->model_account_order->getOrderProducts($this->session->data['order_id']);
 
     /* Reject if MYR currency is not set up */
 
@@ -45,11 +43,15 @@ class ControllerPaymentChip extends Controller
       $this->redirect($this->url->link('checkout/checkout', '', 'SSL'));
     }
 
-    $total_override = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
+    $total_override = $order_info['total'];
 
     if ($this->config->get('chip_convert_to_processing') == 0 AND $this->config->get('config_currency') != 'MYR') {
       $this->session->data['error'] = $this->language->get('convert_to_processing_disabled');
       $this->redirect($this->url->link('checkout/checkout', '', 'SSL'));
+    }
+
+    if ($this->config->get('config_currency') != 'MYR') {
+      $total_override = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
     }
 
     $params = array(
@@ -81,11 +83,6 @@ class ControllerPaymentChip extends Controller
       unset($params['success_callback']);
     }
 
-    $products = $this->cart->getProducts();
-    $subtotal_override = $this->cart->getSubTotal();
-
-    $params['purchase']['subtotal_override'] = round($subtotal_override * 100);
-
     foreach ($products as $product) {
       $product_price = $this->currency->convert($product['price'], $this->config->get('config_currency'), 'MYR');
 
@@ -95,6 +92,10 @@ class ControllerPaymentChip extends Controller
         'price' => round($product_price * 100),
         'category' => $product['product_id']
       );
+    }
+
+    if (!empty($order_info['comment'])) {
+      $params['purchase']['notes'] = substr($order_info['comment'], 0, 10000);
     }
 
     if (!empty($order_info['email'])) {
@@ -340,7 +341,6 @@ class ControllerPaymentChip extends Controller
     }
 
     unset($this->session->data['chip']);
-    $this->cart->clear();
 
     $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
 
