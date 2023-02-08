@@ -25,7 +25,7 @@ $_['entry_brand_id'] = 'Brand ID';
 $_['entry_webhook_url'] = 'Webhook URL';
 $_['entry_public_key'] = 'Public Key';
 $_['entry_general_public_key'] = 'General Public Key';
-$_['entry_purchase_send_receipt'] = 'Purchase Send Receipt:';
+$_['entry_purchase_send_receipt'] = 'Purchase Send Receipt';
 $_['entry_due_strict'] = 'Purchase Due Strict';
 $_['entry_due_strict_timing'] = 'Purchase Due Strict Timing';
 $_['entry_total'] = 'Total';
@@ -61,7 +61,6 @@ $_['help_time_zone'] = 'This will dictate the timestamp zone on the invoice and 
 $_['help_convert_to_processing'] = 'This to allow payment if the store currency is set to other than MYR';
 $_['help_disable_success_redirect'] = 'Default to No. Only tick yes if you are performing a test';
 $_['help_disable_success_callback'] = 'Default to No. Only tick yes if you are performing a test';
-
 
 $_['error_permission'] = 'Warning: You do not have permission to modify CHIP!';
 $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';

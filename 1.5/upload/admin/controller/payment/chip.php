@@ -181,7 +181,7 @@ class ControllerPaymentChip extends Controller {
     if (isset($this->request->post['chip_due_strict_timing'])) {
       $this->data['chip_due_strict_timing'] = $this->request->post['chip_due_strict_timing'];
     } else {
-      $this->data['chip_due_strict_timing'] = $this->config->get('chip_due_strict_timing');
+      $this->data['chip_due_strict_timing'] = !empty($this->config->get('chip_due_strict_timing')) ? $this->config->get('chip_due_strict_timing') : '60';
     }
 
     if (isset($this->request->post['chip_total'])) {

@@ -72,7 +72,7 @@
         <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $help_webhook_url; ?>"><?php echo $entry_webhook_url; ?></span></label>
         <div class="col-sm-10">
           <div class="input-group"> <span class="input-group-addon"><i class="fa fa-link"></i></span>
-          <input type="text" value="<?php echo $webhook; ?>" class="form-control" />
+          <input type="text" value="<?php echo $webhook; ?>" class="form-control" readonly/>
           </div>
         </div>
         </div>
