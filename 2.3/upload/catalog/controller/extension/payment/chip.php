@@ -242,11 +242,6 @@ class ControllerExtensionPaymentChip extends Controller
       exit;
     }
 
-    if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
-      /* do not refund unpaid order */
-      exit;
-    }
-
     $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
 
     /* requery to ensure sequential process */
