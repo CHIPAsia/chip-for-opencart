@@ -17,7 +17,7 @@ class ControllerExtensionPaymentChip extends Controller {
 
       $this->session->data['success'] = $this->language->get('text_success');
 
-      $this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'], true));
+      $this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true));
     } else {
       $data['error'] = @$this->error;
     }
