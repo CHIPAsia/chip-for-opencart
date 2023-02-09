@@ -1,0 +1,391 @@
+{{ header }}{{ column_left }}
+<div id="content">
+ <div class="page-header">
+ <div class="container-fluid">
+  <div class="pull-right">
+  <button type="submit" form="form-chip" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
+  <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a></div>
+  <h1>{{ heading_title }}</h1>
+  <ul class="breadcrumb">
+  {% for breadcrumb in breadcrumbs %}
+   <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+  {% endfor %}
+  </ul>
+ </div>
+ </div>
+ <div class="container-fluid">
+ {% if error %}
+  {% for key, value in error %}
+  <div class="alert alert-danger">
+   {% if value is iterable %}
+    {% for val2 in value %}
+     <i class="fa fa-exclamation-circle"></i> {{ val2 }}
+    {% endfor %}
+   {% else %}
+    <i class="fa fa-exclamation-circle"></i> {{ value }}
+   {% endif %}
+   <button type="button" class="close" data-dismiss="alert">&times;</button>
+  </div>
+  {% endfor %}
+ {% endif %}
+
+ <div class="panel panel-default">
+  <div class="panel-heading">
+  <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+  </div>
+  <div class="panel-body">
+  <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-payment" class="form-horizontal">
+   <ul class="nav nav-tabs">
+   <li class="active"><a href="#tab-api" data-toggle="tab">{{ tab_api_details }}</a></li>
+   <li><a href="#tab-general" data-toggle="tab">{{ tab_general }}</a></li>
+   <li><a href="#tab-order-status" data-toggle="tab">{{ tab_order_status }}</a></li>
+   <li><a href="#tab-checkout" data-toggle="tab">{{ tab_checkout }}</a></li>
+   <li><a href="#tab-troubleshoot" data-toggle="tab">{{ tab_troubleshoot }}</a></li>
+   </ul>
+   <div class="tab-content">
+   <div class="tab-pane active" id="tab-api">
+    {% for language in languages %}
+     <div class="form-group required">
+      <label class="col-sm-2 control-label" for="input-payment-name-{{ language.language_id }}"><span data-toggle="tooltip" title="{{ help_payment_name }}">{{ entry_payment_name }}</span></label>
+      <div class="col-sm-10">
+       <div class="input-group"><span class="input-group-addon"><img src="language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}" /></span>
+        <input type="text" name="payment_chip_payment_name_{{ language.language_id }}" placeholder="{{ entry_payment_name }}" id="input-payment-name-{{ language.language_id }}" class="form-control" value="{% if payment_chip_payment_name[language.language_id] %}{{ payment_chip_payment_name[language.language_id] }}{% else %}{{ text_title }}{% endif %}">
+       </div>
+       {% if error_payment_name[language.language_id] %}
+       <div class="text-danger">{{ error_payment_name[language.language_id] }}</div>
+       {% endif %}
+      </div>
+     </div>
+    {% endfor %}
+    <div class="form-group required">
+    <label class="col-sm-2 control-label" for="input-secret-key"><span data-toggle="tooltip" title="{{ help_secret_key }}">{{ entry_secret_key }}</span></label>
+    <div class="col-sm-10">
+     <input type="text" name="payment_chip_secret_key" value="{{ payment_chip_secret_key }}" placeholder="{{ entry_secret_key }}" id="input-secret-key" class="form-control" />
+     {% if error_secret_key %}
+      <div class="text-danger">{{ error_secret_key }}</div>
+     {% endif %}
+    </div>
+    </div>
+    <div class="form-group required">
+    <label class="col-sm-2 control-label" for="input-brand-id"><span data-toggle="tooltip" title="{{ help_brand_id }}">{{ entry_brand_id }}</span></label>
+    <div class="col-sm-10">
+     <input type="text" name="payment_chip_brand_id" value="{{ payment_chip_brand_id }}" placeholder="{{ entry_brand_id }}" id="input-brand-id" class="form-control" />
+     {% if error_brand_id %}
+      <div class="text-danger">{{ error_brand_id }}</div>
+     {% endif %}
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_webhook_url }}">{{ entry_webhook_url }}</span></label>
+    <div class="col-sm-10">
+     <div class="input-group"> <span class="input-group-addon"><i class="fa fa-link"></i></span>
+     <input type="text" value="{{ webhook }}" class="form-control" readonly/>
+     </div>
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_public_key }}">{{ entry_public_key }}</span></label>
+    <div class="col-sm-10">
+     <textarea name="payment_chip_public_key" cols="80" rows="10" placeholder="{{ entry_public_key }}" id="input-public-key" class="form-control">{{ payment_chip_public_key }}</textarea>
+     {% if error_public_key %}
+      <div class="text-danger">{{ error_public_key }}</div>
+     {% endif %}
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_general_public_key }}">{{ entry_general_public_key }}</span></label>
+    <div class="col-sm-10">
+     <textarea name="payment_chip_general_public_key" cols="80" rows="10" placeholder="{{ entry_general_public_key }}" id="input-general-public-key" class="form-control" readonly>{{ payment_chip_general_public_key }}</textarea>
+    </div>
+    </div>
+   </div>
+   <div class="tab-pane" id="tab-general">
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-convert-to-processing"><span data-toggle="tooltip" title="{{ help_convert_to_processing }}">{{ entry_convert_to_processing }}</span></label>
+    <div class="col-sm-10">
+     <label class="radio-inline">
+      {% if payment_chip_convert_to_processing %}
+      <input type="radio" name="payment_chip_convert_to_processing" value="1" checked="checked" />
+      {{ text_yes }}
+{% else %} 
+      <input type="radio" name="payment_chip_convert_to_processing" value="1" />
+      {{ text_yes }}
+      {% endif %}
+     </label>
+     <label class="radio-inline">
+      {% if not payment_chip_convert_to_processing %}
+      <input type="radio" name="payment_chip_convert_to_processing" value="0" checked="checked" />
+      {{ text_no }}
+{% else %} 
+      <input type="radio" name="payment_chip_convert_to_processing" value="0" />
+      {{ text_no }}
+      {% endif %}
+     </label>
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-purchase-send-receipt">{{ entry_purchase_send_receipt }}</label>
+    <div class="col-sm-10">
+     <label class="radio-inline">
+      {% if payment_chip_purchase_send_receipt %}
+      <input type="radio" name="payment_chip_purchase_send_receipt" value="1" checked="checked" />
+      {{ text_yes }}
+{% else %} 
+      <input type="radio" name="payment_chip_purchase_send_receipt" value="1" />
+      {{ text_yes }}
+      {% endif %}
+     </label>
+     <label class="radio-inline">
+      {% if not payment_chip_purchase_send_receipt %}
+      <input type="radio" name="payment_chip_purchase_send_receipt" value="0" checked="checked" />
+      {{ text_no }}
+{% else %} 
+      <input type="radio" name="payment_chip_purchase_send_receipt" value="0" />
+      {{ text_no }}
+      {% endif %}
+     </label>
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-due-strict"><span data-toggle="tooltip" title="{{ help_due_strict }}">{{ entry_due_strict }}</span></label>
+    <div class="col-sm-10">
+     <label class="radio-inline">
+      {% if payment_chip_due_strict %}
+      <input type="radio" name="payment_chip_due_strict" value="1" checked="checked" />
+      {{ text_yes }}
+{% else %} 
+      <input type="radio" name="payment_chip_due_strict" value="1" />
+      {{ text_yes }}
+      {% endif %}
+     </label>
+     <label class="radio-inline">
+      {% if not payment_chip_due_strict %}
+      <input type="radio" name="payment_chip_due_strict" value="0" checked="checked" />
+      {{ text_no }}
+{% else %} 
+      <input type="radio" name="payment_chip_due_strict" value="0" />
+      {{ text_no }}
+      {% endif %}
+     </label>
+    </div>
+    </div>
+    <div class="form-group required">
+    <label class="col-sm-2 control-label" for="input-due-strict-timing"><span data-toggle="tooltip" title="{{ help_due_strict_timing }}">{{ entry_due_strict_timing }}</span></label>
+    <div class="col-sm-10">
+     <input type="number" name="payment_chip_due_strict_timing" value="{{ payment_chip_due_strict_timing }}" placeholder="{{ entry_due_strict_timing }}" id="input-due-strict-timing" class="form-control" />
+     {% if error_due_strict_timing %}
+      <div class="text-danger">{{ error_due_strict_timing }}</div>
+     {% endif %}
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-total"><span data-toggle="tooltip" title="{{ help_total }}">{{ entry_total }}</span></label>
+    <div class="col-sm-10">
+     <input type="text" name="payment_chip_total" value="{{ payment_chip_total }}" placeholder="{{ entry_total }}" id="input-total" class="form-control" />
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-geo-zone">{{ entry_geo_zone }}</label>
+    <div class="col-sm-10">
+     <select name="payment_chip_geo_zone_id" id="input-geo-zone" class="form-control">
+     <option value="0">{{ text_all_zones }}</option>
+     {% for geo_zone in geo_zones %}
+      {% if geo_zone.geo_zone_id == payment_chip_geo_zone_id %}
+       <option value="{{ geo_zone.geo_zone_id }}" selected="selected">{{ geo_zone.name }}</option>
+{% else %} 
+       <option value="{{ geo_zone.geo_zone_id }}">{{ geo_zone.name }}</option>
+      {% endif %}
+     {% endfor %}
+     </select>
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-time-zone"><span data-toggle="tooltip" title="{{ help_time_zone }}">{{ entry_time_zone }}</span></label>
+    <div class="col-sm-10">
+     <select name="payment_chip_time_zone" id="input-time-zone" class="form-control">
+     {% for time_zone in time_zones %}
+      {% if time_zone == payment_chip_time_zone %}
+       <option value="{{ time_zone }}" selected="selected">{{ time_zone }}</option>
+{% else %} 
+       <option value="{{ time_zone }}">{{ time_zone }}</option>
+      {% endif %}
+     {% endfor %}
+     </select>
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-status"><span data-toggle="tooltip" title="{{ help_status }}">{{ entry_status }}</span></label>
+    <div class="col-sm-10">
+     <label class="radio-inline">
+      {% if payment_chip_status %}
+      <input type="radio" name="payment_chip_status" value="1" checked="checked" />
+      {{ text_yes }}
+{% else %} 
+      <input type="radio" name="payment_chip_status" value="1" />
+      {{ text_yes }}
+      {% endif %}
+     </label>
+     <label class="radio-inline">
+      {% if not payment_chip_status %}
+      <input type="radio" name="payment_chip_status" value="0" checked="checked" />
+      {{ text_no }}
+{% else %} 
+      <input type="radio" name="payment_chip_status" value="0" />
+      {{ text_no }}
+      {% endif %}
+     </label>
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-sort-order"><span data-toggle="tooltip" title="{{ help_sort_order }}">{{ entry_sort_order }}</span></label>
+    <div class="col-sm-10">
+     <input type="text" name="payment_chip_sort_order" value="{{ payment_chip_sort_order }}" placeholder="{{ entry_sort_order }}" id="input-sort-order" class="form-control" />
+    </div>
+    </div>
+   </div>
+   <div class="tab-pane" id="tab-order-status">
+    <div class="form-group">
+    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ formatted_help_paid_order_status }}">{{ entry_paid_order_status }}</span></label>
+    <div class="col-sm-10">
+     <select name="payment_chip_paid_order_status_id" class="form-control">
+     {% for order_status in order_statuses %}
+      {% if order_status.order_status_id == payment_chip_paid_order_status_id %}
+       <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+{% else %} 
+       <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+      {% endif %}
+     {% endfor %}
+     </select>
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_refunded_order_status }}">{{ entry_refunded_order_status }}</span></label>
+    <div class="col-sm-10">
+     <select name="payment_chip_refunded_order_status_id" class="form-control">
+     {% for order_status in order_statuses %}
+      {% if order_status.order_status_id == payment_chip_refunded_order_status_id %}
+       <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+{% else %} 
+       <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+      {% endif %}
+     {% endfor %}
+     </select>
+    </div>
+    </div>
+   </div>
+   <div class="tab-pane" id="tab-checkout">
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-allow-instruction">{{ entry_allow_instruction }}</label>
+    <div class="col-sm-10">
+     <label class="radio-inline">
+      {% if payment_chip_allow_instruction %}
+      <input type="radio" name="payment_chip_allow_instruction" value="1" checked="checked" />
+      {{ text_yes }}
+{% else %} 
+      <input type="radio" name="payment_chip_allow_instruction" value="1" />
+      {{ text_yes }}
+      {% endif %}
+     </label>
+     <label class="radio-inline">
+      {% if not payment_chip_allow_instruction %}
+      <input type="radio" name="payment_chip_allow_instruction" value="0" checked="checked" />
+      {{ text_no }}
+{% else %} 
+      <input type="radio" name="payment_chip_allow_instruction" value="0" />
+      {{ text_no }}
+      {% endif %}
+     </label>
+    </div>
+    </div>
+    {% for language in languages %}
+     <div class="form-group">
+      <label class="col-sm-2 control-label" for="input-instruction-{{ language.language_id }}"><span data-toggle="tooltip" title="{{ help_instruction }}">{{ entry_instruction }}</span></label>
+      <div class="col-sm-10">
+       <div class="input-group"><span class="input-group-addon"><img src="language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}" /></span>
+        <textarea cols="80" rows="10" name="payment_chip_instruction_{{ language.language_id }}" placeholder="{{ entry_instruction }}" id="input-instruction-{{ language.language_id }}" class="form-control">{% if payment_chip_instruction[language.language_id] %}{{ payment_chip_instruction[language.language_id] }}{% endif %}</textarea>
+       </div>
+       {% if error_instruction[language.language_id] %}
+       <div class="text-danger">{{ error_instruction[language.language_id] }}</div>
+       {% endif %}
+      </div>
+     </div>
+    {% endfor %}
+   </div>
+   <div class="tab-pane" id="tab-troubleshoot">
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-debug">{{ entry_debug }}</label>
+    <div class="col-sm-10">
+     <label class="radio-inline">
+      {% if payment_chip_debug %}
+      <input type="radio" name="payment_chip_debug" value="1" checked="checked" />
+      {{ text_yes }}
+{% else %} 
+      <input type="radio" name="payment_chip_debug" value="1" />
+      {{ text_yes }}
+      {% endif %}
+     </label>
+     <label class="radio-inline">
+      {% if not payment_chip_debug %}
+      <input type="radio" name="payment_chip_debug" value="0" checked="checked" />
+      {{ text_no }}
+{% else %} 
+      <input type="radio" name="payment_chip_debug" value="0" />
+      {{ text_no }}
+      {% endif %}
+     </label>
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-disable-success-redirect"><span data-toggle="tooltip" title="{{ help_disable_success_redirect }}">{{ entry_disable_success_redirect }}</span></label>
+    <div class="col-sm-10">
+     <label class="radio-inline">
+      {% if payment_chip_disable_success_redirect %}
+      <input type="radio" name="payment_chip_disable_success_redirect" value="1" checked="checked" />
+      {{ text_yes }}
+{% else %} 
+      <input type="radio" name="payment_chip_disable_success_redirect" value="1" />
+      {{ text_yes }}
+      {% endif %}
+     </label>
+     <label class="radio-inline">
+      {% if not payment_chip_disable_success_redirect %}
+      <input type="radio" name="payment_chip_disable_success_redirect" value="0" checked="checked" />
+      {{ text_no }}
+{% else %} 
+      <input type="radio" name="payment_chip_disable_success_redirect" value="0" />
+      {{ text_no }}
+      {% endif %}
+     </label>
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-disable-success-callback"><span data-toggle="tooltip" title="{{ help_disable_success_callback }}">{{ entry_disable_success_callback }}</span></label>
+    <div class="col-sm-10">
+     <label class="radio-inline">
+      {% if payment_chip_disable_success_callback %}
+      <input type="radio" name="payment_chip_disable_success_callback" value="1" checked="checked" />
+      {{ text_yes }}
+{% else %} 
+      <input type="radio" name="payment_chip_disable_success_callback" value="1" />
+      {{ text_yes }}
+      {% endif %}
+     </label>
+     <label class="radio-inline">
+      {% if not payment_chip_disable_success_callback %}
+      <input type="radio" name="payment_chip_disable_success_callback" value="0" checked="checked" />
+      {{ text_no }}
+{% else %} 
+      <input type="radio" name="payment_chip_disable_success_callback" value="0" />
+      {{ text_no }}
+      {% endif %}
+     </label>
+    </div>
+    </div>
+   </div>
+   </div>
+  </form>
+  </div>
+ </div>
+ </div>
+</div>
+{{ footer }}

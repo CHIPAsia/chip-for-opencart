@@ -1,0 +1,11 @@
+{% if payment_chip_allow_instruction %}
+<h2>{{ text_instruction }}</h2>
+<div class="well well-sm">
+ <p>{{ payment_chip_instruction }}</p>
+</div>
+{% endif %}
+<div class="buttons">
+ <div class="pull-right">
+  <a href="{{ button_continue_action }}" class="btn btn-primary">{{ button_continue }}</a>
+ </div>
+</div>
