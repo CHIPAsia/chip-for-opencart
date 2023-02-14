@@ -3,7 +3,7 @@ class ControllerExtensionPaymentChip extends Controller {
   private $error = array();
 
   public function index() {
-    $this->language->load( 'extension/payment/chip' );
+    $this->load->language( 'extension/payment/chip' );
 
     $this->document->setTitle( $this->language->get( 'heading_title' ) );
 
@@ -135,6 +135,18 @@ class ControllerExtensionPaymentChip extends Controller {
       $data['payment_chip_total'] = $this->config->get('payment_chip_total'); 
     }
 
+    if (isset($this->request->post['payment_chip_canceled_order_status_id'])) {
+      $data['payment_chip_canceled_order_status_id'] = $this->request->post['payment_chip_canceled_order_status_id'];
+    } else {
+      $data['payment_chip_canceled_order_status_id'] = $this->config->get('payment_chip_canceled_order_status_id');
+    }
+
+    if (isset($this->request->post['payment_chip_failed_order_status_id'])) {
+      $data['payment_chip_failed_order_status_id'] = $this->request->post['payment_chip_failed_order_status_id'];
+    } else {
+      $data['payment_chip_failed_order_status_id'] = $this->config->get('payment_chip_failed_order_status_id');
+    }
+
     if (isset($this->request->post['payment_chip_paid_order_status_id'])) {
       $data['payment_chip_paid_order_status_id'] = $this->request->post['payment_chip_paid_order_status_id'];
     } else {
@@ -248,6 +260,16 @@ class ControllerExtensionPaymentChip extends Controller {
     }
 
     $data['formatted_help_paid_order_status'] = sprintf($this->language->get('help_paid_order_status'), $data['config_complete_status_name']);
+
+    $data['canceled_behaviors'] = array(
+      'missing_order' => $this->language->get('behavior_missing_order'),
+      'cancel_order' => $this->language->get('behavior_cancel_order'),
+    );
+
+    $data['failed_behaviors'] = array(
+      'missing_order' => $this->language->get('behavior_missing_order'),
+      'fail_order' => $this->language->get('behavior_fail_order'),
+    );
 
     $data['webhook'] = HTTPS_CATALOG . 'index.php?route=extension/payment/chip/callback';
 

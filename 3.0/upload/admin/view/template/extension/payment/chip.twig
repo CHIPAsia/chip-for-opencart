@@ -214,6 +214,34 @@
     </div>
     </div>
     <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-canceled-behavior"><span data-toggle="tooltip" title="{{ help_canceled_behavior }}">{{ entry_canceled_behavior }}</span></label>
+    <div class="col-sm-10">
+     <select name="payment_chip_canceled_behavior" id="input-canceled-behavior" class="form-control">
+     {% for key, canceled_behavior in canceled_behaviors %}
+      {% if key == payment_chip_canceled_behavior %}
+       <option value="{{ key }}" selected="selected">{{ canceled_behavior }}</option>
+{% else %} 
+       <option value="{{ key }}">{{ canceled_behavior }}</option>
+      {% endif %}
+     {% endfor %}
+     </select>
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label" for="input-failed-behavior"><span data-toggle="tooltip" title="{{ help_failed_behavior }}">{{ entry_failed_behavior }}</span></label>
+    <div class="col-sm-10">
+     <select name="payment_chip_failed_behavior" id="input-failed-behavior" class="form-control">
+     {% for key, failed_behavior in failed_behaviors %}
+      {% if key == payment_chip_failed_behavior %}
+       <option value="{{ key }}" selected="selected">{{ failed_behavior }}</option>
+{% else %} 
+       <option value="{{ key }}">{{ failed_behavior }}</option>
+      {% endif %}
+     {% endfor %}
+     </select>
+    </div>
+    </div>
+    <div class="form-group">
     <label class="col-sm-2 control-label" for="input-status"><span data-toggle="tooltip" title="{{ help_status }}">{{ entry_status }}</span></label>
     <div class="col-sm-10">
      <label class="radio-inline">
@@ -244,6 +272,34 @@
     </div>
    </div>
    <div class="tab-pane" id="tab-order-status">
+    <div class="form-group">
+    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_canceled_order_status }}">{{ entry_canceled_order_status }}</span></label>
+    <div class="col-sm-10">
+     <select name="payment_chip_canceled_order_status_id" class="form-control">
+     {% for order_status in order_statuses %}
+      {% if order_status.order_status_id == payment_chip_canceled_order_status_id %}
+       <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+{% else %} 
+       <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+      {% endif %}
+     {% endfor %}
+     </select>
+    </div>
+    </div>
+    <div class="form-group">
+    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_failed_order_status }}">{{ entry_failed_order_status }}</span></label>
+    <div class="col-sm-10">
+     <select name="payment_chip_failed_order_status_id" class="form-control">
+     {% for order_status in order_statuses %}
+      {% if order_status.order_status_id == payment_chip_failed_order_status_id %}
+       <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+{% else %} 
+       <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+      {% endif %}
+     {% endfor %}
+     </select>
+    </div>
+    </div>
     <div class="form-group">
     <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ formatted_help_paid_order_status }}">{{ entry_paid_order_status }}</span></label>
     <div class="col-sm-10">
