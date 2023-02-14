@@ -48,6 +48,8 @@ $_['entry_debug'] = 'Debug logging';
 $_['entry_convert_to_processing'] = 'Convert To Processing';
 $_['entry_disable_success_redirect'] = 'Disable Success Redirect';
 $_['entry_disable_success_callback'] = 'Disable Success Callback';
+$_['entry_canceled_behavior'] = 'Canceled Order Behavior';
+$_['entry_failed_behavior'] = 'Failed Order Behavior';
 
 $_['help_payment_name'] = 'Name that will be displayed on checkout page';
 $_['help_secret_key'] = 'Secret Key can be retrieved from CHIP Collect Dashboard';
@@ -70,6 +72,8 @@ $_['help_time_zone'] = 'This will dictate the timestamp zone on the invoice and 
 $_['help_convert_to_processing'] = 'This to allow payment if the store currency is set to other than MYR';
 $_['help_disable_success_redirect'] = 'Default to No. Only tick yes if you are performing a test';
 $_['help_disable_success_callback'] = 'Default to No. Only tick yes if you are performing a test';
+$_['help_canceled_behavior'] = 'Missing Order is the default behavior. If you require the order status to be updated to canceled, change to Cancel Order';
+$_['help_failed_behavior'] = 'Missing Order is the default behavior. If you require the order status to be updated to failed, change to Fail Order';
 
 $_['error_permission'] = 'Warning: You do not have permission to modify CHIP!';
 $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';
