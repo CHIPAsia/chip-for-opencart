@@ -2,7 +2,7 @@
 class ControllerExtensionPaymentChip extends Controller
 {
   public function index() {
-    $this->language->load('extension/payment/chip');
+    $this->load->language('extension/payment/chip');
 
     $data['payment_chip_allow_instruction'] = $this->config->get('payment_chip_allow_instruction');
     $data['payment_chip_instruction'] = nl2br($this->config->get('payment_chip_instruction_' . $this->config->get('config_language_id')));
@@ -26,7 +26,7 @@ class ControllerExtensionPaymentChip extends Controller
     $this->load->model('checkout/order');
     $this->load->model('account/order');
 
-    $this->language->load('extension/payment/chip');
+    $this->load->language('extension/payment/chip');
 
     $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
     $products = $this->model_account_order->getOrderProducts($this->session->data['order_id']);
@@ -76,6 +76,14 @@ class ControllerExtensionPaymentChip extends Controller
 
     if ($this->config->get('payment_chip_disable_success_callback')) {
       unset($params['success_callback']);
+    }
+
+    if ($this->config->get('payment_chip_canceled_behavior') == 'cancel_order') {
+      $params['cancel_redirect'] = $this->url->link('extension/payment/chip/cancel_redirect', '', true);
+    }
+
+    if ($this->config->get('payment_chip_failed_behavior') == 'fail_order') {
+      $params['failure_redirect'] = $this->url->link('extension/payment/chip/failure_redirect', '', true);
     }
 
     foreach ($products as $product) {
@@ -197,7 +205,7 @@ class ControllerExtensionPaymentChip extends Controller
 
     $this->load->model('extension/payment/chip');
     $this->load->model('checkout/order');
-    $this->language->load('extension/payment/chip');
+    $this->load->language('extension/payment/chip');
 
     $public_key = $this->config->get('payment_chip_public_key');
 
@@ -258,7 +266,7 @@ class ControllerExtensionPaymentChip extends Controller
   }
   public function success_callback() {
     $this->load->model('checkout/order');
-    $this->language->load('extension/payment/chip');
+    $this->load->language('extension/payment/chip');
 
     $public_key = $this->config->get('payment_chip_general_public_key');
 
@@ -301,7 +309,7 @@ class ControllerExtensionPaymentChip extends Controller
   }
 
   public function success_redirect() {
-    $this->language->load('extension/payment/chip');
+    $this->load->language('extension/payment/chip');
 
     if (!isset($this->session->data['chip'])) {
       exit($this->language->get('invalid_redirect'));
@@ -347,5 +355,57 @@ class ControllerExtensionPaymentChip extends Controller
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
     $this->response->redirect($this->url->link('checkout/success', '', true));
+  }
+
+  public function cancel_redirect() {
+    $this->load->language('extension/payment/chip');
+
+    if (!isset($this->session->data['chip'])) {
+      exit($this->language->get('invalid_redirect'));
+    }
+
+    $purchase_id = $this->session->data['chip']['id'];
+    $order_id = $this->session->data['chip']['reference'];
+
+    $this->load->model('checkout/order');
+
+    unset($this->session->data['chip']);
+
+    $this->db->query("SELECT GET_LOCK('payment_chip_payment_$purchase_id', 15);");
+
+    $order_info = $this->model_checkout_order->getOrder($order_id);
+    if ($order_info['order_status_id'] != $this->config->get('payment_chip_canceled_order_status_id')) {
+      $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('payment_chip_canceled_order_status_id'), $this->language->get('payment_canceled') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
+    }
+
+    $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
+
+    $this->response->redirect($this->url->link('checkout/failure', '', true));
+  }
+
+  public function failure_redirect() {
+    $this->load->language('extension/payment/chip');
+
+    if (!isset($this->session->data['chip'])) {
+      exit($this->language->get('invalid_redirect'));
+    }
+
+    $purchase_id = $this->session->data['chip']['id'];
+    $order_id = $this->session->data['chip']['reference'];
+
+    $this->load->model('checkout/order');
+
+    unset($this->session->data['chip']);
+
+    $this->db->query("SELECT GET_LOCK('payment_chip_payment_$purchase_id', 15);");
+
+    $order_info = $this->model_checkout_order->getOrder($order_id);
+    if ($order_info['order_status_id'] != $this->config->get('payment_chip_failed_order_status_id')) {
+      $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('payment_chip_failed_order_status_id'), $this->language->get('payment_failed') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
+    }
+
+    $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
+
+    $this->response->redirect($this->url->link('checkout/failure', '', true));
   }
 }
