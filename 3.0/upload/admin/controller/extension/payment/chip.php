@@ -171,6 +171,18 @@ class ControllerExtensionPaymentChip extends Controller {
       $data['payment_chip_convert_to_processing'] = $this->config->get('payment_chip_convert_to_processing');
     }
 
+    if (isset($this->request->post['payment_chip_canceled_behavior'])) {
+      $data['payment_chip_canceled_behavior'] = $this->request->post['payment_chip_canceled_behavior'];
+    } else {
+      $data['payment_chip_canceled_behavior'] = $this->config->get('payment_chip_canceled_behavior');
+    }
+
+    if (isset($this->request->post['payment_chip_failed_behavior'])) {
+      $data['payment_chip_failed_behavior'] = $this->request->post['payment_chip_failed_behavior'];
+    } else {
+      $data['payment_chip_failed_behavior'] = $this->config->get('payment_chip_failed_behavior');
+    }
+
     if (isset($this->request->post['payment_chip_disable_success_redirect'])) {
       $data['payment_chip_disable_success_redirect'] = $this->request->post['payment_chip_disable_success_redirect'];
     } else {
