@@ -272,18 +272,6 @@ class ControllerPaymentChip extends Controller {
       $data['chip_disable_success_callback'] = $this->config->get('chip_disable_success_callback');
     }
 
-    if (isset($this->request->post['chip_canceled_behavior'])) {
-      $data['chip_canceled_behavior'] = $this->request->post['chip_canceled_behavior'];
-    } else {
-      $data['chip_canceled_behavior'] = $this->config->get('chip_canceled_behavior');
-    }
-
-    if (isset($this->request->post['chip_failed_behavior'])) {
-      $data['chip_failed_behavior'] = $this->request->post['chip_failed_behavior'];
-    } else {
-      $data['chip_failed_behavior'] = $this->config->get('chip_failed_behavior');
-    }
-
     if (isset($this->request->post['chip_debug'])) {
       $data['chip_debug'] = $this->request->post['chip_debug'];
     } else {
