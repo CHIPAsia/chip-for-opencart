@@ -377,7 +377,7 @@ class Chip extends \Opencart\System\Engine\Controller
   }
 
   public function cancel_redirect() {
-    $this->load->language('extension/payment/chip');
+    $this->load->language('extension/chip/payment/chip');
 
     if (!isset($this->session->data['chip'])) {
       exit($this->language->get('invalid_redirect'));
@@ -394,7 +394,7 @@ class Chip extends \Opencart\System\Engine\Controller
 
     $order_info = $this->model_checkout_order->getOrder($order_id);
     if ($order_info['order_status_id'] != $this->config->get('payment_chip_canceled_order_status_id')) {
-      $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('payment_chip_canceled_order_status_id'), $this->language->get('payment_canceled') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
+      $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_canceled_order_status_id'), $this->language->get('payment_canceled') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
     }
 
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
@@ -403,7 +403,7 @@ class Chip extends \Opencart\System\Engine\Controller
   }
 
   public function failure_redirect() {
-    $this->load->language('extension/payment/chip');
+    $this->load->language('extension/chip/payment/chip');
 
     if (!isset($this->session->data['chip'])) {
       exit($this->language->get('invalid_redirect'));
@@ -420,7 +420,7 @@ class Chip extends \Opencart\System\Engine\Controller
 
     $order_info = $this->model_checkout_order->getOrder($order_id);
     if ($order_info['order_status_id'] != $this->config->get('payment_chip_failed_order_status_id')) {
-      $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('payment_chip_failed_order_status_id'), $this->language->get('payment_failed') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
+      $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_failed_order_status_id'), $this->language->get('payment_failed') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
     }
 
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
