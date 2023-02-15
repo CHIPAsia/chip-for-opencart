@@ -109,6 +109,7 @@ class Chip extends \Opencart\System\Engine\Controller {
     );
 
     $data['payment_chip_canceled_behavior'] = $this->config->get('payment_chip_canceled_behavior');
+    $data['payment_chip_failed_behavior'] = $this->config->get('payment_chip_failed_behavior');
 
     $data['webhook'] = HTTP_CATALOG . 'index.php?route=extension/chip/payment/chip|callback';
 
