@@ -83,6 +83,14 @@ class ControllerPaymentChip extends Controller
       unset($params['success_callback']);
     }
 
+    if ($this->config->get('chip_canceled_behavior') == 'cancel_order') {
+      $params['cancel_redirect'] = $this->url->link('payment/chip/cancel_redirect', '', 'SSL');
+    }
+
+    if ($this->config->get('chip_failed_behavior') == 'fail_order') {
+      $params['failure_redirect'] = $this->url->link('payment/chip/failure_redirect', '', 'SSL');
+    }
+
     foreach ($products as $product) {
       $product_price = $this->currency->convert($product['price'], $this->config->get('config_currency'), 'MYR');
 
@@ -293,6 +301,7 @@ class ControllerPaymentChip extends Controller
     $order_info = $this->model_checkout_order->getOrder($purchase['reference']);
     if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
       $this->model_checkout_order->confirm($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
+      $this->model_checkout_order->update($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id));
       $this->model_checkout_order->update($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
 
       if ($purchase['is_test'] == true) {
@@ -342,6 +351,7 @@ class ControllerPaymentChip extends Controller
     $order_info = $this->model_checkout_order->getOrder($order_id);
     if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
       $this->model_checkout_order->confirm($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
+      $this->model_checkout_order->update($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id));
       $this->model_checkout_order->update($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
 
       if ($purchase['is_test'] == true) {
@@ -352,5 +362,99 @@ class ControllerPaymentChip extends Controller
     $this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
     $this->redirect($this->url->link('checkout/success', '', 'SSL'));
+  }
+
+  public function cancel_redirect() {
+    $this->language->load('payment/chip');
+
+    if (!isset($this->session->data['chip'])) {
+      exit($this->language->get('invalid_redirect'));
+    }
+
+    $purchase_id = $this->session->data['chip']['id'];
+    $order_id = $this->session->data['chip']['reference'];
+
+    $this->load->model('checkout/order');
+
+    unset($this->session->data['chip']);
+
+    $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
+
+    $order_info = $this->model_checkout_order->getOrder($order_id);
+    if ($order_info['order_status_id'] != $this->config->get('chip_canceled_order_status_id')) {
+      $this->model_checkout_order->confirm($order_id, $this->config->get('chip_canceled_order_status_id'), $this->language->get('payment_canceled') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
+    }
+
+    $this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
+
+    $this->document->setTitle($this->language->get('heading_title'));
+
+    $this->data['heading_title'] = $this->language->get('heading_title');
+    $this->data['text_payment_failed'] = $this->language->get('text_payment_failed');
+
+    if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/payment/chip_failure.tpl')) {
+      $this->template = $this->config->get('config_template') . '/template/payment/chip_failure.tpl';
+    } else {
+      $this->template = 'default/template/payment/chip_failure.tpl';
+    }
+
+    $this->children = array(
+      'common/column_left',
+      'common/column_right',
+      'common/content_top',
+      'common/content_bottom',
+      'common/footer',
+      'common/header'
+    );
+
+
+    $this->response->setOutput($this->render(true));
+  }
+
+  public function failure_redirect() {
+    $this->language->load('payment/chip');
+
+    if (!isset($this->session->data['chip'])) {
+      exit($this->language->get('invalid_redirect'));
+    }
+
+    $purchase_id = $this->session->data['chip']['id'];
+    $order_id = $this->session->data['chip']['reference'];
+
+    $this->load->model('checkout/order');
+
+    unset($this->session->data['chip']);
+
+    $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
+
+    $order_info = $this->model_checkout_order->getOrder($order_id);
+    if ($order_info['order_status_id'] != $this->config->get('chip_failed_order_status_id')) {
+      $this->model_checkout_order->confirm($order_id, $this->config->get('chip_failed_order_status_id'), $this->language->get('payment_failed') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
+    }
+
+    $this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
+
+    $this->document->setTitle($this->language->get('heading_title'));
+
+    $this->data['heading_title'] = $this->language->get('heading_title');
+    $this->data['text_payment_failed'] = $this->language->get('text_payment_failed');
+
+    if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/payment/chip_failure.tpl')) {
+      $this->template = $this->config->get('config_template') . '/template/payment/chip_failure.tpl';
+    } else {
+      $this->template = 'default/template/payment/chip_failure.tpl';
+    }
+
+    $this->children = array(
+      'common/column_left',
+      'common/column_right',
+      'common/content_top',
+      'common/content_bottom',
+      'common/footer',
+      'common/header'
+    );
+
+
+    $this->response->setOutput($this->render(true));
   }
 }

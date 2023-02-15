@@ -62,6 +62,10 @@ class ControllerPaymentChip extends Controller {
     $this->data['entry_geo_zone'] = $this->language->get('entry_geo_zone');
     $this->data['entry_status'] = $this->language->get('entry_status');
     $this->data['entry_sort_order'] = $this->language->get('entry_sort_order');
+    $this->data['entry_canceled_behavior'] = $this->language->get('entry_canceled_behavior');
+    $this->data['entry_failed_behavior'] = $this->language->get('entry_failed_behavior');
+    $this->data['entry_canceled_order_status'] = $this->language->get('entry_canceled_order_status');
+    $this->data['entry_failed_order_status'] = $this->language->get('entry_failed_order_status');
 
     $this->data['entry_paid_order_status'] = $this->language->get('entry_paid_order_status');
     $this->data['entry_refunded_order_status'] = $this->language->get('entry_refunded_order_status');
@@ -190,6 +194,18 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_total'] = $this->config->get('chip_total'); 
     }
 
+    if (isset($this->request->post['chip_canceled_order_status_id'])) {
+      $this->data['chip_canceled_order_status_id'] = $this->request->post['chip_canceled_order_status_id'];
+    } else {
+      $this->data['chip_canceled_order_status_id'] = $this->config->get('chip_canceled_order_status_id');
+    }
+
+    if (isset($this->request->post['chip_failed_order_status_id'])) {
+      $this->data['chip_failed_order_status_id'] = $this->request->post['chip_failed_order_status_id'];
+    } else {
+      $this->data['chip_failed_order_status_id'] = $this->config->get('chip_failed_order_status_id');
+    }
+
     if (isset($this->request->post['chip_paid_order_status_id'])) {
       $this->data['chip_paid_order_status_id'] = $this->request->post['chip_paid_order_status_id'];
     } else {
@@ -224,6 +240,18 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_disable_success_callback'] = $this->request->post['chip_disable_success_callback'];
     } else {
       $this->data['chip_disable_success_callback'] = $this->config->get('chip_disable_success_callback');
+    }
+
+    if (isset($this->request->post['chip_canceled_behavior'])) {
+      $this->data['chip_canceled_behavior'] = $this->request->post['chip_canceled_behavior'];
+    } else {
+      $this->data['chip_canceled_behavior'] = $this->config->get('chip_canceled_behavior');
+    }
+
+    if (isset($this->request->post['chip_failed_behavior'])) {
+      $this->data['chip_failed_behavior'] = $this->request->post['chip_failed_behavior'];
+    } else {
+      $this->data['chip_failed_behavior'] = $this->config->get('chip_failed_behavior');
     }
 
     if (isset($this->request->post['chip_debug'])) {
@@ -291,6 +319,16 @@ class ControllerPaymentChip extends Controller {
     } else {
       $this->data['chip_sort_order'] = $this->config->get('chip_sort_order');
     }
+
+    $this->data['canceled_behaviors'] = array(
+      'missing_order' => $this->language->get('behavior_missing_order'),
+      'cancel_order' => $this->language->get('behavior_cancel_order'),
+    );
+
+    $this->data['failed_behaviors'] = array(
+      'missing_order' => $this->language->get('behavior_missing_order'),
+      'fail_order' => $this->language->get('behavior_fail_order'),
+    );
 
     $this->data['webhook'] = HTTPS_CATALOG . 'index.php?route=payment/chip/callback';
 
