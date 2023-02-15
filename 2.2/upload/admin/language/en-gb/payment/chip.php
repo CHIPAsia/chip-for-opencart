@@ -19,6 +19,10 @@ $_['tab_api_details'] = 'API details';
 $_['tab_checkout'] = 'Customize checkout';
 $_['tab_troubleshoot'] = 'Troubleshoot';
 
+$_['behavior_missing_order'] = 'Missing Order';
+$_['behavior_cancel_order'] = 'Cancel Order';
+$_['behavior_fail_order'] = 'Fail Order';
+
 $_['entry_payment_name'] = 'Payment Name';
 $_['entry_secret_key'] = 'Secret Key';
 $_['entry_brand_id'] = 'Brand ID';
@@ -32,6 +36,8 @@ $_['entry_total'] = 'Total';
 $_['entry_geo_zone'] = 'Geo Zone:';
 $_['entry_status'] = 'Status';
 $_['entry_sort_order'] = 'Sort Order';
+$_['entry_canceled_order_status'] = 'Canceled Order Status';
+$_['entry_failed_order_status'] = 'Failed Order Status';
 $_['entry_paid_order_status'] = 'Paid Order Status';
 $_['entry_refunded_order_status'] = 'Refunded Order Status';
 $_['entry_allow_instruction'] = 'Instruction';
@@ -41,6 +47,8 @@ $_['entry_debug'] = 'Debug logging';
 $_['entry_convert_to_processing'] = 'Convert To Processing';
 $_['entry_disable_success_redirect'] = 'Disable Success Redirect';
 $_['entry_disable_success_callback'] = 'Disable Success Callback';
+$_['entry_canceled_behavior'] = 'Canceled Order Behavior';
+$_['entry_failed_behavior'] = 'Failed Order Behavior';
 
 $_['help_payment_name'] = 'Name that will be displayed on checkout page';
 $_['help_secret_key'] = 'Secret Key can be retrieved from CHIP Collect Dashboard';
@@ -53,6 +61,8 @@ $_['help_due_strict_timing'] = 'Set due strict timing in minutes. Setting 60 wil
 $_['help_total'] = 'The checkout total the order must reach before this payment method becomes active';
 $_['help_status'] = 'Whether to enable/disable CHIP payment gateway';
 $_['help_sort_order'] = 'Payment gateway sorting on checkout page';
+$_['help_canceled_order_status'] = 'Default to Canceled';
+$_['help_failed_order_status'] = 'Default to Failed';
 $_['help_paid_order_status'] = 'It can be %s';
 $_['help_refunded_order_status'] = 'Default to Refunded';
 $_['help_allow_instruction'] = 'To insturction on checkout page';
@@ -61,6 +71,8 @@ $_['help_time_zone'] = 'This will dictate the timestamp zone on the invoice and 
 $_['help_convert_to_processing'] = 'This to allow payment if the store currency is set to other than MYR';
 $_['help_disable_success_redirect'] = 'Default to No. Only tick yes if you are performing a test';
 $_['help_disable_success_callback'] = 'Default to No. Only tick yes if you are performing a test';
+$_['help_canceled_behavior'] = 'Missing Order is the default behavior. If you require the order status to be updated to canceled, change to Cancel Order';
+$_['help_failed_behavior'] = 'Missing Order is the default behavior. If you require the order status to be updated to failed, change to Fail Order';
 
 $_['error_permission'] = 'Warning: You do not have permission to modify CHIP!';
 $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';
