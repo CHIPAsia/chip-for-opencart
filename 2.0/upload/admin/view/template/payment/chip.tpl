@@ -207,6 +207,34 @@
         </div>
         </div>
         <div class="form-group">
+        <label class="col-sm-2 control-label" for="input-canceled-behavior"><span data-toggle="tooltip" title="<?php echo $help_canceled_behavior; ?>"><?php echo $entry_canceled_behavior; ?></span></label>
+        <div class="col-sm-10">
+          <select name="chip_canceled_behavior" id="input-canceled-behavior" class="form-control">
+          <?php foreach ($canceled_behaviors as $key => $canceled_behavior) { ?>
+            <?php if ($chip_canceled_behavior == $key) { ?>
+              <option value="<?php echo $key; ?>" selected="selected"><?php echo $chip_canceled_behavior; ?></option>
+            <?php } else { ?>
+              <option value="<?php echo $key; ?>"><?php echo $chip_canceled_behavior; ?></option>
+            <?php } ?>
+          <?php } ?>
+          </select>
+        </div>
+        </div>
+        <div class="form-group">
+        <label class="col-sm-2 control-label" for="input-failed-behavior"><span data-toggle="tooltip" title="<?php echo $help_failed_behavior; ?>"><?php echo $entry_failed_behavior; ?></span></label>
+        <div class="col-sm-10">
+          <select name="chip_failed_behavior" id="input-failed-behavior" class="form-control">
+          <?php foreach ($failed_behaviors as $key => $failed_behavior) { ?>
+            <?php if ($chip_failed_behavior == $key) { ?>
+              <option value="<?php echo $key; ?>" selected="selected"><?php echo $chip_failed_behavior; ?></option>
+            <?php } else { ?>
+              <option value="<?php echo $key; ?>"><?php echo $chip_failed_behavior; ?></option>
+            <?php } ?>
+          <?php } ?>
+          </select>
+        </div>
+        </div>
+        <div class="form-group">
         <label class="col-sm-2 control-label" for="input-status"><span data-toggle="tooltip" title="<?php echo $help_status; ?>"><?php echo $entry_status; ?></span></label>
         <div class="col-sm-10">
           <label class="radio-inline">
@@ -237,6 +265,34 @@
         </div>
       </div>
       <div class="tab-pane" id="tab-order-status">
+        <div class="form-group">
+        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $help_canceled_order_status; ?>"><?php echo $entry_canceled_order_status; ?></span></label>
+        <div class="col-sm-10">
+          <select name="chip_canceled_order_status_id" class="form-control">
+          <?php foreach ($order_statuses as $order_status) { ?>
+            <?php if ($order_status['order_status_id'] == $chip_canceled_order_status_id) { ?>
+              <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
+            <?php } else { ?>
+              <option value="<?php echo $order_status['order_status_id']; ?>"><?php echo $order_status['name']; ?></option>
+            <?php } ?>
+          <?php } ?>
+          </select>
+        </div>
+        </div>
+        <div class="form-group">
+        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $help_failed_order_status; ?>"><?php echo $entry_failed_order_status; ?></span></label>
+        <div class="col-sm-10">
+          <select name="chip_failed_order_status_id" class="form-control">
+          <?php foreach ($order_statuses as $order_status) { ?>
+            <?php if ($order_status['order_status_id'] == $chip_failed_order_status_id) { ?>
+              <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
+            <?php } else { ?>
+              <option value="<?php echo $order_status['order_status_id']; ?>"><?php echo $order_status['name']; ?></option>
+            <?php } ?>
+          <?php } ?>
+          </select>
+        </div>
+        </div>
         <div class="form-group">
         <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo sprintf($help_paid_order_status, $config_complete_status_name); ?>"><?php echo $entry_paid_order_status; ?></span></label>
         <div class="col-sm-10">
