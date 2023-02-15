@@ -60,6 +60,10 @@ class ControllerExtensionPaymentChip extends Controller {
     $data['entry_status'] = $this->language->get('entry_status');
     $data['entry_sort_order'] = $this->language->get('entry_sort_order');
 
+    $data['entry_canceled_behavior'] = $this->language->get('entry_canceled_behavior');
+    $data['entry_failed_behavior'] = $this->language->get('entry_failed_behavior');
+    $data['entry_canceled_order_status'] = $this->language->get('entry_canceled_order_status');
+    $data['entry_failed_order_status'] = $this->language->get('entry_failed_order_status');
     $data['entry_paid_order_status'] = $this->language->get('entry_paid_order_status');
     $data['entry_refunded_order_status'] = $this->language->get('entry_refunded_order_status');
 
@@ -77,6 +81,8 @@ class ControllerExtensionPaymentChip extends Controller {
     $data['help_total'] = $this->language->get('help_total');
     $data['help_status'] = $this->language->get('help_status');
     $data['help_sort_order'] = $this->language->get('help_sort_order');
+    $data['help_canceled_order_status'] = $this->language->get('help_canceled_order_status');
+    $data['help_failed_order_status'] = $this->language->get('help_failed_order_status');
     $data['help_paid_order_status'] = $this->language->get('help_paid_order_status');
     $data['help_refunded_order_status'] = $this->language->get('help_refunded_order_status');
     $data['help_allow_instruction'] = $this->language->get('help_allow_instruction');
@@ -85,6 +91,9 @@ class ControllerExtensionPaymentChip extends Controller {
     $data['help_convert_to_processing'] = $this->language->get('help_convert_to_processing');
     $data['help_disable_success_redirect'] = $this->language->get('help_disable_success_redirect');
     $data['help_disable_success_callback'] = $this->language->get('help_disable_success_callback');
+    $data['help_canceled_behavior'] = $this->language->get('help_canceled_behavior');
+    $data['help_failed_behavior'] = $this->language->get('help_failed_behavior');
+    
 
     $data['button_save'] = $this->language->get('button_save');
     $data['button_cancel'] = $this->language->get('button_cancel');
@@ -204,6 +213,18 @@ class ControllerExtensionPaymentChip extends Controller {
       $data['chip_total'] = $this->config->get('chip_total'); 
     }
 
+    if (isset($this->request->post['chip_canceled_order_status_id'])) {
+      $data['chip_canceled_order_status_id'] = $this->request->post['chip_canceled_order_status_id'];
+    } else {
+      $data['chip_canceled_order_status_id'] = $this->config->get('chip_canceled_order_status_id');
+    }
+
+    if (isset($this->request->post['chip_failed_order_status_id'])) {
+      $data['chip_failed_order_status_id'] = $this->request->post['chip_failed_order_status_id'];
+    } else {
+      $data['chip_failed_order_status_id'] = $this->config->get('chip_failed_order_status_id');
+    }
+
     if (isset($this->request->post['chip_paid_order_status_id'])) {
       $data['chip_paid_order_status_id'] = $this->request->post['chip_paid_order_status_id'];
     } else {
@@ -238,6 +259,18 @@ class ControllerExtensionPaymentChip extends Controller {
       $data['chip_disable_success_callback'] = $this->request->post['chip_disable_success_callback'];
     } else {
       $data['chip_disable_success_callback'] = $this->config->get('chip_disable_success_callback');
+    }
+
+    if (isset($this->request->post['chip_canceled_behavior'])) {
+      $data['chip_canceled_behavior'] = $this->request->post['chip_canceled_behavior'];
+    } else {
+      $data['chip_canceled_behavior'] = $this->config->get('chip_canceled_behavior');
+    }
+
+    if (isset($this->request->post['chip_failed_behavior'])) {
+      $data['chip_failed_behavior'] = $this->request->post['chip_failed_behavior'];
+    } else {
+      $data['chip_failed_behavior'] = $this->config->get('chip_failed_behavior');
     }
 
     if (isset($this->request->post['chip_debug'])) {
@@ -313,6 +346,16 @@ class ControllerExtensionPaymentChip extends Controller {
     } else {
       $data['chip_sort_order'] = $this->config->get('chip_sort_order');
     }
+
+    $data['canceled_behaviors'] = array(
+      'missing_order' => $this->language->get('behavior_missing_order'),
+      'cancel_order' => $this->language->get('behavior_cancel_order'),
+    );
+
+    $data['failed_behaviors'] = array(
+      'missing_order' => $this->language->get('behavior_missing_order'),
+      'fail_order' => $this->language->get('behavior_fail_order'),
+    );
 
     $data['webhook'] = HTTPS_CATALOG . 'index.php?route=extension/payment/chip/callback';
 
