@@ -174,6 +174,34 @@
                             </td>
                         </tr>
                         <tr>
+                            <td><?php echo $entry_canceled_behavior; ?></td>
+                            <td>
+                                <select name="chip_canceled_behavior">
+                                    <?php foreach ($canceled_behaviors as $key => $canceled_behavior) { ?>
+                                    <?php if ($key == $chip_canceled_behavior) { ?>
+                                    <option value="<?php echo $key; ?>" selected="selected"><?php echo $canceled_behavior; ?></option>
+                                    <?php } else { ?>
+                                    <option value="<?php echo $key; ?>"><?php echo $canceled_behavior; ?></option>
+                                    <?php } ?>
+                                    <?php } ?>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><?php echo $entry_failed_behavior; ?></td>
+                            <td>
+                                <select name="chip_failed_behavior">
+                                    <?php foreach ($failed_behaviors as $key => $failed_behavior) { ?>
+                                    <?php if ($key == $chip_failed_behavior) { ?>
+                                    <option value="<?php echo $key; ?>" selected="selected"><?php echo $failed_behavior; ?></option>
+                                    <?php } else { ?>
+                                    <option value="<?php echo $key; ?>"><?php echo $failed_behavior; ?></option>
+                                    <?php } ?>
+                                    <?php } ?>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
                             <td><?php echo $entry_status; ?></td>
                             <td>
                                 <select name="chip_status">
@@ -196,6 +224,34 @@
                 </div>
                 <div id="tab-status">
                     <table class="form">
+                        <tr>
+                            <td><?php echo $entry_canceled_order_status; ?></td>
+                            <td>
+                                <select name="chip_canceled_order_status_id">
+                                    <?php foreach ($order_statuses as $order_status) { ?>
+                                        <?php if ($order_status['order_status_id'] == $chip_canceled_order_status_id) { ?>
+                                            <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
+                                        <?php } else { ?>
+                                            <option value="<?php echo $order_status['order_status_id']; ?>"><?php echo $order_status['name']; ?></option>
+                                        <?php } ?>
+                                    <?php } ?>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><?php echo $entry_failed_order_status; ?></td>
+                            <td>
+                                <select name="chip_failed_order_status_id">
+                                    <?php foreach ($order_statuses as $order_status) { ?>
+                                        <?php if ($order_status['order_status_id'] == $chip_failed_order_status_id) { ?>
+                                            <option value="<?php echo $order_status['order_status_id']; ?>" selected="selected"><?php echo $order_status['name']; ?></option>
+                                        <?php } else { ?>
+                                            <option value="<?php echo $order_status['order_status_id']; ?>"><?php echo $order_status['name']; ?></option>
+                                        <?php } ?>
+                                    <?php } ?>
+                                </select>
+                            </td>
+                        </tr>
                         <tr>
                             <td><?php echo sprintf($entry_paid_order_status, $config_complete_status_name); ?></td>
                             <td>

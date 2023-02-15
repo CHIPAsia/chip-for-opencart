@@ -18,6 +18,10 @@ $_['tab_api_details'] = 'API details';
 $_['tab_customise'] = 'Customize checkout';
 $_['tab_troubleshooting'] = 'Troubleshooting';
 
+$_['behavior_missing_order'] = 'Missing Order';
+$_['behavior_cancel_order'] = 'Cancel Order';
+$_['behavior_fail_order'] = 'Fail Order';
+
 $_['entry_payment_name'] = 'Payment Name:<br /><span class="help">Name that will be displayed on checkout page.</span>';
 $_['entry_secret_key'] = 'Secret Key:<br /><span class="help">Secret Key can be retrieved from CHIP Collect Dashboard.</span>';
 $_['entry_brand_id'] = 'Brand ID:<br /><span class="help">Secret Key can be retrieved from CHIP Collect Dashboard.</span>';
@@ -31,6 +35,8 @@ $_['entry_total'] = 'Total:<br /><span class="help">The checkout total the order
 $_['entry_geo_zone'] = 'Geo Zone:';
 $_['entry_status'] = 'Status:<br /><span class="help">Whether to enable/disable CHIP payment gateway.</span>';
 $_['entry_sort_order'] = 'Sort Order:<br /><span class="help">Payment gateway sorting on checkout page.</span>';
+$_['entry_canceled_order_status'] = 'Canceled Order Status:<br /><span class="help">Default to Canceled</span>';
+$_['entry_failed_order_status'] = 'Failed Order Status:<br /><span class="help">Default to Failed</span>';
 $_['entry_paid_order_status'] = 'Paid Order Status:<br /><span class="help">Default to %s.</span>';
 $_['entry_refunded_order_status'] = 'Refunded Order Status:<br /><span class="help">Default to Refunded.</span>';
 $_['entry_allow_instruction'] = 'Instruction:<br /><span class="help">To insturction on checkout page.</span>';
@@ -40,6 +46,8 @@ $_['entry_debug'] = 'Debug logging:';
 $_['entry_convert_to_processing'] = 'Convert To Processing:<br /><span class="help">This to allow payment if the store currency is set to other than MYR.</span>';
 $_['entry_disable_success_redirect'] = 'Disable Success Redirect:<br /><span class="help">Default to No. Only tick yes if you are performing a test.</span>';
 $_['entry_disable_success_callback'] = 'Disable Success Callback:<br /><span class="help">Default to No. Only tick yes if you are performing a test.</span>';
+$_['entry_canceled_behavior'] = 'Canceled Order Behavior:<br /><span class="help">Missing Order is the default behavior. If you require the order status to be updated to canceled, change to Cancel Order</span>';
+$_['entry_failed_behavior'] = 'Failed Order Behavior:<br /><span class="help">Missing Order is the default behavior. If you require the order status to be updated to failed, change to Fail Order</span>';
 
 $_['error_permission'] = 'Warning: You do not have permission to modify CHIP!';
 $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';
