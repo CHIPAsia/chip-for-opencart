@@ -42,6 +42,8 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['payment_chip_purchase_send_receipt'] = $this->config->get('payment_chip_purchase_send_receipt');
     $data['payment_chip_due_strict'] = $this->config->get('payment_chip_due_strict');
     $data['payment_chip_due_strict_timing'] = !empty($this->config->get('payment_chip_due_strict_timing')) ? $this->config->get('payment_chip_due_strict_timing') : '60';
+    $data['payment_chip_canceled_order_status_id'] = $this->config->get('payment_chip_canceled_order_status_id');
+    $data['payment_chip_failed_order_status_id'] = $this->config->get('payment_chip_failed_order_status_id');
     $data['payment_chip_paid_order_status_id'] = $this->config->get('payment_chip_paid_order_status_id');
     $data['payment_chip_refunded_order_status_id'] = $this->config->get('payment_chip_refunded_order_status_id');
     $data['payment_chip_allow_instruction'] = $this->config->get('payment_chip_allow_instruction');
@@ -95,6 +97,18 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['payment_chip_sort_order'] = $this->config->get('payment_chip_sort_order');
     
     $data['formatted_help_paid_order_status'] = sprintf($this->language->get('help_paid_order_status'), $data['config_complete_status_name']);
+
+    $data['canceled_behaviors'] = array(
+      'missing_order' => $this->language->get('behavior_missing_order'),
+      'cancel_order' => $this->language->get('behavior_cancel_order'),
+    );
+
+    $data['failed_behaviors'] = array(
+      'missing_order' => $this->language->get('behavior_missing_order'),
+      'fail_order' => $this->language->get('behavior_fail_order'),
+    );
+
+    $data['payment_chip_canceled_behavior'] = $this->config->get('payment_chip_canceled_behavior');
 
     $data['webhook'] = HTTP_CATALOG . 'index.php?route=extension/chip/payment/chip|callback';
 
