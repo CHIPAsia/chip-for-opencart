@@ -212,9 +212,9 @@
           <select name="chip_canceled_behavior" id="input-canceled-behavior" class="form-control">
           <?php foreach ($canceled_behaviors as $key => $canceled_behavior) { ?>
             <?php if ($chip_canceled_behavior == $key) { ?>
-              <option value="<?php echo $key; ?>" selected="selected"><?php echo $chip_canceled_behavior; ?></option>
+              <option value="<?php echo $key; ?>" selected="selected"><?php echo $canceled_behavior; ?></option>
             <?php } else { ?>
-              <option value="<?php echo $key; ?>"><?php echo $chip_canceled_behavior; ?></option>
+              <option value="<?php echo $key; ?>"><?php echo $canceled_behavior; ?></option>
             <?php } ?>
           <?php } ?>
           </select>
@@ -226,9 +226,9 @@
           <select name="chip_failed_behavior" id="input-failed-behavior" class="form-control">
           <?php foreach ($failed_behaviors as $key => $failed_behavior) { ?>
             <?php if ($chip_failed_behavior == $key) { ?>
-              <option value="<?php echo $key; ?>" selected="selected"><?php echo $chip_failed_behavior; ?></option>
+              <option value="<?php echo $key; ?>" selected="selected"><?php echo $failed_behavior; ?></option>
             <?php } else { ?>
-              <option value="<?php echo $key; ?>"><?php echo $chip_failed_behavior; ?></option>
+              <option value="<?php echo $key; ?>"><?php echo $failed_behavior; ?></option>
             <?php } ?>
           <?php } ?>
           </select>
