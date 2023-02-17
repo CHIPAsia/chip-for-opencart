@@ -7,8 +7,9 @@ This module adds CHIP payment method option to your OpenCart 4.0.x.
 ## Installation
 
 * [Download zip file of OpenCart plugin](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FCHIPAsia%2Fchip-for-opencart%2Ftree%2Fmain%2F4.0).
-* Upload the file to your OpenCart installation directory.
-* Log in to your OpenCart admin panel and go: **Extensions** -> **Payments**
+* Rename the downloaded zip file to have ending *.ocmod.zip*
+* Upload to the Extension Installer and Install
+* Navigate to : **Extensions** -> **Payments**
 * Click **Install**, for CHIP Payment Gateway.
 
 ## Configuration
