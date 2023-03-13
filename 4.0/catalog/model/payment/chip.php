@@ -46,6 +46,18 @@ class Chip extends \Opencart\System\Engine\Model {
     return $this->call('GET', "/purchases/{$purchase_id}/");
   }
 
+  public function create_client($params) 
+  {
+    return $this->call('POST', "/clients/", $params);
+  }
+
+  // this is secret feature
+  public function get_client_by_email($email)
+  {
+    $email_encoded = urlencode($email);
+    return $this->call('GET', "/clients/?q={$email_encoded}");
+  }
+
   private function call($method, $route, $params = [])
   {
     $private_key = $this->private_key;

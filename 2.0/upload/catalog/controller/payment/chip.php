@@ -188,6 +188,27 @@ class ControllerPaymentChip extends Controller
 
     $this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
 
+    if ($this->customer->isLogged()) {
+      $client_with_params = $params['client'];
+      unset($params['client']);
+
+      $get_client = $this->model_payment_chip->get_client_by_email($this->customer->getEmail());
+
+      if (array_key_exists('__all__', $get_client)) {
+        $this->session->data['error'] = print_r('Invalid Secret Key', true);
+
+        $this->response->redirect($this->url->link('checkout/checkout', '', 'SSL'));
+      }
+
+      if (is_array($get_client['results']) AND !empty($get_client['results'])) {
+        $client = $get_client['results'][0];
+      } else {
+        $client = $this->model_payment_chip->create_client($client_with_params);
+      }
+
+      $params['client_id'] = $client['id'];
+    }
+
     $purchase = $this->model_payment_chip->create_purchase($params);
 
     if ( !array_key_exists('id', $purchase) ) {
