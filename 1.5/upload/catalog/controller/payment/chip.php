@@ -75,6 +75,37 @@ class ControllerPaymentChip extends Controller
       ),
     );
 
+    $payment_method_whitelist = $this->config->get('chip_payment_method_whitelist');
+    if (is_array($payment_method_whitelist) AND sizeof($payment_method_whitelist) > 0) {
+      $params['payment_method_whitelist'] = $payment_method_whitelist;
+
+      $atome_minimum_unparsed = $this->config->get('chip_atome_minimum');
+      $atome_minimum = preg_replace('/[^0-9]/', '', $atome_minimum_unparsed);
+      if (!empty($atome_minimum)) {
+        if ($params['purchase']['total_override'] < $atome_minimum) {
+          if ($atome_index_path = array_search('razer_atome', $params['payment_method_whitelist'])) {
+            unset($params['payment_method_whitelist'][$atome_index_path]);
+          }
+        }
+      }
+
+      if ($atome_product_whitelist_unparsed = $this->config->get('chip_atome_product_whitelist')) {
+        if (!empty($atome_product_whitelist_unparsed)) {
+          $atome_product_whitelist = explode (",", $atome_product_whitelist_unparsed);
+          if (!empty($atome_product_whitelist)) {
+            foreach ($products as $product) {
+              if (!in_array($product['product_id'], $atome_product_whitelist)) {
+                if ($atome_index_path = array_search('razer_atome', $params['payment_method_whitelist'])) {
+                  unset($params['payment_method_whitelist'][$atome_index_path]);
+                }
+              }
+            }
+          }
+        }
+      }
+      
+    }
+
     if ($this->config->get('chip_disable_success_redirect')) {
       unset($params['success_redirect']);
     }

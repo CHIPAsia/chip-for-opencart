@@ -74,10 +74,38 @@
                             </td>
                         </tr>
                         <tr>
-                        <td><?php echo $entry_general_public_key; ?></td>
-                        <td><textarea cols="50" rows="10" name="chip_general_public_key" readonly><?php echo $chip_general_public_key; ?></textarea>
-                        </td>
-                    </tr>
+                            <td><?php echo $entry_general_public_key; ?></td>
+                            <td><textarea cols="50" rows="10" name="chip_general_public_key" readonly><?php echo $chip_general_public_key; ?></textarea></td>
+                        </tr>
+                        <tr>
+                            <td>Payment Method Whitelist<br /><span class="help">This to control what payment method that will be available on payment page.</span></td>
+                            <td><div class="scrollbox">
+                                <?php $class = 'odd'; ?>
+                                <?php foreach ($chip_available_payment_methods as $payment_method) { ?>
+                                <?php $class = ($class == 'even' ? 'odd' : 'even'); ?>
+                                <div class="<?php echo $class; ?>">
+                                  <?php if (in_array($payment_method, $chip_payment_method_whitelist)) { ?>
+                                  <input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" checked="checked" /><?php echo $payment_method; ?>
+                                  <?php } else { ?>
+                                  <input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" /><?php echo $payment_method; ?>
+                                  <?php } ?>
+                                </div>
+                                <?php } ?>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Atome Minimum Amount (Cent)<br /><span class="help">This to exclude Atome when total amount is less than specified amount. Only works when payment method whitelist is set.</span></td>
+                            <td>
+                                <input size="50" type="number" name="chip_atome_minimum" value="<?php echo $chip_atome_minimum; ?>"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Atome Product Whitelist<br /><span class="help">This to whitelist specific product ID for Atome. Separate product id with comma. Example: 1,2,3. Only works when payment method whitelist is set.</span></td>
+                            <td>
+                                <input size="50" type="text" name="chip_atome_product_whitelist" value="<?php echo $chip_atome_product_whitelist; ?>"/>
+                            </td>
+                        </tr>
                     </table>
                 </div>
 

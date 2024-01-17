@@ -332,6 +332,28 @@ class ControllerPaymentChip extends Controller {
 
     $this->data['webhook'] = HTTPS_CATALOG . 'index.php?route=payment/chip/callback';
 
+    if (isset($this->request->post['chip_payment_method_whitelist'])) {
+      $this->data['chip_payment_method_whitelist'] = $this->request->post['chip_payment_method_whitelist'];
+    } elseif ($this->config->get('chip_payment_method_whitelist')) {
+      $this->data['chip_payment_method_whitelist'] = $this->config->get('chip_payment_method_whitelist');
+    } else {
+      $this->data['chip_payment_method_whitelist'] = array();
+    }
+
+    $this->data['chip_available_payment_methods'] = ['fpx', 'fpx_b2b1', 'mastercard', 'maestro', 'visa', 'razer', 'razer_atome', 'razer_grabpay', 'razer_maybankqr', 'razer_shopeepay', 'razer_tng'];
+
+    if (isset($this->request->post['chip_atome_minimum'])) {
+      $this->data['chip_atome_minimum'] = $this->request->post['chip_atome_minimum'];
+    } else {
+      $this->data['chip_atome_minimum'] = $this->config->get('chip_atome_minimum');
+    }
+
+    if (isset($this->request->post['chip_atome_product_whitelist'])) {
+      $this->data['chip_atome_product_whitelist'] = $this->request->post['chip_atome_product_whitelist'];
+    } else {
+      $this->data['chip_atome_product_whitelist'] = $this->config->get('chip_atome_product_whitelist');
+    }
+
     $this->data['token'] = $this->session->data['token'];
 
     $this->template = 'payment/chip.tpl';
