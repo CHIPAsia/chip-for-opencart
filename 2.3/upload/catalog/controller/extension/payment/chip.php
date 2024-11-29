@@ -73,6 +73,25 @@ class ControllerExtensionPaymentChip extends Controller
       ),
     );
 
+    $params['payment_method_whitelist'] = [];
+    if (($total_override = round($total_override * 100)) > 100) { // Greater than RM 1
+      $params['payment_method_whitelist'][] = 'fpx'; // Add FPX
+    }
+
+    if ($total_override > 10000) { // Greater than RM 100
+      $params['payment_method_whitelist'][] = 'visa'; // Add Visa
+      $params['payment_method_whitelist'][] = 'mastercard'; // Add Mastercard
+      $params['payment_method_whitelist'][] = 'maestro'; // Add Maestro
+    }
+
+    if ($total_override > 30000) {
+      unset($params['payment_method_whitelist']); // Show all
+    }
+
+    if (empty($params['payment_method_whitelist'])) {
+      unset($params['payment_method_whitelist']); // Do not sent empty array to CHIP API as it will get rejected
+    }
+    
     if ($this->config->get('chip_disable_success_redirect')) {
       unset($params['success_redirect']);
     }
