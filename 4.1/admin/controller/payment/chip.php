@@ -163,8 +163,51 @@ class Chip extends \Opencart\System\Engine\Controller {
     $pagination->limit = $limit;
     $pagination->url = $this->url->link('extension/chip/payment/chip', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}');
 
-    $data['pagination'] = $pagination->render();
-    $data['results'] = sprintf($this->language->get('text_pagination'), ($total) ? (($page - 1) * $limit) + 1 : 0, ((($page - 1) * $limit) > ($total - $limit)) ? $total : ((($page - 1) * $limit) + $limit), $total, ceil($total / $limit));
+    $data['report_pagination'] = $pagination->render();
+    $data['report_results'] = sprintf($this->language->get('text_pagination'), ($total) ? (($page - 1) * $limit) + 1 : 0, ((($page - 1) * $limit) > ($total - $limit)) ? $total : ((($page - 1) * $limit) + $limit), $total, ceil($total / $limit));
+
+    // Load tokens with pagination
+    $token_page = isset($this->request->get['token_page']) ? (int)$this->request->get['token_page'] : 1;
+    $token_limit = 10;
+    $token_start = ($token_page - 1) * $token_limit;
+
+    // Get total count for tokens
+    $token_total_query = $this->db->query("SELECT COUNT(*) as total FROM `" . DB_PREFIX . "chip_token`");
+    $token_total = $token_total_query->row['total'];
+
+    // Get paginated tokens
+    $tokens = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token` ORDER BY `date_added` DESC LIMIT " . (int)$token_start . ", " . (int)$token_limit);
+    $data['tokens'] = array();
+    if ($tokens->num_rows) {
+      foreach ($tokens->rows as $token) {
+        $customer_url = $this->url->link('customer/customer', 'user_token=' . $this->session->data['user_token'] . '&customer_id=' . $token['customer_id']);
+        $data['tokens'][] = array(
+          'customer_id' => $token['customer_id'],
+          'customer' => $customer_url,
+          'token_id' => $token['token_id'],
+          'type' => $token['type'],
+          'card_name' => $token['card_name'],
+          'card_number' => $token['card_number'],
+          'card_expire' => $token['card_expire_month'] . '/' . $token['card_expire_year'],
+          'date_added' => date('Y-m-d H:i:s', strtotime($token['date_added']))
+        );
+      }
+    }
+
+    // Pagination for tokens
+    $token_url = '';
+    if (isset($this->request->get['token_page'])) {
+      $token_url .= '&token_page=' . $this->request->get['token_page'];
+    }
+
+    $token_pagination = new \Opencart\System\Library\Pagination();
+    $token_pagination->total = $token_total;
+    $token_pagination->page = $token_page;
+    $token_pagination->limit = $token_limit;
+    $token_pagination->url = $this->url->link('extension/chip/payment/chip', 'user_token=' . $this->session->data['user_token'] . $token_url . '&token_page={page}');
+
+    $data['token_pagination'] = $token_pagination->render();
+    $data['token_results'] = sprintf($this->language->get('text_pagination'), ($token_total) ? (($token_page - 1) * $token_limit) + 1 : 0, ((($token_page - 1) * $token_limit) > ($token_total - $token_limit)) ? $token_total : ((($token_page - 1) * $token_limit) + $token_limit), $token_total, ceil($token_total / $token_limit));
 
     $data['header'] = $this->load->controller('common/header');
     $data['column_left'] = $this->load->controller('common/column_left');
