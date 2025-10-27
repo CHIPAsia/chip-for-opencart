@@ -51,6 +51,7 @@ $_['help_payment_name'] = 'Name that will be displayed on checkout page';
 $_['help_secret_key'] = 'Secret Key can be retrieved from CHIP Collect Dashboard';
 $_['help_brand_id'] = 'Secret Key can be retrieved from CHIP Collect Dashboard';
 $_['help_general_public_key'] = 'This public key will be filled automatically when the secret key is set correctly. It requires no configuration';
+$_['help_geo_zone'] = 'Only customers in the selected geo zone will see this payment method';
 $_['help_due_strict'] = 'This will prevent payment after passing due strict timing. Recommended to set to Yes';
 $_['help_due_strict_timing'] = 'Set due strict timing in minutes. Setting 60 will make the payment timeout in 1 hour. If leave blank, default to 60 minutes';
 $_['help_status'] = 'Whether to enable/disable CHIP payment gateway';
