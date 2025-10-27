@@ -3,7 +3,7 @@
 $_['heading_title'] = 'CHIP  - Better Payment & Business Solutions';
 
 $_['text_extension']   = 'Extensions';
-$_['text_title'] = 'Online Banking / Credit Card / Debit Card (CHIP)';
+$_['text_title'] = 'Online Banking / Credit Card / Debit Card / Duitnow QR (CHIP)';
 $_['text_edit'] = 'Edit CHIP';
 $_['text_success'] = 'Success: You have modified CHIP account details!';
 $_['text_enabled'] = 'Enabled';
