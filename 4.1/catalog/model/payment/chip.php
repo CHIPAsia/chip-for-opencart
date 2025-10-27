@@ -61,6 +61,19 @@ class Chip extends \Opencart\System\Engine\Model {
       WHERE `chip_id` = " . (int)$chip_id);
   }
 
+  public function addToken(array $data): void {
+    $this->db->query("INSERT INTO `" . DB_PREFIX . "chip_token` 
+      (`customer_id`, `token_id`, `type`, `card_name`, `card_number`, `card_expire_month`, `card_expire_year`, `date_added`) 
+      VALUES (" . (int)$data['customer_id'] . ", 
+      '" . $this->db->escape($data['token_id']) . "', 
+      '" . $this->db->escape($data['type']) . "', 
+      '" . $this->db->escape($data['card_name']) . "', 
+      '" . $this->db->escape($data['card_number']) . "', 
+      '" . $this->db->escape($data['card_expire_month']) . "', 
+      '" . $this->db->escape($data['card_expire_year']) . "', 
+      NOW())");
+  }
+
   private function call(string $method, string $route, array $params = []): ?array {
     $private_key = $this->private_key;
     if (!empty($params)) {

@@ -280,6 +280,11 @@ class Chip extends \Opencart\System\Engine\Controller
     // Update chip_report status to paid
     $this->model_extension_chip_payment_chip->updateReportStatus($purchase_id, 'paid');
 
+    // Save token if is_recurring_token is true
+    if (isset($purchase['is_recurring_token']) && $purchase['is_recurring_token'] === true) {
+      $this->saveToken($purchase, $order_info['customer_id']);
+    }
+
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
     exit;
@@ -331,6 +336,11 @@ class Chip extends \Opencart\System\Engine\Controller
 
     // Update chip_report status to paid
     $this->model_extension_chip_payment_chip->updateReportStatus($purchase_id, 'paid');
+
+    // Save token if is_recurring_token is true
+    if (isset($purchase['is_recurring_token']) && $purchase['is_recurring_token'] === true) {
+      $this->saveToken($purchase, $order_info['customer_id']);
+    }
 
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
@@ -393,5 +403,31 @@ class Chip extends \Opencart\System\Engine\Controller
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
     $this->response->redirect($this->url->link('checkout/failure'));
-}
+  }
+
+  private function saveToken(array $purchase, int $customer_id): void {
+    if (!isset($purchase['transaction_data']['extra'])) {
+      return;
+    }
+
+    $extra = $purchase['transaction_data']['extra'];
+
+    // Check if required fields exist
+    if (!isset($extra['card_type']) || !isset($extra['masked_pan']) || 
+        !isset($extra['expiry_month']) || !isset($extra['expiry_year'])) {
+      return;
+    }
+
+    $token_data = array(
+      'customer_id' => $customer_id,
+      'token_id' => $purchase['id'],
+      'type' => $extra['card_type'],
+      'card_name' => isset($extra['cardholder_name']) ? $extra['cardholder_name'] : '',
+      'card_number' => $extra['masked_pan'],
+      'card_expire_month' => $extra['expiry_month'],
+      'card_expire_year' => $extra['expiry_year']
+    );
+
+    $this->model_extension_chip_payment_chip->addToken($token_data);
+  }
 }
