@@ -99,6 +99,11 @@ class Chip extends \Opencart\System\Engine\Controller
       $params['failure_redirect'] = $this->url->link('extension/chip/payment/chip|failure_redirect');
     }
 
+    $payment_method_whitelist = $this->config->get('payment_chip_payment_method_whitelist');
+    if (!empty($payment_method_whitelist)) {
+      $params['payment_method_whitelist'] = $payment_method_whitelist;
+    }
+
     foreach ($products as $product) {
       $product_price = $this->currency->convert($product['price'], $this->config->get('config_currency'), 'MYR');
 

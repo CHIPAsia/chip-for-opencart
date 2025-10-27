@@ -49,6 +49,23 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['payment_chip_disable_success_redirect'] = $this->config->get('payment_chip_disable_success_redirect');
     $data['payment_chip_disable_success_callback'] = $this->config->get('payment_chip_disable_success_callback');
     $data['payment_chip_debug'] = $this->config->get('payment_chip_debug');
+    $data['payment_chip_payment_method_whitelist'] = $this->config->get('payment_chip_payment_method_whitelist');
+
+    $data['payment_methods'] = array(
+      'fpx' => 'FPX',
+      'fpx_b2b1' => 'FPX B2B1',
+      'mastercard' => 'Mastercard',
+      'maestro' => 'Maestro',
+      'visa' => 'Visa',
+      'razer_atome' => 'Razer Atome',
+      'razer_grabpay' => 'Razer Grabpay',
+      'razer_maybankqr' => 'Razer Maybankqr',
+      'razer_shopeepay' => 'Razer Shopeepay',
+      'razer_tng' => 'Razer Tng',
+      'duitnow_qr' => 'Duitnow QR',
+      'mpgs_google_pay' => 'Google Pay',
+      'mpgs_apple_pay' => 'Apple Pay',
+    );
 
     $modified_time_zones = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL);
 
