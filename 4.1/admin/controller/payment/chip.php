@@ -125,6 +125,22 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['payment_chip_canceled_behavior'] = $this->config->get('payment_chip_canceled_behavior');
     $data['payment_chip_failed_behavior'] = $this->config->get('payment_chip_failed_behavior');
 
+    // Load reports
+    $reports = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_report` ORDER BY `date_added` DESC LIMIT 100");
+    $data['reports'] = array();
+    if ($reports->num_rows) {
+      foreach ($reports->rows as $report) {
+        $order_url = $this->url->link('sale/order/info', 'user_token=' . $this->session->data['user_token'] . '&order_id=' . $report['order_id']);
+        $data['reports'][] = array(
+          'order_id' => $report['order_id'],
+          'order' => $order_url,
+          'status' => $report['status'],
+          'amount' => $report['amount'],
+          'date_added' => date('Y-m-d H:i:s', strtotime($report['date_added']))
+        );
+      }
+    }
+
     $data['header'] = $this->load->controller('common/header');
     $data['column_left'] = $this->load->controller('common/column_left');
     $data['footer'] = $this->load->controller('common/footer');

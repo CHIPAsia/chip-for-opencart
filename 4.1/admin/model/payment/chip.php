@@ -9,9 +9,22 @@ class Chip extends \Opencart\System\Engine\Model
   public static $brand_id;
 
   public function install() {
+    $this->db->query("
+      CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "chip_report` (
+        `chip_report_id` int(11) NOT NULL AUTO_INCREMENT,
+        `customer_id` int(11) NOT NULL,
+        `chip_id` int(11) NOT NULL,
+        `order_id` int(11) NOT NULL,
+        `status` varchar(64) NOT NULL,
+        `amount` decimal(15,4) NOT NULL,
+        `date_added` datetime NOT NULL,
+        PRIMARY KEY (`chip_report_id`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+    ");
   }
 
   public function uninstall() {
+    $this->db->query("DROP TABLE IF EXISTS `" . DB_PREFIX . "chip_report`");
   }
 
   public function set_keys($private_key, $brand_id) {

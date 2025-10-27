@@ -19,6 +19,7 @@ $_['tab_order_status'] = 'Order status & behavior';
 $_['tab_miscellaneous'] = 'Miscellaneous';
 $_['tab_checkout'] = 'Customize checkout';
 $_['tab_troubleshoot'] = 'Troubleshoot';
+$_['tab_report'] = 'Report';
 
 $_['behavior_missing_order'] = 'Missing Order';
 $_['behavior_cancel_order'] = 'Cancel Order';
@@ -76,3 +77,9 @@ $_['error_brand_id'] = 'Error! You are required to set Brand ID';
 $_['error_due_strict_timing'] = 'Error! You are required to set Due Strict Timing';
 $_['error_payment_name'] = 'Error! You are required to set Payment Name';
 $_['error_instruction'] = 'Error! You are required to set CHIP Instructions';
+
+$_['column_order'] = 'Order';
+$_['column_status'] = 'Status';
+$_['column_amount'] = 'Amount';
+$_['column_date_added'] = 'Date Added';
+$_['text_no_results'] = 'No Results';
