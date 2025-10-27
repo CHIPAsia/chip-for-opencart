@@ -246,11 +246,14 @@ class Chip extends \Opencart\System\Engine\Controller
     $amount = $params['purchase']['total_override'] / 100;
     $environment_type = isset($purchase['is_test']) && $purchase['is_test'] ? 'staging' : 'production';
 
-    $this->db->query("INSERT INTO `" . DB_PREFIX . "chip_report` 
-      (`customer_id`, `chip_id`, `order_id`, `status`, `amount`, `environment_type`, `date_added`) 
-      VALUES (" . (int)$customer_id . ", " . (int)$chip_id . ", " . (int)$order_id . ", 
-      '" . $this->db->escape($status) . "', '" . (float)$amount . "', 
-      '" . $this->db->escape($environment_type) . "', NOW())");
+    $this->model_extension_chip_payment_chip->addReport(array(
+      'customer_id' => $customer_id,
+      'chip_id' => $chip_id,
+      'order_id' => $order_id,
+      'status' => $status,
+      'amount' => $amount,
+      'environment_type' => $environment_type
+    ));
 
     $json['redirect'] = $purchase['checkout_url'];
 
@@ -298,9 +301,7 @@ class Chip extends \Opencart\System\Engine\Controller
     }
 
     // Update chip_report status to paid
-    $this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
-      SET `status` = 'paid' 
-      WHERE `chip_id` = " . (int)$purchase_id);
+    $this->model_extension_chip_payment_chip->updateReportStatus($purchase_id, 'paid');
 
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
@@ -352,9 +353,7 @@ class Chip extends \Opencart\System\Engine\Controller
     }
 
     // Update chip_report status to paid
-    $this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
-      SET `status` = 'paid' 
-      WHERE `chip_id` = " . (int)$purchase_id);
+    $this->model_extension_chip_payment_chip->updateReportStatus($purchase_id, 'paid');
 
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
@@ -383,9 +382,7 @@ class Chip extends \Opencart\System\Engine\Controller
     }
 
     // Update chip_report status to canceled
-    $this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
-      SET `status` = 'canceled' 
-      WHERE `chip_id` = " . (int)$purchase_id);
+    $this->model_extension_chip_payment_chip->updateReportStatus($purchase_id, 'canceled');
 
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
@@ -414,9 +411,7 @@ class Chip extends \Opencart\System\Engine\Controller
     }
 
     // Update chip_report status to failed
-    $this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
-      SET `status` = 'failed' 
-      WHERE `chip_id` = " . (int)$purchase_id);
+    $this->model_extension_chip_payment_chip->updateReportStatus($purchase_id, 'failed');
 
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 

@@ -58,6 +58,22 @@ class Chip extends \Opencart\System\Engine\Model {
     return $this->call('GET', "/clients/?q={$email_encoded}");
   }
 
+  public function addReport($data)
+  {
+    $this->db->query("INSERT INTO `" . DB_PREFIX . "chip_report` 
+      (`customer_id`, `chip_id`, `order_id`, `status`, `amount`, `environment_type`, `date_added`) 
+      VALUES (" . (int)$data['customer_id'] . ", " . (int)$data['chip_id'] . ", " . (int)$data['order_id'] . ", 
+      '" . $this->db->escape($data['status']) . "', '" . (float)$data['amount'] . "', 
+      '" . $this->db->escape($data['environment_type']) . "', NOW())");
+  }
+
+  public function updateReportStatus($chip_id, $status)
+  {
+    $this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
+      SET `status` = '" . $this->db->escape($status) . "' 
+      WHERE `chip_id` = " . (int)$chip_id);
+  }
+
   private function call($method, $route, $params = [])
   {
     $private_key = $this->private_key;
