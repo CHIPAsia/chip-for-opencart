@@ -37,7 +37,6 @@ class Chip extends \Opencart\System\Engine\Controller {
 
     $data['payment_chip_secret_key'] = $this->config->get('payment_chip_secret_key');
     $data['payment_chip_brand_id'] = $this->config->get('payment_chip_brand_id');
-    $data['payment_chip_public_key'] = $this->config->get('payment_chip_public_key');
     $data['payment_chip_general_public_key'] = $this->config->get('payment_chip_general_public_key');
     $data['payment_chip_due_strict'] = $this->config->get('payment_chip_due_strict');
     $data['payment_chip_due_strict_timing'] = !empty($this->config->get('payment_chip_due_strict_timing')) ? $this->config->get('payment_chip_due_strict_timing') : '60';
@@ -110,8 +109,6 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['payment_chip_canceled_behavior'] = $this->config->get('payment_chip_canceled_behavior');
     $data['payment_chip_failed_behavior'] = $this->config->get('payment_chip_failed_behavior');
 
-    $data['webhook'] = HTTP_CATALOG . 'index.php?route=extension/chip/payment/chip|callback';
-
     $data['header'] = $this->load->controller('common/header');
     $data['column_left'] = $this->load->controller('common/column_left');
     $data['footer'] = $this->load->controller('common/footer');
@@ -154,14 +151,6 @@ class Chip extends \Opencart\System\Engine\Controller {
 
     if (!$this->request->post['payment_chip_brand_id']) {
       $this->json['error']['brand_id'] = $this->language->get('error_brand_id');
-    }
-
-    if ($this->request->post['payment_chip_public_key']) {
-      $public_key_validity = openssl_pkey_get_public($this->request->post['payment_chip_public_key']);
-
-      if (!$public_key_validity) {
-        $this->json['error']['public_key'] = $this->language->get('error_public_key');
-      }
     }
     
     if (!$json) {
