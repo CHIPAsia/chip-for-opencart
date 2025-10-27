@@ -69,34 +69,6 @@
     </div>
     </div>
     <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="input-canceled-behavior"><span data-bs-toggle="tooltip" title="{{ help_canceled_behavior }}" class="col-sm-2 col-form-label">{{ entry_canceled_behavior }}</span></label>
-    <div class="col-sm-10">
-     <select name="payment_chip_canceled_behavior" id="input-canceled-behavior" class="form-control">
-     {% for key, canceled_behavior in canceled_behaviors %}
-      {% if key == payment_chip_canceled_behavior %}
-       <option value="{{ key }}" selected="selected">{{ canceled_behavior }}</option>
-{% else %} 
-       <option value="{{ key }}">{{ canceled_behavior }}</option>
-      {% endif %}
-     {% endfor %}
-     </select>
-    </div>
-    </div>
-    <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="input-failed-behavior"><span data-bs-toggle="tooltip" title="{{ help_failed_behavior }}" class="col-sm-2 col-form-label">{{ entry_failed_behavior }}</span></label>
-    <div class="col-sm-10">
-     <select name="payment_chip_failed_behavior" id="input-failed-behavior" class="form-control">
-     {% for key, failed_behavior in failed_behaviors %}
-      {% if key == payment_chip_failed_behavior %}
-       <option value="{{ key }}" selected="selected">{{ failed_behavior }}</option>
-{% else %} 
-       <option value="{{ key }}">{{ failed_behavior }}</option>
-      {% endif %}
-     {% endfor %}
-     </select>
-    </div>
-    </div>
-    <div class="row mb-3">
     <label class="col-sm-2 col-form-label" for="input-status"><span data-bs-toggle="tooltip" title="{{ help_status }}" class="col-sm-2 col-form-label">{{ entry_status }}</span></label>
     <div class="col-sm-10">
      <div class="form-check form-switch form-switch-lg">
@@ -211,6 +183,35 @@
        <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
 {% else %} 
        <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+      {% endif %}
+     {% endfor %}
+     </select>
+    </div>
+    </div>
+    <hr class="my-4" />
+    <div class="row mb-3">
+    <label class="col-sm-2 col-form-label" for="input-canceled-behavior"><span data-bs-toggle="tooltip" title="{{ help_canceled_behavior }}" class="col-sm-2 col-form-label">{{ entry_canceled_behavior }}</span></label>
+    <div class="col-sm-10">
+     <select name="payment_chip_canceled_behavior" id="input-canceled-behavior" class="form-control">
+     {% for key, canceled_behavior in canceled_behaviors %}
+      {% if key == payment_chip_canceled_behavior %}
+       <option value="{{ key }}" selected="selected">{{ canceled_behavior }}</option>
+{% else %} 
+       <option value="{{ key }}">{{ canceled_behavior }}</option>
+      {% endif %}
+     {% endfor %}
+     </select>
+    </div>
+    </div>
+    <div class="row mb-3">
+    <label class="col-sm-2 col-form-label" for="input-failed-behavior"><span data-bs-toggle="tooltip" title="{{ help_failed_behavior }}" class="col-sm-2 col-form-label">{{ entry_failed_behavior }}</span></label>
+    <div class="col-sm-10">
+     <select name="payment_chip_failed_behavior" id="input-failed-behavior" class="form-control">
+     {% for key, failed_behavior in failed_behaviors %}
+      {% if key == payment_chip_failed_behavior %}
+       <option value="{{ key }}" selected="selected">{{ failed_behavior }}</option>
+{% else %} 
+       <option value="{{ key }}">{{ failed_behavior }}</option>
       {% endif %}
      {% endfor %}
      </select>

@@ -15,7 +15,7 @@ $_['text_payment'] = 'Payment';
 $_['text_chip'] = '<a href="https://www.chip-in.asia/" taget="_blank"><img src="'.HTTP_CATALOG . 'extension/chip/admin/view/image/payment/chip.png" alt="CHIP" title="CHIP" style="height: 14px;" /></a>';
 
 $_['tab_general'] = 'General';
-$_['tab_order_status'] = 'Order status';
+$_['tab_order_status'] = 'Order status & behavior';
 $_['tab_miscellaneous'] = 'Miscellaneous';
 $_['tab_checkout'] = 'Customize checkout';
 $_['tab_troubleshoot'] = 'Troubleshoot';
