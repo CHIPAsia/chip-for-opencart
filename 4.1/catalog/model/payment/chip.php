@@ -26,11 +26,21 @@ class Chip extends \Opencart\System\Engine\Model {
       return [];
     }
 
-    return [
+    $method_data = [
       'code'       => 'chip',
       'title'      => nl2br($this->config->get('payment_chip_payment_name_' . $this->config->get('config_language_id'))),
       'sort_order' => $this->config->get('payment_chip_sort_order')
     ];
+
+    // Get available tokens for the customer
+    if ($this->customer->getId()) {
+      $tokens = $this->getTokens($this->customer->getId());
+      if (!empty($tokens)) {
+        $method_data['option'] = $tokens;
+      }
+    }
+
+    return $method_data;
   }
 
   public function setKeys(string $private_key, string $brand_id): void {
@@ -72,6 +82,27 @@ class Chip extends \Opencart\System\Engine\Model {
       '" . $this->db->escape($data['card_expire_month']) . "', 
       '" . $this->db->escape($data['card_expire_year']) . "', 
       NOW())");
+  }
+
+  public function getTokens(int $customer_id): array {
+    $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token` 
+      WHERE `customer_id` = " . (int)$customer_id . " 
+      ORDER BY `date_added` DESC");
+
+    $tokens = [];
+    if ($query->num_rows) {
+      foreach ($query->rows as $row) {
+        $tokens[] = [
+          'token_id' => $row['token_id'],
+          'type' => $row['type'],
+          'card_name' => $row['card_name'],
+          'card_number' => $row['card_number'],
+          'card_expire' => $row['card_expire_month'] . '/' . $row['card_expire_year']
+        ];
+      }
+    }
+
+    return $tokens;
   }
 
   private function call(string $method, string $route, array $params = []): ?array {

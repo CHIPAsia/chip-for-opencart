@@ -31,11 +31,12 @@ class Chip extends \Opencart\System\Engine\Model
         `type` varchar(64) NOT NULL,
         `card_name` varchar(64) NOT NULL,
         `card_number` varchar(64) NOT NULL,
-        `card_expire_month` varchar(64) NOT NULL,
-        `card_expire_year` varchar(64) NOT NULL,
-        `date_added` datetime NOT NULL,
-        PRIMARY KEY (`chip_token_id`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+      `card_expire_month` varchar(64) NOT NULL,
+      `card_expire_year` varchar(64) NOT NULL,
+      `date_added` datetime NOT NULL,
+      PRIMARY KEY (`chip_token_id`),
+      KEY `customer_id` (`customer_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
     ");
   }
 
