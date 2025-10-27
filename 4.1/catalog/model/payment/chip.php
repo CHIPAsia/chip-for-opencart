@@ -8,29 +8,29 @@ class Chip extends \Opencart\System\Engine\Model {
   public function getMethods(array $address): array {
     $this->load->language('extension/chip/payment/chip');
 
-    $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "zone_to_geo_zone` WHERE `geo_zone_id` = '" . (int)$this->config->get('payment_chip_geo_zone_id') . "' AND `country_id` = '" . (int)$address['country_id'] . "' AND (`zone_id` = '" . (int)$address['zone_id'] . "' OR `zone_id` = '0')");
-
     if ($this->cart->hasSubscription()) {
-      $status = false;
-    } elseif (!$this->config->get('payment_chip_geo_zone_id')) {
-      $status = true;
-    } elseif ($query->num_rows) {
+      return [];
+    }
+
+    $geo_zone_id = $this->config->get('payment_chip_geo_zone_id');
+
+    if (!$geo_zone_id) {
       $status = true;
     } else {
-      $status = false;
+      $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "zone_to_geo_zone` WHERE `geo_zone_id` = '" . (int)$geo_zone_id . "' AND `country_id` = '" . (int)$address['country_id'] . "' AND (`zone_id` = '" . (int)$address['zone_id'] . "' OR `zone_id` = '0')");
+      
+      $status = (bool)$query->num_rows;
     }
 
-    $method_data = [];
-
-    if ($status) {
-      $method_data = [
-        'code'       => 'chip',
-        'title'      => nl2br($this->config->get('payment_chip_payment_name_' . $this->config->get('config_language_id'))),
-        'sort_order' => $this->config->get('payment_chip_sort_order')
-      ];
+    if (!$status) {
+      return [];
     }
 
-    return $method_data;
+    return [
+      'code'       => 'chip',
+      'title'      => nl2br($this->config->get('payment_chip_payment_name_' . $this->config->get('config_language_id'))),
+      'sort_order' => $this->config->get('payment_chip_sort_order')
+    ];
   }
 
   public function setKeys(string $private_key, string $brand_id): void {
