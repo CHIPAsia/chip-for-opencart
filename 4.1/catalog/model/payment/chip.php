@@ -1,15 +1,17 @@
 <?php
 namespace Opencart\Catalog\Model\Extension\Chip\Payment;
+
 class Chip extends \Opencart\System\Engine\Model {
-  private $private_key;
-  private $brand_id;
-  public function getMethod($address): array {
+  private string $private_key;
+  private string $brand_id;
+
+  public function getMethods(array $address): array {
     $this->load->language('extension/chip/payment/chip');
 
-    $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE geo_zone_id = '" . (int)$this->config->get('payment_chip_geo_zone_id') . "' AND country_id = '" . (int)$address['country_id'] . "' AND (zone_id = '" . (int)$address['zone_id'] . "' OR zone_id = '0')");
+    $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "zone_to_geo_zone` WHERE `geo_zone_id` = '" . (int)$this->config->get('payment_chip_geo_zone_id') . "' AND `country_id` = '" . (int)$address['country_id'] . "' AND (`zone_id` = '" . (int)$address['zone_id'] . "' OR `zone_id` = '0')");
 
     if ($this->cart->hasSubscription()) {
-			$status = false;
+      $status = false;
     } elseif (!$this->config->get('payment_chip_geo_zone_id')) {
       $status = true;
     } elseif ($query->num_rows) {
@@ -18,48 +20,42 @@ class Chip extends \Opencart\System\Engine\Model {
       $status = false;
     }
 
-    $method_data = array();
+    $method_data = [];
 
     if ($status) {
-      $method_data = array(
+      $method_data = [
         'code'       => 'chip',
         'title'      => nl2br($this->config->get('payment_chip_payment_name_' . $this->config->get('config_language_id'))),
         'sort_order' => $this->config->get('payment_chip_sort_order')
-      );
+      ];
     }
 
     return $method_data;
   }
 
-  public function set_keys($private_key, $brand_id) {
+  public function setKeys(string $private_key, string $brand_id): void {
     $this->private_key = $private_key;
-    $this->brand_id    = $brand_id;
+    $this->brand_id = $brand_id;
   }
 
-  public function create_purchase($params)
-  {
+  public function createPurchase(array $params): array {
     return $this->call('POST', '/purchases/', $params);
   }
 
-  public function get_purchase($purchase_id)
-  {
+  public function getPurchase(string $purchase_id): array {
     return $this->call('GET', "/purchases/{$purchase_id}/");
   }
 
-  public function create_client($params) 
-  {
-    return $this->call('POST', "/clients/", $params);
+  public function createClient(array $params): array {
+    return $this->call('POST', '/clients/', $params);
   }
 
-  // this is secret feature
-  public function get_client_by_email($email)
-  {
+  public function getClientByEmail(string $email): array {
     $email_encoded = urlencode($email);
     return $this->call('GET', "/clients/?q={$email_encoded}");
   }
 
-  public function addReport($data)
-  {
+  public function addReport(array $data): void {
     $this->db->query("INSERT INTO `" . DB_PREFIX . "chip_report` 
       (`customer_id`, `chip_id`, `order_id`, `status`, `amount`, `environment_type`, `date_added`) 
       VALUES (" . (int)$data['customer_id'] . ", " . (int)$data['chip_id'] . ", " . (int)$data['order_id'] . ", 
@@ -67,15 +63,13 @@ class Chip extends \Opencart\System\Engine\Model {
       '" . $this->db->escape($data['environment_type']) . "', NOW())");
   }
 
-  public function updateReportStatus($chip_id, $status)
-  {
+  public function updateReportStatus(int $chip_id, string $status): void {
     $this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
       SET `status` = '" . $this->db->escape($status) . "' 
       WHERE `chip_id` = " . (int)$chip_id);
   }
 
-  private function call($method, $route, $params = [])
-  {
+  private function call(string $method, string $route, array $params = []): ?array {
     $private_key = $this->private_key;
     if (!empty($params)) {
       $params = json_encode($params);
@@ -103,8 +97,7 @@ class Chip extends \Opencart\System\Engine\Model {
     return $result;
   }
 
-  private function request($method, $url, $params = [], $headers = [])
-  {
+  private function request(string $method, string $url, string $params = '', array $headers = []): string {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
 

@@ -197,13 +197,13 @@ class Chip extends \Opencart\System\Engine\Controller
 
     /* End of shipping information */
 
-    $this->model_extension_chip_payment_chip->set_keys($this->config->get('payment_chip_secret_key'), 'brand-id');
+    $this->model_extension_chip_payment_chip->setKeys($this->config->get('payment_chip_secret_key'), 'brand-id');
 
     if ($this->customer->isLogged()) {
       $client_with_params = $params['client'];
       unset($params['client']);
 
-      $get_client = $this->model_extension_chip_payment_chip->get_client_by_email($this->customer->getEmail());
+      $get_client = $this->model_extension_chip_payment_chip->getClientByEmail($this->customer->getEmail());
 
       if (array_key_exists('__all__', $get_client)) {
         $json['error'] = print_r('Invalid Secret Key', true);
@@ -216,13 +216,13 @@ class Chip extends \Opencart\System\Engine\Controller
       if (is_array($get_client['results']) AND !empty($get_client['results'])) {
         $client = $get_client['results'][0];
       } else {
-        $client = $this->model_extension_chip_payment_chip->create_client($client_with_params);
+        $client = $this->model_extension_chip_payment_chip->createClient($client_with_params);
       }
 
       $params['client_id'] = $client['id'];
     }
 
-    $purchase = $this->model_extension_chip_payment_chip->create_purchase($params);
+    $purchase = $this->model_extension_chip_payment_chip->createPurchase($params);
 
     if ( !array_key_exists('id', $purchase) ) {
       $json['error'] = print_r($purchase, true);
@@ -321,8 +321,8 @@ class Chip extends \Opencart\System\Engine\Controller
     $this->load->model('checkout/order');
     $this->load->model('extension/chip/payment/chip');
 
-    $this->model_extension_chip_payment_chip->set_keys($this->config->get('payment_chip_secret_key'), '');
-    $purchase = $this->model_extension_chip_payment_chip->get_purchase($purchase_id);
+    $this->model_extension_chip_payment_chip->setKeys($this->config->get('payment_chip_secret_key'), '');
+    $purchase = $this->model_extension_chip_payment_chip->getPurchase($purchase_id);
 
     if ( !array_key_exists('id', $purchase) ) {
       $json['error'] = print_r($purchase, true);
