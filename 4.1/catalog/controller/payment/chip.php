@@ -68,7 +68,7 @@ class Chip extends \Opencart\System\Engine\Controller
       'success_redirect' => $this->url->link('extension/chip/payment/chip|success_redirect'),
       'failure_redirect' => $this->url->link('checkout/checkout', 'language=' . $this->config->get('config_language')),
       'cancel_redirect'  => $this->url->link('checkout/cart', 'language=' . $this->config->get('config_language')),
-      'creator_agent'    => 'OC40: 1.0.0',
+      'creator_agent'    => 'OC41: 1.0.0',
       'reference'        => $this->session->data['order_id'],
       'platform'         => 'opencart',
       'due'              => time() + (abs( (int) $this->config->get('payment_chip_due_strict_timing') ) * 60),
@@ -198,29 +198,6 @@ class Chip extends \Opencart\System\Engine\Controller
     /* End of shipping information */
 
     $this->model_extension_chip_payment_chip->setKeys($this->config->get('payment_chip_secret_key'), 'brand-id');
-
-    if ($this->customer->isLogged()) {
-      $client_with_params = $params['client'];
-      unset($params['client']);
-
-      $get_client = $this->model_extension_chip_payment_chip->getClientByEmail($this->customer->getEmail());
-
-      if (array_key_exists('__all__', $get_client)) {
-        $json['error'] = print_r('Invalid Secret Key', true);
-
-        $this->response->addHeader('Content-Type: application/json');
-        $this->response->setOutput(json_encode($json));
-        return;
-      }
-
-      if (is_array($get_client['results']) AND !empty($get_client['results'])) {
-        $client = $get_client['results'][0];
-      } else {
-        $client = $this->model_extension_chip_payment_chip->createClient($client_with_params);
-      }
-
-      $params['client_id'] = $client['id'];
-    }
 
     $purchase = $this->model_extension_chip_payment_chip->createPurchase($params);
 

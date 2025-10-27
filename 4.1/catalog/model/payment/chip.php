@@ -46,14 +46,6 @@ class Chip extends \Opencart\System\Engine\Model {
     return $this->call('GET', "/purchases/{$purchase_id}/");
   }
 
-  public function createClient(array $params): array {
-    return $this->call('POST', '/clients/', $params);
-  }
-
-  public function getClientByEmail(string $email): array {
-    $email_encoded = urlencode($email);
-    return $this->call('GET', "/clients/?q={$email_encoded}");
-  }
 
   public function addReport(array $data): void {
     $this->db->query("INSERT INTO `" . DB_PREFIX . "chip_report` 
