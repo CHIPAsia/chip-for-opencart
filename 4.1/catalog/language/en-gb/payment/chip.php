@@ -21,6 +21,7 @@ $_['error_order_id'] = 'No order ID in the session!';
 $_['error_payment_method'] = 'Payment method is incorrect!';
 
 $_['text_card_use'] = 'Use';
+$_['text_card_new'] = 'New Card';
 
 $_['text_visa'] = 'Visa';
 $_['text_mastercard'] = 'Mastercard';

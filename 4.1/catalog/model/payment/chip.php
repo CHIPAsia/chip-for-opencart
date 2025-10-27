@@ -33,12 +33,21 @@ class Chip extends \Opencart\System\Engine\Model {
     ];
 
     // Get available tokens for the customer
+    $option_data = [];
+    $has_tokens = false;
     if ($this->customer->getId()) {
       $tokens = $this->getTokens($this->customer->getId());
-      if (!empty($tokens)) {
-        $method_data['option'] = $tokens;
-      }
+      $has_tokens = !empty($tokens);
+      $option_data = $tokens;
     }
+
+    // Always add the option to use a new card
+    $option_data['credit_card'] = [
+      'code' => 'credit_card.credit_card',
+      'name' => !$has_tokens ? $this->language->get('text_card_use') : $this->language->get('text_card_new')
+    ];
+
+    $method_data['option'] = $option_data;
 
     return $method_data;
   }
