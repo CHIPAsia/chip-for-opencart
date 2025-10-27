@@ -30,7 +30,6 @@ $_['entry_brand_id'] = 'Brand ID';
 $_['entry_webhook_url'] = 'Webhook URL';
 $_['entry_public_key'] = 'Public Key';
 $_['entry_general_public_key'] = 'General Public Key';
-$_['entry_purchase_send_receipt'] = 'Purchase Send Receipt';
 $_['entry_due_strict'] = 'Purchase Due Strict';
 $_['entry_due_strict_timing'] = 'Purchase Due Strict Timing';
 $_['entry_geo_zone'] = 'Geo Zone:';

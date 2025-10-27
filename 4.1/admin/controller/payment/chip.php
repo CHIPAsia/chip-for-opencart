@@ -39,7 +39,6 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['payment_chip_brand_id'] = $this->config->get('payment_chip_brand_id');
     $data['payment_chip_public_key'] = $this->config->get('payment_chip_public_key');
     $data['payment_chip_general_public_key'] = $this->config->get('payment_chip_general_public_key');
-    $data['payment_chip_purchase_send_receipt'] = $this->config->get('payment_chip_purchase_send_receipt');
     $data['payment_chip_due_strict'] = $this->config->get('payment_chip_due_strict');
     $data['payment_chip_due_strict_timing'] = !empty($this->config->get('payment_chip_due_strict_timing')) ? $this->config->get('payment_chip_due_strict_timing') : '60';
     $data['payment_chip_canceled_order_status_id'] = $this->config->get('payment_chip_canceled_order_status_id');

@@ -71,7 +71,6 @@ class Chip extends \Opencart\System\Engine\Controller
       'creator_agent'    => 'OC40: 1.0.0',
       'reference'        => $this->session->data['order_id'],
       'platform'         => 'opencart',
-      'send_receipt'     => $this->config->get('payment_chip_purchase_send_receipt'),
       'due'              => time() + (abs( (int) $this->config->get('payment_chip_due_strict_timing') ) * 60),
       'brand_id'         => $this->config->get('payment_chip_brand_id'),
       'client'           => [],
