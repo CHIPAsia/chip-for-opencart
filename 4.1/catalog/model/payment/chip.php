@@ -89,20 +89,17 @@ class Chip extends \Opencart\System\Engine\Model {
       WHERE `customer_id` = " . (int)$customer_id . " 
       ORDER BY `date_added` DESC");
 
-    $tokens = [];
+    $option_data = [];
     if ($query->num_rows) {
       foreach ($query->rows as $row) {
-        $tokens[] = [
-          'token_id' => $row['token_id'],
-          'type' => $row['type'],
-          'card_name' => $row['card_name'],
-          'card_number' => $row['card_number'],
-          'card_expire' => $row['card_expire_month'] . '/' . $row['card_expire_year']
+        $option_data[$row['chip_token_id']] = [
+          'code' => 'chip.' . $row['chip_token_id'],
+          'name' => $this->language->get('text_card_use') . ' ' . $this->language->get('text_' . $row['type']) . ' ' . $row['card_number']
         ];
       }
     }
 
-    return $tokens;
+    return $option_data;
   }
 
   private function call(string $method, string $route, array $params = []): ?array {

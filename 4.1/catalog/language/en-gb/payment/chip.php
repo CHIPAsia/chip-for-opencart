@@ -19,3 +19,12 @@ $_['invalid_redirect'] = 'Invalid redirect.';
 
 $_['error_order_id'] = 'No order ID in the session!';
 $_['error_payment_method'] = 'Payment method is incorrect!';
+
+$_['text_card_use'] = 'Use';
+
+$_['text_visa'] = 'Visa';
+$_['text_mastercard'] = 'Mastercard';
+$_['text_amex'] = 'American Express';
+$_['text_discover'] = 'Discover';
+$_['text_jcb'] = 'JCB';
+$_['text_maestro'] = 'Maestro';

@@ -421,7 +421,7 @@ class Chip extends \Opencart\System\Engine\Controller
     $token_data = array(
       'customer_id' => $customer_id,
       'token_id' => $purchase['id'],
-      'type' => $extra['card_type'],
+      'type' => $extra['card_brand'],
       'card_name' => isset($extra['cardholder_name']) ? $extra['cardholder_name'] : '',
       'card_number' => $extra['masked_pan'],
       'card_expire_month' => $extra['expiry_month'],
