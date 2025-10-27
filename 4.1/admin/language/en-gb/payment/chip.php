@@ -16,7 +16,7 @@ $_['text_chip'] = '<a href="https://www.chip-in.asia/" taget="_blank"><img src="
 
 $_['tab_general'] = 'General';
 $_['tab_order_status'] = 'Order status';
-$_['tab_api_details'] = 'API details';
+$_['tab_miscellaneous'] = 'Miscellaneous';
 $_['tab_checkout'] = 'Customize checkout';
 $_['tab_troubleshoot'] = 'Troubleshoot';
 
