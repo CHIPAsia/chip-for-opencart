@@ -83,3 +83,4 @@ $_['column_status'] = 'Status';
 $_['column_amount'] = 'Amount';
 $_['column_date_added'] = 'Date Added';
 $_['text_no_results'] = 'No Results';
+$_['text_pagination'] = 'Showing %d to %d of %d (%d Pages)';

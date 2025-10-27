@@ -125,8 +125,17 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['payment_chip_canceled_behavior'] = $this->config->get('payment_chip_canceled_behavior');
     $data['payment_chip_failed_behavior'] = $this->config->get('payment_chip_failed_behavior');
 
-    // Load reports
-    $reports = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_report` ORDER BY `date_added` DESC LIMIT 100");
+    // Load reports with pagination
+    $page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
+    $limit = 10;
+    $start = ($page - 1) * $limit;
+
+    // Get total count
+    $total_query = $this->db->query("SELECT COUNT(*) as total FROM `" . DB_PREFIX . "chip_report`");
+    $total = $total_query->row['total'];
+
+    // Get paginated reports
+    $reports = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_report` ORDER BY `date_added` DESC LIMIT " . (int)$start . ", " . (int)$limit);
     $data['reports'] = array();
     if ($reports->num_rows) {
       foreach ($reports->rows as $report) {
@@ -140,6 +149,21 @@ class Chip extends \Opencart\System\Engine\Controller {
         );
       }
     }
+
+    // Pagination
+    $url = '';
+    if (isset($this->request->get['page'])) {
+      $url .= '&page=' . $this->request->get['page'];
+    }
+
+    $pagination = new \Opencart\System\Library\Pagination();
+    $pagination->total = $total;
+    $pagination->page = $page;
+    $pagination->limit = $limit;
+    $pagination->url = $this->url->link('extension/chip/payment/chip', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}');
+
+    $data['pagination'] = $pagination->render();
+    $data['results'] = sprintf($this->language->get('text_pagination'), ($total) ? (($page - 1) * $limit) + 1 : 0, ((($page - 1) * $limit) > ($total - $limit)) ? $total : ((($page - 1) * $limit) + $limit), $total, ceil($total / $limit));
 
     $data['header'] = $this->load->controller('common/header');
     $data['column_left'] = $this->load->controller('common/column_left');
