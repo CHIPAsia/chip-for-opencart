@@ -145,6 +145,7 @@ class Chip extends \Opencart\System\Engine\Controller {
           'order' => $order_url,
           'status' => $report['status'],
           'amount' => $report['amount'],
+          'environment_type' => $report['environment_type'],
           'date_added' => date('Y-m-d H:i:s', strtotime($report['date_added']))
         );
       }

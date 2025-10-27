@@ -243,12 +243,14 @@ class Chip extends \Opencart\System\Engine\Controller
     $chip_id = $purchase['id'];
     $order_id = $this->session->data['order_id'];
     $status = isset($purchase['status']) ? $purchase['status'] : 'pending';
-    $amount = $params['purchase']['total_override '] / 100;
+    $amount = $params['purchase']['total_override'] / 100;
+    $environment_type = isset($purchase['is_test']) && $purchase['is_test'] ? 'staging' : 'production';
 
     $this->db->query("INSERT INTO `" . DB_PREFIX . "chip_report` 
-      (`customer_id`, `chip_id`, `order_id`, `status`, `amount`, `date_added`) 
+      (`customer_id`, `chip_id`, `order_id`, `status`, `amount`, `environment_type`, `date_added`) 
       VALUES (" . (int)$customer_id . ", " . (int)$chip_id . ", " . (int)$order_id . ", 
-      '" . $this->db->escape($status) . "', '" . (float)$amount . "', NOW())");
+      '" . $this->db->escape($status) . "', '" . (float)$amount . "', 
+      '" . $this->db->escape($environment_type) . "', NOW())");
 
     $json['redirect'] = $purchase['checkout_url'];
 

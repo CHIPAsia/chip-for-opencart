@@ -81,6 +81,7 @@ $_['error_instruction'] = 'Error! You are required to set CHIP Instructions';
 $_['column_order'] = 'Order';
 $_['column_status'] = 'Status';
 $_['column_amount'] = 'Amount';
+$_['column_environment'] = 'Environment';
 $_['column_date_added'] = 'Date Added';
 $_['text_no_results'] = 'No Results';
 $_['text_pagination'] = 'Showing %d to %d of %d (%d Pages)';

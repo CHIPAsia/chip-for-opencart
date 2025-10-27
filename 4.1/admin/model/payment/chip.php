@@ -17,6 +17,7 @@ class Chip extends \Opencart\System\Engine\Model
         `order_id` int(11) NOT NULL,
         `status` varchar(64) NOT NULL,
         `amount` decimal(15,4) NOT NULL,
+        `environment_type` varchar(32) NOT NULL,
         `date_added` datetime NOT NULL,
         PRIMARY KEY (`chip_report_id`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
