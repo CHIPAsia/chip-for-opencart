@@ -238,6 +238,18 @@ class Chip extends \Opencart\System\Engine\Controller
 
     $this->session->data['chip'] = $purchase;
 
+    // Save to chip_report table
+    $customer_id = isset($this->customer) && $this->customer->isLogged() ? $this->customer->getId() : 0;
+    $chip_id = $purchase['id'];
+    $order_id = $this->session->data['order_id'];
+    $status = isset($purchase['status']) ? $purchase['status'] : 'pending';
+    $amount = $params['purchase']['total_override '] / 100;
+
+    $this->db->query("INSERT INTO `" . DB_PREFIX . "chip_report` 
+      (`customer_id`, `chip_id`, `order_id`, `status`, `amount`, `date_added`) 
+      VALUES (" . (int)$customer_id . ", " . (int)$chip_id . ", " . (int)$order_id . ", 
+      '" . $this->db->escape($status) . "', '" . (float)$amount . "', NOW())");
+
     $json['redirect'] = $purchase['checkout_url'];
 
     $this->response->addHeader('Content-Type: application/json');
@@ -282,6 +294,11 @@ class Chip extends \Opencart\System\Engine\Controller
         $this->model_checkout_order->addHistory($purchase['reference'], $this->config->get('payment_chip_paid_order_status_id'), $this->language->get('test_mode_disclaimer'));
       }
     }
+
+    // Update chip_report status to paid
+    $this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
+      SET `status` = 'paid' 
+      WHERE `chip_id` = " . (int)$purchase_id);
 
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
@@ -332,6 +349,11 @@ class Chip extends \Opencart\System\Engine\Controller
       }
     }
 
+    // Update chip_report status to paid
+    $this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
+      SET `status` = 'paid' 
+      WHERE `chip_id` = " . (int)$purchase_id);
+
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
     $this->response->redirect($this->url->link('checkout/success'));
@@ -357,6 +379,11 @@ class Chip extends \Opencart\System\Engine\Controller
     if ($order_info['order_status_id'] != $this->config->get('payment_chip_canceled_order_status_id')) {
       $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_canceled_order_status_id'), $this->language->get('payment_canceled') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
     }
+
+    // Update chip_report status to canceled
+    $this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
+      SET `status` = 'canceled' 
+      WHERE `chip_id` = " . (int)$purchase_id);
 
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
@@ -384,8 +411,13 @@ class Chip extends \Opencart\System\Engine\Controller
       $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_failed_order_status_id'), $this->language->get('payment_failed') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
     }
 
+    // Update chip_report status to failed
+    $this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
+      SET `status` = 'failed' 
+      WHERE `chip_id` = " . (int)$purchase_id);
+
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
     $this->response->redirect($this->url->link('checkout/failure'));
-  }
+}
 }
