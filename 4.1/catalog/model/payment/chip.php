@@ -71,6 +71,23 @@ class Chip extends \Opencart\System\Engine\Model {
     return $this->call('GET', "/purchases/{$purchase_id}/");
   }
 
+  public function chargeToken(string $purchase_id, string $token_id): array {
+    $params = [
+      'recurring_token' => $token_id
+    ];
+    return $this->call('POST', "/purchases/{$purchase_id}/charge/", $params);
+  }
+
+  public function getTokenByChipTokenId(int $chip_token_id): ?array {
+    $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token` WHERE `chip_token_id` = " . (int)$chip_token_id);
+    
+    if ($query->num_rows) {
+      return $query->row;
+    }
+    
+    return null;
+  }
+
 
   public function addReport(array $data): void {
     $this->db->query("INSERT INTO `" . DB_PREFIX . "chip_report` 
