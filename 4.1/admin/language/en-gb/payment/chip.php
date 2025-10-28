@@ -80,6 +80,7 @@ $_['error_payment_name'] = 'Error! You are required to set Payment Name';
 $_['error_instruction'] = 'Error! You are required to set CHIP Instructions';
 
 $_['column_order'] = 'Order';
+$_['column_chip_id'] = 'Purchase ID';
 $_['column_status'] = 'Status';
 $_['column_amount'] = 'Amount';
 $_['column_environment'] = 'Environment';

@@ -3,6 +3,7 @@
   <thead>
    <tr>
     <th class="text-start">{{ column_order }}</th>
+    <th class="text-start">{{ column_chip_id }}</th>
     <th class="text-start">{{ column_status }}</th>
     <th class="text-start">{{ column_amount }}</th>
     <th class="text-start">{{ column_environment }}</th>
@@ -14,6 +15,7 @@
     {% for report in reports %}
      <tr>
       <td class="text-start"><a href="{{ report.order }}" target="_blank">{{ report.order_id }}</a></td>
+      <td class="text-start">{{ report.chip_id }}</td>
       <td class="text-start">{{ report.status }}</td>
       <td class="text-start">{{ report.amount }}</td>
       <td class="text-start">{{ report.environment_type }}</td>
@@ -22,7 +24,7 @@
     {% endfor %}
    {% else %}
     <tr>
-     <td class="text-center" colspan="5">{{ text_no_results }}</td>
+     <td class="text-center" colspan="6">{{ text_no_results }}</td>
     </tr>
    {% endif %}
   </tbody>

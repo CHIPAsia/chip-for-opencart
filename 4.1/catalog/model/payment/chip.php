@@ -27,6 +27,7 @@ class Chip extends \Opencart\System\Engine\Model {
     }
 
     $method_data = [
+      'name'       => $this->language->get('heading_title'),
       'code'       => 'chip',
       'title'      => nl2br($this->config->get('payment_chip_payment_name_' . $this->config->get('config_language_id'))),
       'sort_order' => $this->config->get('payment_chip_sort_order')
@@ -39,14 +40,14 @@ class Chip extends \Opencart\System\Engine\Model {
       $tokens = $this->getTokens($this->customer->getId());
       
       // Always add the option to use a new card
-      $option_data['chip_token'] = [
-        'code' => 'chip_token.chip_token',
-        'name' => $this->language->get('text_card_use')
+      $option_data['chip'] = [
+        'code' => 'chip.chip',
+        'name' => nl2br($this->config->get('payment_chip_payment_name_' . $this->config->get('config_language_id')))
       ];
 
       foreach ($tokens as $token) {
         $option_data[$token['chip_token_id']] = [
-          'code' => 'chip_token.' . $token['chip_token_id'],
+          'code' => 'chip.' . $token['chip_token_id'],
           'name' => $this->language->get('text_card_use') . ' ' . $this->language->get('text_' . $token['type']) . ' ' . $token['card_number']
         ];
       }
@@ -74,15 +75,25 @@ class Chip extends \Opencart\System\Engine\Model {
   public function addReport(array $data): void {
     $this->db->query("INSERT INTO `" . DB_PREFIX . "chip_report` 
       (`customer_id`, `chip_id`, `order_id`, `status`, `amount`, `environment_type`, `date_added`) 
-      VALUES (" . (int)$data['customer_id'] . ", " . (int)$data['chip_id'] . ", " . (int)$data['order_id'] . ", 
+      VALUES (" . (int)$data['customer_id'] . ", '" . $this->db->escape($data['chip_id']) . "', " . (int)$data['order_id'] . ", 
       '" . $this->db->escape($data['status']) . "', '" . (float)$data['amount'] . "', 
       '" . $this->db->escape($data['environment_type']) . "', NOW())");
   }
 
-  public function updateReportStatus(int $chip_id, string $status): void {
+  public function updateReportStatus(string $chip_id, string $status): void {
     $this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
       SET `status` = '" . $this->db->escape($status) . "' 
-      WHERE `chip_id` = " . (int)$chip_id);
+      WHERE `chip_id` = '" . $this->db->escape($chip_id) . "'");
+  }
+
+  public function getReportByOrderId(int $order_id): ?array {
+    $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_report` WHERE `order_id` = " . (int)$order_id . " ORDER BY `date_added` DESC LIMIT 1");
+    
+    if ($query->num_rows) {
+      return $query->row;
+    }
+    
+    return null;
   }
 
   public function addToken(array $data): void {
@@ -108,7 +119,7 @@ class Chip extends \Opencart\System\Engine\Model {
 
   private function call(string $method, string $route, array $params = []): ?array {
     $private_key = $this->private_key;
-    if (!empty($params)) {
+    if (!empty($params) || is_array($params)) {
       $params = json_encode($params);
     }
 

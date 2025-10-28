@@ -1,5 +1,6 @@
 <?php
 
+$_['heading_title']    = 'CHIP';
 $_['text_instruction'] = 'CHIP Collect Instruction';
 
 $_['pending_myr_setup'] = 'CHIP requires MYR currency to be set-up.';

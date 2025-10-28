@@ -8,10 +8,6 @@ class Chip extends \Opencart\System\Engine\Controller
     $data['payment_chip_allow_instruction'] = $this->config->get('payment_chip_allow_instruction');
     $data['payment_chip_instruction'] = nl2br($this->config->get('payment_chip_instruction_' . $this->config->get('config_language_id')));
 
-    /**
-     * if there is any other chip session data, clear it
-     */
-    unset($this->session->data['chip']);
 
     if (isset($this->session->data['payment_method'])) {
 			// $data['logged'] = $this->customer->isLogged();
@@ -27,7 +23,7 @@ class Chip extends \Opencart\System\Engine\Controller
 			}
 
 			// Card storage
-			if ($this->session->data['payment_method']['code'] == 'chip_token.chip_token') {
+			if ($this->session->data['payment_method']['code'] == 'chip.chip') {
 				return $this->load->view('extension/chip/payment/chip', $data);
 			} else {
 				$data['text_title'] = $this->session->data['payment_method']['name'];
@@ -51,7 +47,7 @@ class Chip extends \Opencart\System\Engine\Controller
       return;
     }
 
-    if (!isset($this->session->data['payment_method']) || $this->session->data['payment_method'] != 'chip') {
+    if (!isset($this->session->data['payment_method']) || $this->session->data['payment_method']['code'] != 'chip.chip') {
       $json['error'] = $this->language->get('error_payment_method');
       $this->response->addHeader('Content-Type: application/json');
 		  $this->response->setOutput(json_encode($json));
@@ -86,9 +82,12 @@ class Chip extends \Opencart\System\Engine\Controller
       $total_override = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
     }
 
+    $success_callback_url = $this->url->link('extension/chip/payment/chip.success_callback') . (strpos($this->url->link('extension/chip/payment/chip.success_callback'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
+    $success_redirect_url = $this->url->link('extension/chip/payment/chip.success_redirect') . (strpos($this->url->link('extension/chip/payment/chip.success_redirect'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
+
     $params = array(
-      'success_callback' => $this->url->link('extension/chip/payment/chip|success_callback'),
-      'success_redirect' => $this->url->link('extension/chip/payment/chip|success_redirect'),
+      'success_callback' => $success_callback_url,
+      'success_redirect' => $success_redirect_url,
       'failure_redirect' => $this->url->link('checkout/checkout', 'language=' . $this->config->get('config_language')),
       'cancel_redirect'  => $this->url->link('checkout/cart', 'language=' . $this->config->get('config_language')),
       'creator_agent'    => 'OC41: 1.0.0',
@@ -115,11 +114,13 @@ class Chip extends \Opencart\System\Engine\Controller
     }
 
     if ($this->config->get('payment_chip_canceled_behavior') == 'cancel_order') {
-      $params['cancel_redirect'] = $this->url->link('extension/chip/payment/chip|cancel_redirect');
+      $cancel_redirect_url = $this->url->link('extension/chip/payment/chip.cancel_redirect') . (strpos($this->url->link('extension/chip/payment/chip.cancel_redirect'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
+      $params['cancel_redirect'] = $cancel_redirect_url;
     }
 
     if ($this->config->get('payment_chip_failed_behavior') == 'fail_order') {
-      $params['failure_redirect'] = $this->url->link('extension/chip/payment/chip|failure_redirect');
+      $failure_redirect_url = $this->url->link('extension/chip/payment/chip.failure_redirect') . (strpos($this->url->link('extension/chip/payment/chip.failure_redirect'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
+      $params['failure_redirect'] = $failure_redirect_url;
     }
 
     $payment_method_whitelist = $this->config->get('payment_chip_payment_method_whitelist');
@@ -236,12 +237,10 @@ class Chip extends \Opencart\System\Engine\Controller
       return;
     }
 
-    $this->session->data['chip'] = $purchase;
-
     // Save to chip_report table
-    $customer_id = isset($this->customer) && $this->customer->isLogged() ? $this->customer->getId() : 0;
+    $customer_id = $order_info['customer_id'];
     $chip_id = $purchase['id'];
-    $order_id = $this->session->data['order_id'];
+    $order_id = $order_info['order_id'];
     $status = isset($purchase['status']) ? $purchase['status'] : 'pending';
     $amount = $params['purchase']['total_override'] / 100;
     $environment_type = isset($purchase['is_test']) && $purchase['is_test'] ? 'staging' : 'production';
@@ -316,12 +315,22 @@ class Chip extends \Opencart\System\Engine\Controller
   public function success_redirect() {
     $this->language->load('extension/chip/payment/chip');
 
-    if (!isset($this->session->data['chip'])) {
+    // Get order_id from request parameter
+    if (!isset($this->request->get['order_id'])) {
       exit($this->language->get('invalid_redirect'));
     }
 
-    $purchase_id = $this->session->data['chip']['id'];
-    $order_id = $this->session->data['chip']['reference'];
+    $order_id = (int)$this->request->get['order_id'];
+
+    // Load model and get report data
+    $this->load->model('extension/chip/payment/chip');
+    $report = $this->model_extension_chip_payment_chip->getReportByOrderId($order_id);
+
+    if (!$report) {
+      exit($this->language->get('invalid_redirect'));
+    }
+
+    $purchase_id = $report['chip_id'];
 
     $this->load->model('checkout/order');
     $this->load->model('extension/chip/payment/chip');
@@ -336,14 +345,13 @@ class Chip extends \Opencart\System\Engine\Controller
         $this->log->write('CHIP API /purchase/'.$purchase_id. '/ failed for order #' . $order_id . '. Response Body: ' . json_encode($purchase));
       }
 
-      $this->response->redirect($this->session->data['chip']['checkout_url'] . 'receipt/');
+      $this->response->redirect($this->url->link('checkout/failure'));
     }
 
     if ($purchase['status'] != 'paid') {
+      echo '<pre>' . print_r($purchase, true) . '</pre>';
       exit;
     }
-
-    unset($this->session->data['chip']);
 
     $this->db->query("SELECT GET_LOCK('payment_chip_payment_$purchase_id', 15);");
 
@@ -373,16 +381,23 @@ class Chip extends \Opencart\System\Engine\Controller
   public function cancel_redirect() {
     $this->load->language('extension/chip/payment/chip');
 
-    if (!isset($this->session->data['chip'])) {
+    // Get order_id from request parameter
+    if (!isset($this->request->get['order_id'])) {
       exit($this->language->get('invalid_redirect'));
     }
 
-    $purchase_id = $this->session->data['chip']['id'];
-    $order_id = $this->session->data['chip']['reference'];
+    $order_id = (int)$this->request->get['order_id'];
 
+    // Load model and get report data
+    $this->load->model('extension/chip/payment/chip');
+    $report = $this->model_extension_chip_payment_chip->getReportByOrderId($order_id);
+
+    if (!$report) {
+      exit($this->language->get('invalid_redirect'));
+    }
+
+    $purchase_id = $report['chip_id'];
     $this->load->model('checkout/order');
-
-    unset($this->session->data['chip']);
 
     $this->db->query("SELECT GET_LOCK('payment_chip_payment_$purchase_id', 15);");
 
@@ -402,16 +417,23 @@ class Chip extends \Opencart\System\Engine\Controller
   public function failure_redirect() {
     $this->load->language('extension/chip/payment/chip');
 
-    if (!isset($this->session->data['chip'])) {
+    // Get order_id from request parameter
+    if (!isset($this->request->get['order_id'])) {
       exit($this->language->get('invalid_redirect'));
     }
 
-    $purchase_id = $this->session->data['chip']['id'];
-    $order_id = $this->session->data['chip']['reference'];
+    $order_id = (int)$this->request->get['order_id'];
 
+    // Load model and get report data
+    $this->load->model('extension/chip/payment/chip');
+    $report = $this->model_extension_chip_payment_chip->getReportByOrderId($order_id);
+
+    if (!$report) {
+      exit($this->language->get('invalid_redirect'));
+    }
+
+    $purchase_id = $report['chip_id'];
     $this->load->model('checkout/order');
-
-    unset($this->session->data['chip']);
 
     $this->db->query("SELECT GET_LOCK('payment_chip_payment_$purchase_id', 15);");
 

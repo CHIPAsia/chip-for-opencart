@@ -32,7 +32,7 @@ class Chip extends \Opencart\System\Engine\Controller {
       'href'      => $this->url->link('extension/chip/payment/chip', 'user_token=' . $this->session->data['user_token']),
     );
 
-    $data['save'] = $this->url->link('extension/chip/payment/chip|save', 'user_token=' . $this->session->data['user_token']);
+    $data['save'] = $this->url->link('extension/chip/payment/chip.save', 'user_token=' . $this->session->data['user_token']);
     $data['back'] = $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment');
 
     $data['payment_chip_secret_key'] = $this->config->get('payment_chip_secret_key');
@@ -125,6 +125,9 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['payment_chip_canceled_behavior'] = $this->config->get('payment_chip_canceled_behavior');
     $data['payment_chip_failed_behavior'] = $this->config->get('payment_chip_failed_behavior');
 
+    $data['report'] = $this->getReport();
+    $data['token'] = $this->getToken();
+
     $data['header'] = $this->load->controller('common/header');
     $data['column_left'] = $this->load->controller('common/column_left');
     $data['footer'] = $this->load->controller('common/footer');
@@ -210,7 +213,7 @@ class Chip extends \Opencart\System\Engine\Controller {
     return true;
   }
 
-  public function getReport(): void {
+  public function getReport(): string {
     $page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
     $limit = $this->config->get('config_pagination_admin');
     $start = ($page - 1) * $limit;
@@ -226,10 +229,11 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['reports'] = array();
     if ($reports->num_rows) {
       foreach ($reports->rows as $report) {
-        $order_url = $this->url->link('sale/order/info', 'user_token=' . $this->session->data['user_token'] . '&order_id=' . $report['order_id']);
+        $order_url = $this->url->link('sale/order.info', 'user_token=' . $this->session->data['user_token'] . '&order_id=' . $report['order_id']);
         $data['reports'][] = array(
           'order_id' => $report['order_id'],
           'order' => $order_url,
+          'chip_id' => $report['chip_id'],
           'status' => $report['status'],
           'amount' => $report['amount'],
           'environment_type' => $report['environment_type'],
@@ -249,16 +253,17 @@ class Chip extends \Opencart\System\Engine\Controller {
     // Load language
     $this->load->language('extension/chip/payment/chip');
     $data['column_order'] = $this->language->get('column_order');
+    $data['column_chip_id'] = $this->language->get('column_chip_id');
     $data['column_status'] = $this->language->get('column_status');
     $data['column_amount'] = $this->language->get('column_amount');
     $data['column_environment'] = $this->language->get('column_environment');
     $data['column_date_added'] = $this->language->get('column_date_added');
     $data['text_no_results'] = $this->language->get('text_no_results');
 
-    $this->response->setOutput($this->load->view('extension/chip/payment/chip_report', $data));
+    return $this->load->view('extension/chip/payment/chip_report', $data);
   }
 
-  public function getToken(): void {
+  public function getToken(): string {
     $page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
     $limit = $this->config->get('config_pagination_admin');
     $start = ($page - 1) * $limit;
@@ -307,6 +312,6 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['column_date_added'] = $this->language->get('column_date_added');
     $data['text_no_results'] = $this->language->get('text_no_results');
 
-    $this->response->setOutput($this->load->view('extension/chip/payment/chip_token', $data));
+    return $this->load->view('extension/chip/payment/chip_token', $data);
   }
 }

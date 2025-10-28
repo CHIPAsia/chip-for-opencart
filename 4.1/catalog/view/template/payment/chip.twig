@@ -10,13 +10,13 @@
   </div>
 </fieldset>
 <script type="text/javascript"><!--
-$('#button-confirm').on('click', function () {
+$('#button-confirm').on('click', function (e) {
   e.preventDefault();
   
   var element = this;
 
   $.ajax({
-    url: 'index.php?route=extension/chip/payment/chip|create_purchase',
+    url: 'index.php?route=extension/chip/payment/chip.create_purchase',
     dataType: 'json',
     cache: false,
     beforeSend: function () {
