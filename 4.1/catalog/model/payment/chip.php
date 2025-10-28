@@ -37,15 +37,20 @@ class Chip extends \Opencart\System\Engine\Model {
     $has_tokens = false;
     if ($this->customer->getId()) {
       $tokens = $this->getTokens($this->customer->getId());
-      $has_tokens = !empty($tokens);
-      $option_data = $tokens;
-    }
+      
+      // Always add the option to use a new card
+      $option_data['chip_token'] = [
+        'code' => 'chip_token.chip_token',
+        'name' => $this->language->get('text_card_use')
+      ];
 
-    // Always add the option to use a new card
-    $option_data['credit_card'] = [
-      'code' => 'credit_card.credit_card',
-      'name' => !$has_tokens ? $this->language->get('text_card_use') : $this->language->get('text_card_new')
-    ];
+      foreach ($tokens as $token) {
+        $option_data[$token['chip_token_id']] = [
+          'code' => 'chip_token.' . $token['chip_token_id'],
+          'name' => $this->language->get('text_card_use') . ' ' . $this->language->get('text_' . $token['type']) . ' ' . $token['card_number']
+        ];
+      }
+    }
 
     $method_data['option'] = $option_data;
 
@@ -98,17 +103,7 @@ class Chip extends \Opencart\System\Engine\Model {
       WHERE `customer_id` = " . (int)$customer_id . " 
       ORDER BY `date_added` DESC");
 
-    $option_data = [];
-    if ($query->num_rows) {
-      foreach ($query->rows as $row) {
-        $option_data[$row['chip_token_id']] = [
-          'code' => 'chip.' . $row['chip_token_id'],
-          'name' => $this->language->get('text_card_use') . ' ' . $this->language->get('text_' . $row['type']) . ' ' . $row['card_number']
-        ];
-      }
-    }
-
-    return $option_data;
+    return $query->rows;
   }
 
   private function call(string $method, string $route, array $params = []): ?array {

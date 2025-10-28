@@ -273,10 +273,16 @@
     </div>
    </div>
    <div class="tab-pane" id="tab-report">
-    {{ include('extension/chip/payment/chip_report.twig') }}
+    <fieldset>
+     <legend>{{ tab_report }}</legend>
+     <div id="report">{{ reports }}</div>
+    </fieldset>
    </div>
    <div class="tab-pane" id="tab-token">
-    {{ include('extension/chip/payment/chip_token.twig') }}
+    <fieldset>
+     <legend>{{ tab_token }}</legend>
+     <div id="token">{{ tokens }}</div>
+    </fieldset>
    </div>
    </div>
   </form>

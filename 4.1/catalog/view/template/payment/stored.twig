@@ -1,22 +1,18 @@
 <fieldset>
-  {% if payment_chip_allow_instruction %}
-    <legend>{{ text_instruction }}</legend>
-    <div class="border rounded p-3 mb-3">
-      <p>{{ payment_chip_instruction }}</p>
-    </div>
-  {% endif %}
-  <div class="d-inline-block pt-2 pd-2 w-100 text-end">
+  <legend>{{ text_title }}</legend>
+  <div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation"></i> {{ text_description }}</div>
+  <div class="text-end">
     <button type="button" id="button-confirm" class="btn btn-primary">{{ button_confirm }}</button>
   </div>
 </fieldset>
 <script type="text/javascript"><!--
 $('#button-confirm').on('click', function () {
   e.preventDefault();
-  
+
   var element = this;
 
   $.ajax({
-    url: 'index.php?route=extension/chip/payment/chip|create_purchase',
+    url: 'index.php?route=extension/chip/payment/chip.create_purchase_stored',
     dataType: 'json',
     cache: false,
     beforeSend: function () {
