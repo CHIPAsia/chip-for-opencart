@@ -498,10 +498,10 @@ class Chip extends \Opencart\System\Engine\Controller
       $this->response->addHeader('Content-Type: application/json');
       $this->response->setOutput(json_encode($json));
       return;
+    } else {
+      // Charge the stored token
+      $charge_response = $this->model_extension_chip_payment_chip->chargeToken($chip_id, $token_data['token_id']);
     }
-
-    // Charge the stored token
-    $charge_response = $this->model_extension_chip_payment_chip->chargeToken($chip_id, $token_data['token_id']);
 
     $json['redirect'] = $purchase['checkout_url'];
 
