@@ -279,7 +279,7 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['tokens'] = array();
     if ($tokens->num_rows) {
       foreach ($tokens->rows as $token) {
-        $customer_url = $this->url->link('customer/customer', 'user_token=' . $this->session->data['user_token'] . '&customer_id=' . $token['customer_id']);
+        $customer_url = $this->url->link('customer/customer.form', 'user_token=' . $this->session->data['user_token'] . '&customer_id=' . $token['customer_id']);
         $data['tokens'][] = array(
           'customer_id' => $token['customer_id'],
           'customer' => $customer_url,
