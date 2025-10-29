@@ -79,6 +79,34 @@ class Chip extends \Opencart\System\Engine\Controller {
     
     $data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
 
+    // Find Failed order status ID for default value and set it if not already configured
+    $failed_order_status_id = null;
+    foreach ($data['order_statuses'] as $order_status) {
+      if (strtolower($order_status['name']) === 'failed') {
+        $failed_order_status_id = $order_status['order_status_id'];
+        break;
+      }
+    }
+    
+    // Set default for Failed Order Status if not already set
+    if (empty($data['payment_chip_failed_order_status_id']) && $failed_order_status_id) {
+      $data['payment_chip_failed_order_status_id'] = $failed_order_status_id;
+    }
+
+    // Find Processing order status ID for default value and set it if not already configured
+    $processing_order_status_id = null;
+    foreach ($data['order_statuses'] as $order_status) {
+      if (strtolower($order_status['name']) === 'processing') {
+        $processing_order_status_id = $order_status['order_status_id'];
+        break;
+      }
+    }
+    
+    // Set default for Paid Order Status if not already set
+    if (empty($data['payment_chip_paid_order_status_id']) && $processing_order_status_id) {
+      $data['payment_chip_paid_order_status_id'] = $processing_order_status_id;
+    }
+
     $complete_order_status_ids = $this->config->get('config_complete_status');
 
     foreach($data['order_statuses'] as $order_status){
