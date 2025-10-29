@@ -237,54 +237,11 @@ class Chip extends \Opencart\System\Engine\Controller {
 			return;
 		}
 
+		// Store purchase ID in session
+		$this->session->data['chip_add_card_purchase_id'] = $purchase['id'];
+
 		// Redirect to checkout URL
 		$this->response->redirect($purchase['checkout_url']);
-	}
-
-	/**
-	 * Success callback for adding payment method
-	 */
-	public function success_callback(): void {
-		$this->load->model('extension/chip/payment/chip');
-
-		$public_key = $this->config->get('payment_chip_general_public_key');
-
-		if (!isset($this->request->server['HTTP_X_SIGNATURE'])) {
-			http_response_code(400);
-			exit('No HTTP_X_SIGNATURE detected');
-		}
-
-		$HTTP_X_SIGNATURE = $this->request->server['HTTP_X_SIGNATURE'];
-		$purchase_json = file_get_contents('php://input');
-
-		if (openssl_verify($purchase_json, base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption') != 1) {
-			http_response_code(401);
-			exit('Invalid signature');
-		}
-
-		$purchase = json_decode($purchase_json, true);
-
-		if ($purchase['status'] != 'preauthorized') {
-			http_response_code(200);
-			exit;
-		}
-
-		$purchase_id = $purchase['id'];
-
-		// Get customer ID from reference (we used customer_id as reference)
-		$customer_id = $purchase['reference'];
-
-		$this->db->query("SELECT GET_LOCK('payment_chip_add_card_$purchase_id', 15);");
-
-		// Save token if available
-		if (isset($purchase['is_recurring_token']) && $purchase['is_recurring_token'] === true) {
-			$this->saveToken($purchase, $customer_id);
-		}
-
-		$this->db->query("SELECT RELEASE_LOCK('payment_chip_add_card_$purchase_id');");
-
-		http_response_code(200);
-		exit;
 	}
 
 	/**
@@ -295,6 +252,52 @@ class Chip extends \Opencart\System\Engine\Controller {
 			$this->response->redirect($this->url->link('account/login', 'language=' . $this->config->get('config_language'), true));
 			return;
 		}
+
+		// Get purchase ID from session
+		if (!isset($this->session->data['chip_add_card_purchase_id'])) {
+			$this->response->redirect($this->url->link('account/payment_method', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token'], true));
+			return;
+		}
+
+		$purchase_id = $this->session->data['chip_add_card_purchase_id'];
+
+		// Load model and get purchase details from CHIP API
+		$this->load->model('extension/chip/payment/chip');
+		$this->model_extension_chip_payment_chip->setKeys($this->config->get('payment_chip_secret_key'), '');
+		$purchase = $this->model_extension_chip_payment_chip->getPurchase($purchase_id);
+
+		if (!array_key_exists('id', $purchase)) {
+			if ($this->config->get('payment_chip_debug')) {
+				$this->log->write('CHIP API /purchase/' . $purchase_id . '/ failed in add card flow. Response Body: ' . json_encode($purchase));
+			}
+			// Clear session and redirect
+			unset($this->session->data['chip_add_card_purchase_id']);
+			$this->response->redirect($this->url->link('account/payment_method', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token'], true));
+			return;
+		}
+
+		// Check if purchase is preauthorized (expected status for add card flow)
+		if ($purchase['status'] != 'preauthorized') {
+			// Clear session and redirect
+			unset($this->session->data['chip_add_card_purchase_id']);
+			$this->response->redirect($this->url->link('account/payment_method', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token'], true));
+			return;
+		}
+
+		$this->db->query("SELECT GET_LOCK('payment_chip_add_card_$purchase_id', 15);");
+
+		// Get customer ID from reference (we used customer_id as reference)
+		$customer_id = $purchase['reference'];
+
+		// Save token if available
+		if (isset($purchase['is_recurring_token']) && $purchase['is_recurring_token'] === true) {
+			$this->saveToken($purchase, $customer_id);
+		}
+
+		$this->db->query("SELECT RELEASE_LOCK('payment_chip_add_card_$purchase_id');");
+
+		// Clear session
+		unset($this->session->data['chip_add_card_purchase_id']);
 
 		// Redirect to payment method page
 		$redirect_url = $this->url->link('account/payment_method', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token'], true);
