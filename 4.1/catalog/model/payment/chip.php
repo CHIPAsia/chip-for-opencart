@@ -134,6 +134,24 @@ class Chip extends \Opencart\System\Engine\Model {
     return $query->rows;
   }
 
+  public function getToken(int $customer_id, int $chip_token_id): ?array {
+    $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token` 
+      WHERE `customer_id` = " . (int)$customer_id . " 
+      AND `chip_token_id` = " . (int)$chip_token_id);
+    
+    if ($query->num_rows) {
+      return $query->row;
+    }
+    
+    return null;
+  }
+
+  public function deleteToken(int $customer_id, int $chip_token_id): void {
+    $this->db->query("DELETE FROM `" . DB_PREFIX . "chip_token` 
+      WHERE `customer_id` = " . (int)$customer_id . " 
+      AND `chip_token_id` = " . (int)$chip_token_id);
+  }
+
   private function call(string $method, string $route, array $params = []): ?array {
     $private_key = $this->private_key;
     if (!empty($params) || is_array($params)) {
