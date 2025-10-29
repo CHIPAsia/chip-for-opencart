@@ -11,7 +11,6 @@ class Chip extends \Opencart\System\Engine\Controller
 
     if (isset($this->session->data['payment_method'])) {
 			// $data['logged'] = $this->customer->isLogged();
-			// $data['subscription'] = $this->cart->hasSubscription();
 
 			$data['types'] = [];
 
@@ -217,6 +216,10 @@ class Chip extends \Opencart\System\Engine\Controller
 
     if (!empty($order_info['shipping_iso_code_2'])) {
       $params['client']['shipping_country'] = $order_info['shipping_iso_code_2'];
+    }
+
+    if ($this->cart->hasSubscription()) {
+      $params['force_recurring'] = true;
     }
 
     /* End of shipping information */
@@ -511,6 +514,7 @@ class Chip extends \Opencart\System\Engine\Controller
 
   public function success_callback() {
     $this->load->model('checkout/order');
+    $this->load->model('extension/chip/payment/chip');
     $this->language->load('extension/chip/payment/chip');
 
     $public_key = $this->config->get('payment_chip_general_public_key');
@@ -555,6 +559,9 @@ class Chip extends \Opencart\System\Engine\Controller
     if (isset($purchase['is_recurring_token']) && $purchase['is_recurring_token'] === true) {
       $this->saveToken($purchase, $order_info['customer_id']);
     }
+
+    // Create subscription if order contains subscription products
+    $this->createSubscription($purchase['reference']);
 
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
@@ -621,6 +628,9 @@ class Chip extends \Opencart\System\Engine\Controller
     if (isset($purchase['is_recurring_token']) && $purchase['is_recurring_token'] === true) {
       $this->saveToken($purchase, $order_info['customer_id']);
     }
+
+    // Create subscription if order contains subscription products
+    $this->createSubscription($order_id);
 
     $this->db->query("SELECT RELEASE_LOCK('payment_chip_payment_$purchase_id');");
 
@@ -723,5 +733,73 @@ class Chip extends \Opencart\System\Engine\Controller
     );
 
     $this->model_extension_chip_payment_chip->addToken($token_data);
+  }
+
+  private function createSubscription(int $order_id): void {
+    $this->load->model('checkout/subscription');
+    $this->load->model('catalog/product');
+    $this->load->model('extension/chip/payment/chip');
+    
+    $order_info = $this->model_checkout_order->getOrder($order_id);
+    $order_products = $this->model_checkout_order->getProducts($order_id);
+    
+    foreach ($order_products as $order_product) {
+      $product_info = $this->model_catalog_product->getProduct($order_product['product_id']);
+      
+      // Check if product has subscription
+      if (!empty($product_info['subscription'])) {
+        $subscription_plan_id = $product_info['subscription'];
+        
+        // Get subscription plan details
+        $subscription_plan_info = $this->model_catalog_product->getSubscription($subscription_plan_id);
+        
+        if ($subscription_plan_info) {
+          // Determine payment method - use order's payment method if it's CHIP, otherwise get customer's first token
+          $payment_method = $order_info['payment_method']['code'] ?? 'chip.chip';
+          
+          // If payment method is CHIP without token ID, try to get customer's first token
+          if ($payment_method === 'chip.chip') {
+            $tokens = $this->model_extension_chip_payment_chip->getTokens($order_info['customer_id']);
+            if (!empty($tokens) && isset($tokens[0]['chip_token_id'])) {
+              $payment_method = 'chip.' . $tokens[0]['chip_token_id'];
+            }
+          }
+          
+          // Calculate next payment date
+          $next_payment_date = date('Y-m-d', strtotime('+' . $subscription_plan_info['frequency'] . ' ' . $subscription_plan_info['trial_frequency']));
+          
+          $subscription_data = [
+            'order_product_id'       => $order_product['order_product_id'],
+            'customer_id'            => $order_info['customer_id'],
+            'payment_address_id'     => $order_info['payment_address_id'],
+            'payment_method'         => $payment_method,
+            'shipping_address_id'    => $order_info['shipping_address_id'] ?? $order_info['payment_address_id'],
+            'shipping_method'        => $order_info['shipping_method'] ?? '',
+            'subscription_plan_id'   => $subscription_plan_id,
+            'trial_price'            => $subscription_plan_info['trial_price'],
+            'trial_frequency'        => $subscription_plan_info['trial_frequency'],
+            'trial_cycle'            => $subscription_plan_info['trial_cycle'],
+            'trial_duration'         => $subscription_plan_info['trial_duration'],
+            'trial_remaining'        => $subscription_plan_info['trial_duration'],
+            'price'                  => $subscription_plan_info['price'],
+            'frequency'              => $subscription_plan_info['frequency'],
+            'cycle'                  => $subscription_plan_info['cycle'],
+            'duration'               => $subscription_plan_info['duration'],
+            'remaining'              => $subscription_plan_info['duration'],
+            'date_next'              => $next_payment_date,
+            'status'                 => 1,
+            'trial_status'           => $subscription_plan_info['trial_duration'] > 0 ? 1 : 0,
+          ];
+          
+          // Add the subscription
+          $subscription_id = $this->model_checkout_subscription->addSubscription($order_id, $subscription_data);
+          
+          if ($subscription_id) {
+            // Update order history
+            $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_paid_order_status_id'), 'Subscription created: ' . $subscription_id, true);
+          }
+        }
+      }
+    }
   }
 }
