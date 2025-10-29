@@ -10,10 +10,12 @@ This module adds CHIP payment method option to your OpenCart.
 
 **Download pre-built packages from [Releases](https://github.com/CHIPAsia/chip-for-opencart/releases)**
 
-Ready-to-install `.ocmod.zip` files are automatically generated for each OpenCart version. Simply:
+Ready-to-install packages are automatically generated for each OpenCart version. Simply:
 1. Go to the [Releases page](https://github.com/CHIPAsia/chip-for-opencart/releases)
-2. Download the zip file for your OpenCart version (e.g., `chip-opencart-4.1.ocmod.zip`)
-3. Upload and install via OpenCart Extension Installer
+2. Download the master zip file (e.g., `chip-for-opencart-v1.0.0.zip`)
+3. Extract the zip file
+4. Navigate to your OpenCart version folder (e.g., `v1.0.0/opencart-4.1/`)
+5. Upload `chip.ocmod.zip` via OpenCart Extension Installer
 
 ### Manual Installation
 
@@ -53,8 +55,30 @@ Examples:
 ```
 
 This will:
-1. Update version numbers in all files (install.json and creator_agent in PHP files)
-2. Create all `.ocmod.zip` files in the `dist/` folder
+1. Create `chip.ocmod.zip` files organized by version and OpenCart version folders
+2. Create a master zip file containing all versions: `chip-for-opencart-v{VERSION}.zip`
+
+**Note:** The VERSION parameter is only used for folder naming. It does not modify version numbers in source files.
+
+**Output Structure:**
+```
+dist/
+└── v{VERSION}/
+    ├── opencart-1.5/
+    │   └── chip.ocmod.zip
+    ├── opencart-2.0/
+    │   └── chip.ocmod.zip
+    ├── opencart-2.2/
+    │   └── chip.ocmod.zip
+    ├── opencart-2.3/
+    │   └── chip.ocmod.zip
+    ├── opencart-3.0/
+    │   └── chip.ocmod.zip
+    ├── opencart-4.0/
+    │   └── chip.ocmod.zip
+    └── opencart-4.1/
+        └── chip.ocmod.zip
+```
 
 ### Automated Releases
 
@@ -63,21 +87,21 @@ GitHub Actions automatically builds and publishes zip packages:
 - **On Release/Tag Creation**: Automatically creates all zip files and attaches them to the release
 - **Manual Trigger**: Can be triggered manually from the Actions tab
 - **Artifacts**: Build artifacts are available for 90 days after each build
-- **Version Sync**: Automatically extracts version from the release tag (e.g., `v1.2.0`) and updates all version references in files
+- **Version-based Organization**: Extracts version from the release tag (e.g., `v1.2.0`) for folder organization
 
 ### Release Process
 
-1. Make your code changes
+1. Make your code changes and update version numbers manually in files if needed
 2. Create a new release/tag on GitHub (e.g., `v1.2.0`)
-   - The version from the tag (without the `v` prefix) will be automatically used
+   - The version from the tag (without the `v` prefix) will be used for folder organization
 3. GitHub Actions will automatically:
    - Extract the version from the tag (e.g., `v1.2.0` → `1.2.0`)
-   - Update all version references in `install.json` and `creator_agent` fields
-   - Build zip files for all OpenCart versions
-   - Attach them to the release
-   - Make them available for download
+   - Build `chip.ocmod.zip` files for all OpenCart versions, organized in version folders
+   - Create a master zip file: `chip-for-opencart-v1.2.0.zip`
+   - Attach the master zip to the release
+   - Make it available for download
 
-**Note**: Version numbers are dynamically set from the release tag, so you don't need to manually update version numbers in the code before creating a release.
+**Note**: The version tag is only used for folder organization. Source files are not modified during the build process.
 
 ## Other
 
