@@ -8,9 +8,9 @@ class Chip extends \Opencart\System\Engine\Model {
   public function getMethods(array $address): array {
     $this->load->language('extension/chip/payment/chip');
 
-    // if ($this->cart->hasSubscription()) {
-    //   return [];
-    // }
+    if ($this->cart->hasSubscription()) {
+      return [];
+    }
 
     $geo_zone_id = $this->config->get('payment_chip_geo_zone_id');
 
