@@ -270,7 +270,7 @@ class Chip extends \Opencart\System\Engine\Controller {
 
 		$purchase = json_decode($purchase_json, true);
 
-		if ($purchase['status'] != 'paid') {
+		if ($purchase['status'] != 'preauthorized') {
 			http_response_code(200);
 			exit;
 		}
