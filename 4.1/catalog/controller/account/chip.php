@@ -110,6 +110,7 @@ class Chip extends \Opencart\System\Engine\Controller {
 		$data['column_credit_card'] = $this->language->get('column_credit_card');
 		$data['column_date_expire'] = $this->language->get('column_date_expire');
 		$data['column_action'] = $this->language->get('column_action');
+		$data['add_card_url'] = $this->url->link('extension/chip/account/chip.create_payment_method', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token']);
 
 		return $this->load->view('extension/chip/account/chip_list', $data);
 	}
@@ -173,6 +174,163 @@ class Chip extends \Opencart\System\Engine\Controller {
 
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
+	}
+
+	/**
+	 * Create purchase for adding payment method
+	 */
+	public function create_payment_method(): void {
+		$this->load->language('extension/chip/account/chip');
+
+		if (!$this->customer->isLogged() || (!isset($this->request->get['customer_token']) || !isset($this->session->data['customer_token']) || ($this->request->get['customer_token'] != $this->session->data['customer_token']))) {
+			$this->session->data['redirect'] = $this->url->link('account/payment_method', 'language=' . $this->config->get('config_language'));
+			$this->response->redirect($this->url->link('account/login', 'language=' . $this->config->get('config_language'), true));
+		}
+
+		// Load customer model
+		$this->load->model('account/customer');
+
+		// Get customer information
+		$customer_id = $this->customer->getId();
+		$customer_info = $this->model_account_customer->getCustomer($customer_id);
+		
+		// Build full name
+		$customer_full_name = trim(($customer_info['firstname'] ?? '') . ' ' . ($customer_info['lastname'] ?? ''));
+		
+		// Get customer email
+		$customer_email = $customer_info['email'] ?? '';
+
+		// Build URLs
+		$success_callback_url = $this->url->link('extension/chip/account/chip.success_callback', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token']);
+		$success_redirect_url = $this->url->link('extension/chip/account/chip.success_add_card', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token']);
+
+		// Prepare purchase parameters
+		$params = array(
+			'success_callback' => $success_callback_url,
+			'success_redirect' => $success_redirect_url,
+			'failure_redirect' => $this->url->link('account/payment_method', 'language=' . $this->config->get('config_language')),
+			'cancel_redirect'  => $this->url->link('account/payment_method', 'language=' . $this->config->get('config_language')),
+			'creator_agent'    => 'OC41: 1.0.0',
+			'reference'        => $customer_id,
+			'platform'         => 'opencart',
+			'brand_id'         => $this->config->get('payment_chip_brand_id'),
+			'client'           => array(
+				'full_name' => $customer_full_name,
+				'email'     => $customer_email,
+			),
+			'purchase'         => array(
+				'timezone'       => $this->config->get('payment_chip_time_zone'),
+				'currency'       => 'MYR',
+				'due_strict'     => $this->config->get('payment_chip_due_strict'),
+				'products'       => array(array('name' => 'Add payment method', 'quantity' => 1, 'price' => 0)),
+			),
+			'skip_capture'     => true,
+			'force_recurring'  => true,
+		);
+
+		// Initialize model with keys
+		$this->load->model('extension/chip/payment/chip');
+		$this->model_extension_chip_payment_chip->setKeys($this->config->get('payment_chip_secret_key'), 'brand-id');
+
+		// Create purchase
+		$purchase = $this->model_extension_chip_payment_chip->createPurchase($params);
+
+		// Check if purchase creation was successful
+		if (!array_key_exists('id', $purchase)) {
+			$this->response->redirect($this->url->link('account/payment_method', 'language=' . $this->config->get('config_language') . '&error=' . urlencode('Failed to create payment method')));
+			return;
+		}
+
+		// Redirect to checkout URL
+		$this->response->redirect($purchase['checkout_url']);
+	}
+
+	/**
+	 * Success callback for adding payment method
+	 */
+	public function success_callback(): void {
+		$this->load->model('extension/chip/payment/chip');
+
+		$public_key = $this->config->get('payment_chip_general_public_key');
+
+		if (!isset($this->request->server['HTTP_X_SIGNATURE'])) {
+			http_response_code(400);
+			exit('No HTTP_X_SIGNATURE detected');
+		}
+
+		$HTTP_X_SIGNATURE = $this->request->server['HTTP_X_SIGNATURE'];
+		$purchase_json = file_get_contents('php://input');
+
+		if (openssl_verify($purchase_json, base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption') != 1) {
+			http_response_code(401);
+			exit('Invalid signature');
+		}
+
+		$purchase = json_decode($purchase_json, true);
+
+		if ($purchase['status'] != 'paid') {
+			http_response_code(200);
+			exit;
+		}
+
+		$purchase_id = $purchase['id'];
+
+		// Get customer ID from reference (we used customer_id as reference)
+		$customer_id = $purchase['reference'];
+
+		$this->db->query("SELECT GET_LOCK('payment_chip_add_card_$purchase_id', 15);");
+
+		// Save token if available
+		if (isset($purchase['is_recurring_token']) && $purchase['is_recurring_token'] === true) {
+			$this->saveToken($purchase, $customer_id);
+		}
+
+		$this->db->query("SELECT RELEASE_LOCK('payment_chip_add_card_$purchase_id');");
+
+		http_response_code(200);
+		exit;
+	}
+
+	/**
+	 * Success redirect for adding payment method
+	 */
+	public function success_add_card(): void {
+		if (!$this->customer->isLogged()) {
+			$this->response->redirect($this->url->link('account/login', 'language=' . $this->config->get('config_language'), true));
+			return;
+		}
+
+		// Redirect to payment method page
+		$this->response->redirect($this->url->link('account/payment_method', 'language=' . $this->config->get('config_language')));
+	}
+
+	/**
+	 * Save token from purchase
+	 */
+	private function saveToken(array $purchase, int $customer_id): void {
+		if (!isset($purchase['transaction_data']['extra'])) {
+			return;
+		}
+
+		$extra = $purchase['transaction_data']['extra'];
+
+		// Check if required fields exist
+		if (!isset($extra['card_type']) || !isset($extra['masked_pan']) || 
+			!isset($extra['expiry_month']) || !isset($extra['expiry_year'])) {
+			return;
+		}
+
+		$token_data = array(
+			'customer_id' => $customer_id,
+			'token_id' => $purchase['id'],
+			'type' => $extra['card_brand'],
+			'card_name' => isset($extra['cardholder_name']) ? $extra['cardholder_name'] : '',
+			'card_number' => $extra['masked_pan'],
+			'card_expire_month' => $extra['expiry_month'],
+			'card_expire_year' => $extra['expiry_year']
+		);
+
+		$this->model_extension_chip_payment_chip->addToken($token_data);
 	}
 }
 
