@@ -193,7 +193,7 @@ class Chip extends \Opencart\System\Engine\Controller {
 		// Get customer information
 		$customer_id = $this->customer->getId();
 		$customer_info = $this->model_account_customer->getCustomer($customer_id);
-		
+
 		// Build full name
 		$customer_full_name = trim(($customer_info['firstname'] ?? '') . ' ' . ($customer_info['lastname'] ?? ''));
 		
@@ -201,15 +201,18 @@ class Chip extends \Opencart\System\Engine\Controller {
 		$customer_email = $customer_info['email'] ?? '';
 
 		// Build URLs
-		$success_callback_url = $this->url->link('extension/chip/account/chip.success_callback', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token']);
-		$success_redirect_url = $this->url->link('extension/chip/account/chip.success_add_card', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token']);
+		$success_callback_url = $this->url->link('extension/chip/account/chip.success_callback');
+		$success_callback_url .= (strpos($success_callback_url, '?') !== false ? '&' : '?') . 'language=' . $this->config->get('config_language');
+		$success_callback_url .= (strpos($success_callback_url, '?') !== false ? '&' : '?') . 'customer_token=' . $this->session->data['customer_token'];
+
+		$success_redirect_url = $this->url->link('extension/chip/account/chip.success_add_card');
+		$success_redirect_url .= (strpos($success_redirect_url, '?') !== false ? '&' : '?') . 'language=' . $this->config->get('config_language');
+		$success_redirect_url .= (strpos($success_redirect_url, '?') !== false ? '&' : '?') . 'customer_token=' . $this->session->data['customer_token'];
 
 		// Prepare purchase parameters
 		$params = array(
 			'success_callback' => $success_callback_url,
 			'success_redirect' => $success_redirect_url,
-			'failure_redirect' => $this->url->link('account/payment_method', 'language=' . $this->config->get('config_language')),
-			'cancel_redirect'  => $this->url->link('account/payment_method', 'language=' . $this->config->get('config_language')),
 			'creator_agent'    => 'OC41: 1.0.0',
 			'reference'        => $customer_id,
 			'platform'         => 'opencart',
@@ -227,6 +230,10 @@ class Chip extends \Opencart\System\Engine\Controller {
 			'skip_capture'     => true,
 			'force_recurring'  => true,
 		);
+
+		if ($this->config->get('payment_chip_disable_success_callback')) {
+			unset($params['success_callback']);
+		}
 
 		// Initialize model with keys
 		$this->load->model('extension/chip/payment/chip');
@@ -295,13 +302,16 @@ class Chip extends \Opencart\System\Engine\Controller {
 	 * Success redirect for adding payment method
 	 */
 	public function success_add_card(): void {
-		if (!$this->customer->isLogged()) {
+		if (!isset($this->request->get['customer_token']) || !isset($this->session->data['customer_token']) || ($this->request->get['customer_token'] != $this->session->data['customer_token'])) {
 			$this->response->redirect($this->url->link('account/login', 'language=' . $this->config->get('config_language'), true));
 			return;
 		}
 
 		// Redirect to payment method page
-		$this->response->redirect($this->url->link('account/payment_method', 'language=' . $this->config->get('config_language')));
+		$redirect_url = $this->url->link('account/payment_method');
+		$redirect_url .= (strpos($redirect_url, '?') !== false ? '&' : '?') . 'language=' . $this->config->get('config_language');
+		$redirect_url .= (strpos($redirect_url, '?') !== false ? '&' : '?') . 'customer_token=' . $this->session->data['customer_token'];
+		$this->response->redirect($redirect_url);
 	}
 
 	/**
