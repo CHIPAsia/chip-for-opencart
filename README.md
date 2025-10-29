@@ -13,7 +13,8 @@ The installation files differs by OpenCart version. Choose your OpenCart version
 * [OpenCart 2.2.x](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FCHIPAsia%2Fchip-for-opencart%2Ftree%2Fmain%2F2.2)
 * [OpenCart 2.3.x](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FCHIPAsia%2Fchip-for-opencart%2Ftree%2Fmain%2F2.3)
 * [OpenCart 3.0.x](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FCHIPAsia%2Fchip-for-opencart%2Ftree%2Fmain%2F3.0)
-* [OpenCart 4.0.x](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FCHIPAsia%2Fchip-for-opencart%2Ftree%2Fmain%2F4.0)
+* [OpenCart 4.0.0](https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2FCHIPAsia%2Fchip-for-opencart%2Ftree%2Fmain%2F4.0)
+* [OpenCart 4.1.x](https://github.com/CHIPAsia/chip-for-opencart-4.1.x)
 
 ## Configuration
 
