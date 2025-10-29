@@ -82,8 +82,8 @@ class Chip extends \Opencart\System\Engine\Controller
       $total_override = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
     }
 
-    $success_callback_url = $this->url->link('extension/chip/payment/chip.success_callback') . (strpos($this->url->link('extension/chip/payment/chip.success_callback'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
-    $success_redirect_url = $this->url->link('extension/chip/payment/chip.success_redirect') . (strpos($this->url->link('extension/chip/payment/chip.success_redirect'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
+    $success_callback_url = $this->url->link('extension/chip/payment/chip.success_callback', 'order_id=' . $order_info['order_id'], true);
+    $success_redirect_url = $this->url->link('extension/chip/payment/chip.success_redirect', 'order_id=' . $order_info['order_id'], true);
 
     $params = array(
       'success_callback' => $success_callback_url,
@@ -114,12 +114,12 @@ class Chip extends \Opencart\System\Engine\Controller
     }
 
     if ($this->config->get('payment_chip_canceled_behavior') == 'cancel_order') {
-      $cancel_redirect_url = $this->url->link('extension/chip/payment/chip.cancel_redirect') . (strpos($this->url->link('extension/chip/payment/chip.cancel_redirect'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
+      $cancel_redirect_url = $this->url->link('extension/chip/payment/chip.cancel_redirect', 'order_id=' . $order_info['order_id'], true);
       $params['cancel_redirect'] = $cancel_redirect_url;
     }
 
     if ($this->config->get('payment_chip_failed_behavior') == 'fail_order') {
-      $failure_redirect_url = $this->url->link('extension/chip/payment/chip.failure_redirect') . (strpos($this->url->link('extension/chip/payment/chip.failure_redirect'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
+      $failure_redirect_url = $this->url->link('extension/chip/payment/chip.failure_redirect', 'order_id=' . $order_info['order_id'], true);
       $params['failure_redirect'] = $failure_redirect_url;
     }
 
@@ -318,8 +318,8 @@ class Chip extends \Opencart\System\Engine\Controller
       $total_override = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
     }
 
-    $success_callback_url = $this->url->link('extension/chip/payment/chip.success_callback') . (strpos($this->url->link('extension/chip/payment/chip.success_callback'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
-    $success_redirect_url = $this->url->link('extension/chip/payment/chip.success_redirect') . (strpos($this->url->link('extension/chip/payment/chip.success_redirect'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
+    $success_callback_url = $this->url->link('extension/chip/payment/chip.success_callback', 'order_id=' . $order_info['order_id'], true);
+    $success_redirect_url = $this->url->link('extension/chip/payment/chip.success_redirect', 'order_id=' . $order_info['order_id'], true);
 
     $params = array(
       'success_callback' => $success_callback_url,
@@ -350,12 +350,12 @@ class Chip extends \Opencart\System\Engine\Controller
     }
 
     if ($this->config->get('payment_chip_canceled_behavior') == 'cancel_order') {
-      $cancel_redirect_url = $this->url->link('extension/chip/payment/chip.cancel_redirect') . (strpos($this->url->link('extension/chip/payment/chip.cancel_redirect'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
+      $cancel_redirect_url = $this->url->link('extension/chip/payment/chip.cancel_redirect', 'order_id=' . $order_info['order_id'], true);
       $params['cancel_redirect'] = $cancel_redirect_url;
     }
 
     if ($this->config->get('payment_chip_failed_behavior') == 'fail_order') {
-      $failure_redirect_url = $this->url->link('extension/chip/payment/chip.failure_redirect') . (strpos($this->url->link('extension/chip/payment/chip.failure_redirect'), '?') !== false ? '&' : '?') . 'order_id=' . $order_info['order_id'];
+      $failure_redirect_url = $this->url->link('extension/chip/payment/chip.failure_redirect', 'order_id=' . $order_info['order_id'], true);
       $params['failure_redirect'] = $failure_redirect_url;
     }
 

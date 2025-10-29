@@ -201,13 +201,8 @@ class Chip extends \Opencart\System\Engine\Controller {
 		$customer_email = $customer_info['email'] ?? '';
 
 		// Build URLs
-		$success_callback_url = $this->url->link('extension/chip/account/chip.success_callback');
-		$success_callback_url .= (strpos($success_callback_url, '?') !== false ? '&' : '?') . 'language=' . $this->config->get('config_language');
-		$success_callback_url .= (strpos($success_callback_url, '?') !== false ? '&' : '?') . 'customer_token=' . $this->session->data['customer_token'];
-
-		$success_redirect_url = $this->url->link('extension/chip/account/chip.success_add_card');
-		$success_redirect_url .= (strpos($success_redirect_url, '?') !== false ? '&' : '?') . 'language=' . $this->config->get('config_language');
-		$success_redirect_url .= (strpos($success_redirect_url, '?') !== false ? '&' : '?') . 'customer_token=' . $this->session->data['customer_token'];
+		$success_callback_url = $this->url->link('extension/chip/account/chip.success_callback', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token'], true);
+		$success_redirect_url = $this->url->link('extension/chip/account/chip.success_add_card', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token'], true);
 
 		// Prepare purchase parameters
 		$params = array(
@@ -308,9 +303,7 @@ class Chip extends \Opencart\System\Engine\Controller {
 		}
 
 		// Redirect to payment method page
-		$redirect_url = $this->url->link('account/payment_method');
-		$redirect_url .= (strpos($redirect_url, '?') !== false ? '&' : '?') . 'language=' . $this->config->get('config_language');
-		$redirect_url .= (strpos($redirect_url, '?') !== false ? '&' : '?') . 'customer_token=' . $this->session->data['customer_token'];
+		$redirect_url = $this->url->link('account/payment_method', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token'], true);
 		$this->response->redirect($redirect_url);
 	}
 
