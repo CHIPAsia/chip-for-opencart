@@ -544,7 +544,7 @@ class Chip extends \Opencart\System\Engine\Controller
 
     $order_info = $this->model_checkout_order->getOrder($purchase['reference']);
     if ($order_info['order_status_id'] != $this->config->get('payment_chip_paid_order_status_id')) {
-      $this->model_checkout_order->addHistory($purchase['reference'], $this->config->get('payment_chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
+      $this->model_checkout_order->addHistory($purchase['reference'], $this->config->get('payment_chip_paid_order_status_id'), $this->language->get('payment_successful') . ' ' . $purchase_id, true);
       $this->model_checkout_order->addHistory($purchase['reference'], $this->config->get('payment_chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
 
       if ($purchase['is_test'] == true) {
@@ -613,7 +613,7 @@ class Chip extends \Opencart\System\Engine\Controller
 
     $order_info = $this->model_checkout_order->getOrder($order_id);
     if ($order_info['order_status_id'] != $this->config->get('payment_chip_paid_order_status_id')) {
-      $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
+      $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. $purchase_id, true);
       $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
 
       if ($purchase['is_test'] == true) {
@@ -662,7 +662,7 @@ class Chip extends \Opencart\System\Engine\Controller
 
     $order_info = $this->model_checkout_order->getOrder($order_id);
     if ($order_info['order_status_id'] != $this->config->get('payment_chip_canceled_order_status_id')) {
-      $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_canceled_order_status_id'), $this->language->get('payment_canceled') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
+      $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_canceled_order_status_id'), $this->language->get('payment_canceled') .' '. $purchase_id, true);
     }
 
     // Update chip_report status to canceled
@@ -698,7 +698,7 @@ class Chip extends \Opencart\System\Engine\Controller
 
     $order_info = $this->model_checkout_order->getOrder($order_id);
     if ($order_info['order_status_id'] != $this->config->get('payment_chip_failed_order_status_id')) {
-      $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_failed_order_status_id'), $this->language->get('payment_failed') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
+      $this->model_checkout_order->addHistory($order_id, $this->config->get('payment_chip_failed_order_status_id'), $this->language->get('payment_failed') .' '. $purchase_id, true);
     }
 
     // Update chip_report status to failed
