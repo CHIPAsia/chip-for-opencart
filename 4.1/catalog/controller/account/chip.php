@@ -201,12 +201,10 @@ class Chip extends \Opencart\System\Engine\Controller {
 		$customer_email = $customer_info['email'] ?? '';
 
 		// Build URLs
-		$success_callback_url = $this->url->link('extension/chip/account/chip.success_callback', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token'], true);
 		$success_redirect_url = $this->url->link('extension/chip/account/chip.success_add_card', 'language=' . $this->config->get('config_language') . '&customer_token=' . $this->session->data['customer_token'], true);
 
 		// Prepare purchase parameters
 		$params = array(
-			'success_callback' => $success_callback_url,
 			'success_redirect' => $success_redirect_url,
 			'creator_agent'    => 'OC41: 1.0.0',
 			'reference'        => $customer_id,
@@ -225,10 +223,6 @@ class Chip extends \Opencart\System\Engine\Controller {
 			'skip_capture'     => true,
 			'force_recurring'  => true,
 		);
-
-		if ($this->config->get('payment_chip_disable_success_callback')) {
-			unset($params['success_callback']);
-		}
 
 		// Initialize model with keys
 		$this->load->model('extension/chip/payment/chip');
