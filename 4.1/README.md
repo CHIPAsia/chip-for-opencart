@@ -16,6 +16,18 @@ This module adds CHIP payment method option to your OpenCart 4.1.x.
 
 Set the **Brand ID** and **Secret Key** in the plugins settings.
 
+### Important Requirement
+
+**Session SameSite Cookie Setting**: For the CHIP payment integration to work properly, merchants need to set the session samesite cookie to **Lax** instead of **Strict**. 
+
+To configure this setting:
+1. Navigate to **OpenCart Admin >> System >> Settings >> Stores >> Server**
+2. Set the **Session SameSite Cookie** to **Lax**
+
+![Session SameSite Cookie Setting](Lax-Settings.png)
+
+This setting is required for the payment gateway redirects and callbacks to function correctly.
+
 ## Other
 
 Facebook: [Merchants & DEV Community](https://www.facebook.com/groups/3210496372558088)
