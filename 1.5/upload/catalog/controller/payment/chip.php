@@ -77,7 +77,11 @@ class ControllerPaymentChip extends Controller
 
     $payment_method_whitelist = $this->config->get('chip_payment_method_whitelist');
     if (is_array($payment_method_whitelist) AND sizeof($payment_method_whitelist) > 0) {
-      $params['payment_method_whitelist'] = $payment_method_whitelist;
+      $params['payment_method_whitelist'] = $this->model_payment_chip->resolve_payment_method_whitelist(
+        $payment_method_whitelist,
+        'MYR',
+        $params['purchase']['total_override']
+      );
 
       $atome_minimum_unparsed = $this->config->get('chip_atome_minimum');
       $atome_minimum = preg_replace('/[^0-9]/', '', $atome_minimum_unparsed);

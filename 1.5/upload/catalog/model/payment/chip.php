@@ -48,6 +48,55 @@ class ModelPaymentChip extends Model {
     return $this->call('POST', "/clients/", $params);
   }
 
+  public function payment_methods($currency, $amount)
+  {
+    return $this->call('GET', "/payment_methods/?brand_id={$this->brand_id}&currency={$currency}&amount={$amount}");
+  }
+
+  public function resolve_payment_method_whitelist($whitelist, $currency, $amount)
+  {
+    static $cache = array();
+
+    $duitnow_group = array('duitnow_qr', 'dnqr');
+
+    // 1. Short-circuit: no dnqr-group member configured -> return unchanged (no API call).
+    if (count(array_intersect($whitelist, $duitnow_group)) == 0) {
+      return $whitelist;
+    }
+
+    // 2. Expand the group in-memory.
+    $expanded = array_values(array_unique(array_merge($whitelist, $duitnow_group)));
+
+    // 3. Cache key: brand + currency + amount-bucket (round to 100-sen steps).
+    $cache_key = 'chip_pm_' . md5($this->brand_id . '|' . $currency . '|' . intval($amount / 100));
+
+    if (isset($cache[$cache_key])) {
+      $available = $cache[$cache_key];
+    } else {
+      $response = $this->payment_methods($currency, $amount);
+      if (!is_array($response) || !isset($response['available_payment_methods'])) {
+        // 4. Fallback: return expanded whitelist unchanged if the API fails.
+        return $expanded;
+      }
+      $available = $response['available_payment_methods'];
+      $cache[$cache_key] = $available;
+    }
+
+    // 5. Intersect: keep only group members the merchant actually has.
+    $resolved_group = array_values(array_intersect($duitnow_group, $available));
+
+    // 6. Priority: dnqr wins when both are present.
+    if (in_array('dnqr', $resolved_group)) {
+      $resolved_group = array_values(array_diff($resolved_group, array('duitnow_qr')));
+    }
+
+    // 7. Final: original non-group entries + resolved group.
+    $final = array_values(array_diff($expanded, $duitnow_group));
+    $final = array_merge($final, $resolved_group);
+
+    return $final;
+  }
+
   // this is secret feature
   public function get_client_by_email($email)
   {

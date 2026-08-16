@@ -342,6 +342,21 @@ class ControllerPaymentChip extends Controller {
 
     $this->data['chip_available_payment_methods'] = ['fpx', 'fpx_b2b1', 'mastercard', 'maestro', 'visa', 'razer', 'razer_atome', 'razer_grabpay', 'razer_maybankqr', 'razer_shopeepay', 'razer_tng', 'duitnow_qr'];
 
+    $this->data['chip_payment_method_labels'] = array(
+      'fpx'             => 'FPX',
+      'fpx_b2b1'        => 'FPX B2B1',
+      'mastercard'      => 'Mastercard',
+      'maestro'         => 'Maestro',
+      'visa'            => 'Visa',
+      'razer'           => 'Razer',
+      'razer_atome'     => 'Atome',
+      'razer_grabpay'   => 'GrabPay',
+      'razer_maybankqr' => 'Maybank QRPay',
+      'razer_shopeepay' => 'ShopeePay',
+      'razer_tng'       => "Touch 'n Go eWallet",
+      'duitnow_qr'      => 'DuitNow QR',
+    );
+
     if (isset($this->request->post['chip_atome_minimum'])) {
       $this->data['chip_atome_minimum'] = $this->request->post['chip_atome_minimum'];
     } else {

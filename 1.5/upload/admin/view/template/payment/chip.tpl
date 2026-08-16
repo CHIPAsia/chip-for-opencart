@@ -83,11 +83,12 @@
                                 <?php $class = 'odd'; ?>
                                 <?php foreach ($chip_available_payment_methods as $payment_method) { ?>
                                 <?php $class = ($class == 'even' ? 'odd' : 'even'); ?>
+                                <?php $payment_method_label = isset($chip_payment_method_labels[$payment_method]) ? $chip_payment_method_labels[$payment_method] : $payment_method; ?>
                                 <div class="<?php echo $class; ?>">
                                   <?php if (in_array($payment_method, $chip_payment_method_whitelist)) { ?>
-                                  <input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" checked="checked" /><?php echo $payment_method; ?>
+                                  <input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" checked="checked" /><?php echo $payment_method_label; ?>
                                   <?php } else { ?>
-                                  <input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" /><?php echo $payment_method; ?>
+                                  <input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" /><?php echo $payment_method_label; ?>
                                   <?php } ?>
                                 </div>
                                 <?php } ?>
