@@ -27,6 +27,7 @@
                 <a href="#tab-status"><?php echo $tab_order_status; ?></a>
                 <a href="#tab-customise"><?php echo $tab_customise; ?></a>
                 <a href="#tab-troubleshooting"><?php echo $tab_troubleshooting; ?></a>
+                <a href="#tab-report"><?php echo $tab_report; ?></a>
             </div>
 
             <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form">
@@ -394,6 +395,9 @@
                             </td>
                         </tr>
                     </table>
+                </div>
+                <div id="tab-report">
+                    <?php echo $report; ?>
                 </div>
             </form>
         </div>
