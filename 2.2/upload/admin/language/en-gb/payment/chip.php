@@ -18,6 +18,15 @@ $_['tab_order_status'] = 'Order status';
 $_['tab_api_details'] = 'API details';
 $_['tab_checkout'] = 'Customize checkout';
 $_['tab_troubleshoot'] = 'Troubleshoot';
+$_['tab_report'] = 'Report';
+
+$_['column_order'] = 'Order';
+$_['column_chip_id'] = 'Purchase ID';
+$_['column_status'] = 'Status';
+$_['column_amount'] = 'Amount';
+$_['column_environment'] = 'Environment';
+$_['column_date_added'] = 'Date Added';
+$_['text_no_results'] = 'No results!';
 
 $_['behavior_missing_order'] = 'Missing Order';
 $_['behavior_cancel_order'] = 'Cancel Order';

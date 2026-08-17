@@ -2,226 +2,298 @@
 namespace Opencart\Admin\Controller\Extension\Chip\Payment;
 
 class Chip extends \Opencart\System\Engine\Controller {
+	public $json = [];
 
-  public $json = array();
+	/**
+	 * @return void
+	 */
+	public function index(): void {
+		$this->load->language('extension/chip/payment/chip');
 
-  public function index(): void {
-    $this->load->language( 'extension/chip/payment/chip' );
+		$this->document->setTitle($this->language->get('heading_title'));
 
-    $this->document->setTitle( $this->language->get( 'heading_title' ) );
+		$this->load->model('localisation/order_status');
+		$this->load->model('localisation/geo_zone');
+		$this->load->model('localisation/language');
 
-    $this->load->model('localisation/order_status');
-    $this->load->model('localisation/geo_zone');
-    $this->load->model('localisation/language');
+		$languages = $this->model_localisation_language->getLanguages();
 
-    $languages = $this->model_localisation_language->getLanguages();
+		$data['breadcrumbs'] = [];
 
-    $data['breadcrumbs'] = array();
+		$data['breadcrumbs'][] = [
+			'text' => $this->language->get('text_home'),
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'])
+		];
 
-    $data['breadcrumbs'][] = array(
-      'text'      => $this->language->get('text_home'),
-      'href'      => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token']),
-    );
+		$data['breadcrumbs'][] = [
+			'text' => $this->language->get('text_extension'),
+			'href' => $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment')
+		];
 
-    $data['breadcrumbs'][] = array(
-      'text'      => $this->language->get('text_extension'),
-      'href'      => $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment'),
-    );
+		$data['breadcrumbs'][] = [
+			'text' => $this->language->get('heading_title'),
+			'href' => $this->url->link('extension/chip/payment/chip', 'user_token=' . $this->session->data['user_token'])
+		];
 
-    $data['breadcrumbs'][] = array(
-      'text'      => $this->language->get('heading_title'),
-      'href'      => $this->url->link('extension/chip/payment/chip', 'user_token=' . $this->session->data['user_token']),
-    );
+		$data['save'] = $this->url->link('extension/chip/payment/chip.save', 'user_token=' . $this->session->data['user_token']);
+		$data['back'] = $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment');
 
-    $data['save'] = $this->url->link('extension/chip/payment/chip|save', 'user_token=' . $this->session->data['user_token']);
-    $data['back'] = $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment');
+		$data['payment_chip_secret_key'] = $this->config->get('payment_chip_secret_key');
+		$data['payment_chip_brand_id'] = $this->config->get('payment_chip_brand_id');
+		$data['payment_chip_public_key'] = $this->config->get('payment_chip_public_key');
+		$data['payment_chip_general_public_key'] = $this->config->get('payment_chip_general_public_key');
+		$data['payment_chip_payment_method_whitelist'] = $this->config->get('payment_chip_payment_method_whitelist');
 
-    $data['payment_chip_secret_key'] = $this->config->get('payment_chip_secret_key');
-    $data['payment_chip_brand_id'] = $this->config->get('payment_chip_brand_id');
-    $data['payment_chip_public_key'] = $this->config->get('payment_chip_public_key');
-    $data['payment_chip_general_public_key'] = $this->config->get('payment_chip_general_public_key');
-    $data['payment_chip_payment_method_whitelist'] = $this->config->get('payment_chip_payment_method_whitelist');
+		$data['payment_chip_available_payment_methods'] = ['fpx', 'fpx_b2b1', 'mastercard', 'maestro', 'visa', 'razer_atome', 'razer_grabpay', 'razer_maybankqr', 'shopee_pay', 'razer_tng', 'duitnow_qr', 'crypto_coin'];
 
-    $data['payment_chip_available_payment_methods'] = array('fpx', 'fpx_b2b1', 'mastercard', 'maestro', 'visa', 'razer_atome', 'razer_grabpay', 'razer_maybankqr', 'shopee_pay', 'razer_tng', 'duitnow_qr', 'crypto_coin');
+		$data['payment_chip_payment_method_labels'] = [
+			'fpx'             => 'FPX',
+			'fpx_b2b1'        => 'FPX B2B1',
+			'mastercard'      => 'Mastercard',
+			'maestro'         => 'Maestro',
+			'visa'            => 'Visa',
+			'razer_atome'     => 'Atome',
+			'razer_grabpay'   => 'GrabPay',
+			'razer_maybankqr' => 'Maybank QR',
+			'shopee_pay'      => 'ShopeePay',
+			'razer_tng'       => "Touch 'n Go",
+			'duitnow_qr'      => 'DuitNow QR',
+			'crypto_coin'     => 'Crypto Coin'
+		];
 
-    $data['payment_chip_payment_method_labels'] = array(
-      'fpx'             => 'FPX',
-      'fpx_b2b1'        => 'FPX B2B1',
-      'mastercard'      => 'Mastercard',
-      'maestro'         => 'Maestro',
-      'visa'            => 'Visa',
-      'razer_atome'     => 'Atome',
-      'razer_grabpay'   => 'GrabPay',
-      'razer_maybankqr' => 'Maybank QR',
-      'shopee_pay'      => 'ShopeePay',
-      'razer_tng'       => "Touch 'n Go",
-      'duitnow_qr'      => 'DuitNow QR',
-      'crypto_coin'     => 'Crypto Coin',
-    );
-    $data['payment_chip_purchase_send_receipt'] = $this->config->get('payment_chip_purchase_send_receipt');
-    $data['payment_chip_due_strict'] = $this->config->get('payment_chip_due_strict');
-    $data['payment_chip_due_strict_timing'] = !empty($this->config->get('payment_chip_due_strict_timing')) ? $this->config->get('payment_chip_due_strict_timing') : '60';
-    $data['payment_chip_canceled_order_status_id'] = $this->config->get('payment_chip_canceled_order_status_id');
-    $data['payment_chip_failed_order_status_id'] = $this->config->get('payment_chip_failed_order_status_id');
-    $data['payment_chip_paid_order_status_id'] = $this->config->get('payment_chip_paid_order_status_id');
-    $data['payment_chip_refunded_order_status_id'] = $this->config->get('payment_chip_refunded_order_status_id');
-    $data['payment_chip_allow_instruction'] = $this->config->get('payment_chip_allow_instruction');
-    $data['payment_chip_convert_to_processing'] = $this->config->get('payment_chip_convert_to_processing');
-    $data['payment_chip_disable_success_redirect'] = $this->config->get('payment_chip_disable_success_redirect');
-    $data['payment_chip_disable_success_callback'] = $this->config->get('payment_chip_disable_success_callback');
-    $data['payment_chip_debug'] = $this->config->get('payment_chip_debug');
+		$data['payment_chip_purchase_send_receipt'] = $this->config->get('payment_chip_purchase_send_receipt');
+		$data['payment_chip_due_strict'] = $this->config->get('payment_chip_due_strict');
+		$data['payment_chip_due_strict_timing'] = !empty($this->config->get('payment_chip_due_strict_timing')) ? $this->config->get('payment_chip_due_strict_timing') : '60';
+		$data['payment_chip_canceled_order_status_id'] = $this->config->get('payment_chip_canceled_order_status_id');
+		$data['payment_chip_failed_order_status_id'] = $this->config->get('payment_chip_failed_order_status_id');
+		$data['payment_chip_paid_order_status_id'] = $this->config->get('payment_chip_paid_order_status_id');
+		$data['payment_chip_refunded_order_status_id'] = $this->config->get('payment_chip_refunded_order_status_id');
+		$data['payment_chip_allow_instruction'] = $this->config->get('payment_chip_allow_instruction');
+		$data['payment_chip_convert_to_processing'] = $this->config->get('payment_chip_convert_to_processing');
+		$data['payment_chip_disable_success_redirect'] = $this->config->get('payment_chip_disable_success_redirect');
+		$data['payment_chip_disable_success_callback'] = $this->config->get('payment_chip_disable_success_callback');
+		$data['payment_chip_debug'] = $this->config->get('payment_chip_debug');
 
-    $modified_time_zones = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL);
+		$modified_time_zones = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL);
 
-    if (($key = array_search('Asia/Kuala_Lumpur', $modified_time_zones)) !== false) {
-      unset($modified_time_zones[$key]);
-      array_unshift($modified_time_zones, 'Asia/Kuala_Lumpur');
-    }
+		if (($key = array_search('Asia/Kuala_Lumpur', $modified_time_zones)) !== false) {
+			unset($modified_time_zones[$key]);
+			array_unshift($modified_time_zones, 'Asia/Kuala_Lumpur');
+		}
 
-    $data['time_zones'] = $modified_time_zones;
+		$data['time_zones'] = $modified_time_zones;
 
-    $data['payment_chip_time_zone'] = $this->config->get('payment_chip_time_zone');
-    
-    $data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
+		$data['payment_chip_time_zone'] = $this->config->get('payment_chip_time_zone');
 
-    $complete_order_status_ids = $this->config->get('config_complete_status');
+		$data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
 
-    foreach($data['order_statuses'] as $order_status){
-      foreach($complete_order_status_ids as $complete_order_status_id) {
-        if ($order_status['order_status_id'] == $complete_order_status_id) {
-          if (isset($data['config_complete_status_name'])) {
-            $data['config_complete_status_name'] .= ' / ' . $order_status['name'];
-          } else {
-            $data['config_complete_status_name'] = $order_status['name'];
-          }
-          break;
-        }
-      }
-    }
+		$complete_order_status_ids = $this->config->get('config_complete_status');
 
-    $data['payment_chip_geo_zone_id'] = $this->config->get('payment_chip_geo_zone_id'); 
-    
-    $data['payment_chip_payment_name'] = array();
+		foreach ($data['order_statuses'] as $order_status) {
+			foreach ($complete_order_status_ids as $complete_order_status_id) {
+				if ($order_status['order_status_id'] == $complete_order_status_id) {
+					if (isset($data['config_complete_status_name'])) {
+						$data['config_complete_status_name'] .= ' / ' . $order_status['name'];
+					} else {
+						$data['config_complete_status_name'] = $order_status['name'];
+					}
+					break;
+				}
+			}
+		}
 
-    foreach ($languages as $language) {
-      $data['payment_chip_instruction'][$language['language_id']] = $this->config->get('payment_chip_instruction_' . $language['language_id']);
-      $data['payment_chip_payment_name'][$language['language_id']] = $this->config->get('payment_chip_payment_name_' . $language['language_id']);
-    }
+		$data['payment_chip_geo_zone_id'] = $this->config->get('payment_chip_geo_zone_id');
 
-    $data['languages'] = $languages;
+		$data['payment_chip_payment_name'] = [];
 
-    $data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
+		foreach ($languages as $language) {
+			$data['payment_chip_instruction'][$language['language_id']] = $this->config->get('payment_chip_instruction_' . $language['language_id']);
+			$data['payment_chip_payment_name'][$language['language_id']] = $this->config->get('payment_chip_payment_name_' . $language['language_id']);
+		}
 
-    $data['payment_chip_status'] = $this->config->get('payment_chip_status');
-    $data['payment_chip_sort_order'] = $this->config->get('payment_chip_sort_order');
-    
-    $data['formatted_help_paid_order_status'] = sprintf($this->language->get('help_paid_order_status'), $data['config_complete_status_name']);
+		$data['languages'] = $languages;
 
-    $data['canceled_behaviors'] = array(
-      'missing_order' => $this->language->get('behavior_missing_order'),
-      'cancel_order' => $this->language->get('behavior_cancel_order'),
-    );
+		$data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
 
-    $data['failed_behaviors'] = array(
-      'missing_order' => $this->language->get('behavior_missing_order'),
-      'fail_order' => $this->language->get('behavior_fail_order'),
-    );
+		$data['payment_chip_status'] = $this->config->get('payment_chip_status');
+		$data['payment_chip_sort_order'] = $this->config->get('payment_chip_sort_order');
 
-    $data['payment_chip_canceled_behavior'] = $this->config->get('payment_chip_canceled_behavior');
-    $data['payment_chip_failed_behavior'] = $this->config->get('payment_chip_failed_behavior');
+		$data['formatted_help_paid_order_status'] = sprintf($this->language->get('help_paid_order_status'), $data['config_complete_status_name']);
 
-    $data['webhook'] = HTTP_CATALOG . 'index.php?route=extension/chip/payment/chip|callback';
+		$data['canceled_behaviors'] = [
+			'missing_order' => $this->language->get('behavior_missing_order'),
+			'cancel_order'  => $this->language->get('behavior_cancel_order')
+		];
 
-    $data['header'] = $this->load->controller('common/header');
-    $data['column_left'] = $this->load->controller('common/column_left');
-    $data['footer'] = $this->load->controller('common/footer');
+		$data['failed_behaviors'] = [
+			'missing_order' => $this->language->get('behavior_missing_order'),
+			'fail_order'    => $this->language->get('behavior_fail_order')
+		];
 
-    $this->response->setOutput($this->load->view('extension/chip/payment/chip', $data));
-  }
+		$data['payment_chip_canceled_behavior'] = $this->config->get('payment_chip_canceled_behavior');
+		$data['payment_chip_failed_behavior'] = $this->config->get('payment_chip_failed_behavior');
 
-  public function save(): void {
-    $this->load->language('extension/chip/payment/chip');
+		$data['report'] = $this->getReport();
 
-    $json = &$this->json;
+		$data['webhook'] = HTTP_CATALOG . 'index.php?route=extension/chip/payment/chip|callback';
 
-    if (!$this->user->hasPermission('modify', 'extension/chip/payment/chip')) {
-      $this->json['error']['warning'] = $this->language->get('error_permission');
-    }
+		$data['header'] = $this->load->controller('common/header');
+		$data['column_left'] = $this->load->controller('common/column_left');
+		$data['footer'] = $this->load->controller('common/footer');
 
-    $this->load->model('localisation/language');
+		$this->response->setOutput($this->load->view('extension/chip/payment/chip', $data));
+	}
 
-    $languages = $this->model_localisation_language->getLanguages();
+	/**
+	 * @return void
+	 */
+	public function save(): void {
+		$this->load->language('extension/chip/payment/chip');
 
-    foreach ($languages as $language) {
-      if (isset($this->request->post['payment_chip_allow_instruction']) && $this->request->post['payment_chip_allow_instruction'] == '1' && empty($this->request->post['payment_chip_instruction_'. $language['language_id']])) {
-        $this->json['error']['instruction_' . $language['language_id']] = $this->language->get('error_instruction');
-      }
+		$json = &$this->json;
 
-      if (empty($this->request->post['payment_chip_payment_name_'. $language['language_id']])) {
-        $this->json['error']['payment_name_' . $language['language_id']] = $this->language->get('error_payment_name');
-      }
-    }
+		if (!$this->user->hasPermission('modify', 'extension/chip/payment/chip')) {
+			$this->json['error']['warning'] = $this->language->get('error_permission');
+		}
 
-    if ($this->request->post['payment_chip_secret_key']) {
-      $this->configure_general_public_key();
-    } else {
-      $this->json['error']['secret_key'] = $this->language->get('error_secret_key');
-    }
+		$this->load->model('localisation/language');
 
-    if (!$this->request->post['payment_chip_due_strict_timing']) {
-      $this->json['error']['due_strict_timing'] = $this->language->get('error_due_strict_timing');
-    }
+		$languages = $this->model_localisation_language->getLanguages();
 
-    if (!$this->request->post['payment_chip_brand_id']) {
-      $this->json['error']['brand_id'] = $this->language->get('error_brand_id');
-    }
+		foreach ($languages as $language) {
+			if (isset($this->request->post['payment_chip_allow_instruction']) && $this->request->post['payment_chip_allow_instruction'] == '1' && empty($this->request->post['payment_chip_instruction_' . $language['language_id']])) {
+				$this->json['error']['instruction_' . $language['language_id']] = $this->language->get('error_instruction');
+			}
 
-    if ($this->request->post['payment_chip_public_key']) {
-      $public_key_validity = openssl_pkey_get_public($this->request->post['payment_chip_public_key']);
+			if (empty($this->request->post['payment_chip_payment_name_' . $language['language_id']])) {
+				$this->json['error']['payment_name_' . $language['language_id']] = $this->language->get('error_payment_name');
+			}
+		}
 
-      if (!$public_key_validity) {
-        $this->json['error']['public_key'] = $this->language->get('error_public_key');
-      }
-    }
-    
-    if (!$json) {
-      $this->load->model('setting/setting');
+		if ($this->request->post['payment_chip_secret_key']) {
+			$this->configure_general_public_key();
+		} else {
+			$this->json['error']['secret_key'] = $this->language->get('error_secret_key');
+		}
 
-      $this->model_setting_setting->editSetting('payment_chip', $this->request->post);
+		if (!$this->request->post['payment_chip_due_strict_timing']) {
+			$this->json['error']['due_strict_timing'] = $this->language->get('error_due_strict_timing');
+		}
 
-      $this->json['success'] = $this->language->get('text_success');
-    }
+		if (!$this->request->post['payment_chip_brand_id']) {
+			$this->json['error']['brand_id'] = $this->language->get('error_brand_id');
+		}
 
-    $this->response->addHeader('Content-Type: application/json');
-    $this->response->setOutput(json_encode($json));
-  }
+		if ($this->request->post['payment_chip_public_key']) {
+			$public_key_validity = openssl_pkey_get_public($this->request->post['payment_chip_public_key']);
 
-  public function install(): void {
-    $this->load->model('extension/chip/payment/chip');
-    $this->model_extension_chip_payment_chip->install();
-  }
+			if (!$public_key_validity) {
+				$this->json['error']['public_key'] = $this->language->get('error_public_key');
+			}
+		}
 
-  public function uninstall(): void {
-    $this->load->model('extension/chip/payment/chip');
-    $this->model_extension_chip_payment_chip->uninstall();
-  }
+		if (!$json) {
+			$this->load->model('setting/setting');
 
-  private function configure_general_public_key(): bool {
-    $this->load->model('extension/chip/payment/chip');
-    $this->model_extension_chip_payment_chip->set_keys($this->request->post['payment_chip_secret_key'], '');
-    $general_public_key = str_replace('\n', "\n", $this->model_extension_chip_payment_chip->get_public_key());
+			$this->model_setting_setting->editSetting('payment_chip', $this->request->post);
 
-    if (isset($general_public_key['__all__'])) {
-      $this->json['secret_key'] = implode('. ', $general_public_key['__all__'][0]);
-      return false;
-    }
+			$this->json['success'] = $this->language->get('text_success');
+		}
 
-    if (empty($general_public_key) OR !openssl_pkey_get_public($general_public_key)){
-      $this->json['secret_key'] = $this->language->get('error_secret_key_invalid');
-      return false;
-    }
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode($json));
+	}
 
-    $this->request->post['payment_chip_general_public_key'] = $general_public_key;
-    return true;
-  }
+	/**
+	 * @return void
+	 */
+	public function install(): void {
+		$this->load->model('extension/chip/payment/chip');
+		$this->model_extension_chip_payment_chip->install();
+	}
+
+	/**
+	 * @return void
+	 */
+	public function uninstall(): void {
+		$this->load->model('extension/chip/payment/chip');
+		$this->model_extension_chip_payment_chip->uninstall();
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function configure_general_public_key(): bool {
+		$this->load->model('extension/chip/payment/chip');
+		$this->model_extension_chip_payment_chip->set_keys($this->request->post['payment_chip_secret_key'], '');
+		$general_public_key = str_replace('\n', "\n", $this->model_extension_chip_payment_chip->get_public_key());
+
+		if (isset($general_public_key['__all__'])) {
+			$this->json['secret_key'] = implode('. ', $general_public_key['__all__'][0]);
+			return false;
+		}
+
+		if (empty($general_public_key) or !openssl_pkey_get_public($general_public_key)) {
+			$this->json['secret_key'] = $this->language->get('error_secret_key_invalid');
+			return false;
+		}
+
+		$this->request->post['payment_chip_general_public_key'] = $general_public_key;
+		return true;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getReport(): string {
+		$page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
+		$limit = $this->config->get('config_pagination_admin');
+		$start = ($page - 1) * $limit;
+
+		// Get total count.
+		$total_query = $this->db->query("SELECT COUNT(*) AS total FROM `" . DB_PREFIX . "chip_report`");
+		$total = $total_query->row['total'];
+
+		// Get paginated reports.
+		$reports = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_report` ORDER BY `date_added` DESC LIMIT " . (int)$start . ", " . (int)$limit);
+
+		$data['reports'] = [];
+
+		if ($reports->num_rows) {
+			foreach ($reports->rows as $report) {
+				$order_url = $this->url->link('sale/order.info', 'user_token=' . $this->session->data['user_token'] . '&order_id=' . $report['order_id']);
+
+				$data['reports'][] = [
+					'order_id'         => $report['order_id'],
+					'order'            => $order_url,
+					'chip_id'          => $report['chip_id'],
+					'status'           => $report['status'],
+					'amount'           => $report['amount'],
+					'environment_type' => $report['environment_type'],
+					'date_added'       => date('Y-m-d H:i:s', strtotime($report['date_added']))
+				];
+			}
+		}
+
+		// Pagination.
+		$data['report_pagination'] = $this->load->controller('common/pagination', [
+			'total' => $total,
+			'page'  => $page,
+			'limit' => $this->config->get('config_pagination_admin'),
+			'url'   => $this->url->link('extension/chip/payment/chip', 'user_token=' . $this->session->data['user_token'] . '&page={page}')
+		]);
+
+		// Load language.
+		$this->load->language('extension/chip/payment/chip');
+
+		$data['column_order'] = $this->language->get('column_order');
+		$data['column_chip_id'] = $this->language->get('column_chip_id');
+		$data['column_status'] = $this->language->get('column_status');
+		$data['column_amount'] = $this->language->get('column_amount');
+		$data['column_environment'] = $this->language->get('column_environment');
+		$data['column_date_added'] = $this->language->get('column_date_added');
+		$data['text_no_results'] = $this->language->get('text_no_results');
+
+		return $this->load->view('extension/chip/payment/chip_report', $data);
+	}
 }

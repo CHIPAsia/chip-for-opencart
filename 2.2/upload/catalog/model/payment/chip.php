@@ -1,199 +1,217 @@
 <?php
 class ModelPaymentChip extends Model {
-  const DUITNOW_GROUP = array('duitnow_qr', 'dnqr');
-  const SHOPEE_GROUP = array('razer_shopeepay', 'shopee_pay');
+	const DUITNOW_GROUP = array('duitnow_qr', 'dnqr');
+	const SHOPEE_GROUP = array('razer_shopeepay', 'shopee_pay');
 
-  public function getMethod($address, $total) {
-    $this->language->load('payment/chip');
+	public function getMethod($address, $total) {
+		$this->language->load('payment/chip');
 
-    $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE geo_zone_id = '" . (int)$this->config->get('chip_geo_zone_id') . "' AND country_id = '" . (int)$address['country_id'] . "' AND (zone_id = '" . (int)$address['zone_id'] . "' OR zone_id = '0')");
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE geo_zone_id = '" . (int)$this->config->get('chip_geo_zone_id') . "' AND country_id = '" . (int)$address['country_id'] . "' AND (zone_id = '" . (int)$address['zone_id'] . "' OR zone_id = '0')");
 
-    if ($this->config->get('chip_total') > 0 && $this->config->get('chip_total') > $total) {
-      $status = false;
-    } elseif (!$this->config->get('chip_geo_zone_id')) {
-      $status = true;
-    } elseif ($query->num_rows) {
-      $status = true;
-    } else {
-      $status = false;
-    }
+		if ($this->config->get('chip_total') > 0 && $this->config->get('chip_total') > $total) {
+			$status = false;
+		} elseif (!$this->config->get('chip_geo_zone_id')) {
+			$status = true;
+		} elseif ($query->num_rows) {
+			$status = true;
+		} else {
+			$status = false;
+		}
 
-    $method_data = array();
+		$method_data = array();
 
-    if ($status) {
-      $method_data = array(
-        'code'       => 'chip',
-        'title'      => nl2br($this->config->get('chip_payment_name_' . $this->config->get('config_language_id'))),
-        'terms'      => '',
-        'sort_order' => $this->config->get('chip_sort_order')
-      );
-    }
+		if ($status) {
+			$method_data = array(
+				'code'       => 'chip',
+				'title'      => nl2br($this->config->get('chip_payment_name_' . $this->config->get('config_language_id'))),
+				'terms'      => '',
+				'sort_order' => $this->config->get('chip_sort_order')
+			);
+		}
 
-    return $method_data;
-  }
+		return $method_data;
+	}
 
-  public function set_keys($private_key, $brand_id) {
-    $this->private_key = $private_key;
-    $this->brand_id    = $brand_id;
-  }
+	public function addReport($data) {
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "chip_report` 
+			(`customer_id`, `chip_id`, `order_id`, `status`, `amount`, `environment_type`, `date_added`) 
+			VALUES (" . (int)$data['customer_id'] . ", '" . $this->db->escape($data['chip_id']) . "', " . (int)$data['order_id'] . ", 
+			'" . $this->db->escape($data['status']) . "', '" . (float)$data['amount'] . "', 
+			'" . $this->db->escape($data['environment_type']) . "', NOW())");
+	}
 
-  public function create_purchase($params)
-  {
-    return $this->call('POST', '/purchases/', $params);
-  }
+	public function updateReportStatus($chip_id, $status) {
+		$this->db->query("UPDATE `" . DB_PREFIX . "chip_report` 
+			SET `status` = '" . $this->db->escape($status) . "' 
+			WHERE `chip_id` = '" . $this->db->escape($chip_id) . "'");
+	}
 
-  public function get_purchase($purchase_id)
-  {
-    return $this->call('GET', "/purchases/{$purchase_id}/");
-  }
+	public function getReportByOrderId($order_id) {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_report` WHERE `order_id` = " . (int)$order_id . " ORDER BY `date_added` DESC LIMIT 1");
 
-  public function payment_methods($currency, $amount)
-  {
-    return $this->call('GET', "/payment_methods/?brand_id={$this->brand_id}&currency={$currency}&amount={$amount}");
-  }
+		if ($query->num_rows) {
+			return $query->row;
+		}
 
-  public function resolve_payment_method_whitelist($whitelist, $currency, $amount)
-  {
-    static $cache = array();
+		return null;
+	}
 
-    // In-memory migration: legacy razer_shopeepay key -> shopee_pay (modern).
-    // Keeps backward compatibility for merchants with the old key saved.
-    if (in_array('razer_shopeepay', $whitelist) && !in_array('shopee_pay', $whitelist)) {
-      $whitelist = array_map(function ($method) {
-        return $method === 'razer_shopeepay' ? 'shopee_pay' : $method;
-      }, $whitelist);
-      $whitelist = array_values(array_unique($whitelist));
-    }
+	public function set_keys($private_key, $brand_id) {
+		$this->private_key = $private_key;
+		$this->brand_id    = $brand_id;
+	}
 
-    $groups = array(
-      'dnqr'   => self::DUITNOW_GROUP,
-      'shopee' => self::SHOPEE_GROUP,
-    );
+	public function create_purchase($params) {
+		return $this->call('POST', '/purchases/', $params);
+	}
 
-    // 1. Short-circuit: no group member configured -> return unchanged (no API call).
-    $configured_groups = array();
-    foreach ($groups as $group_key => $group) {
-      if (count(array_intersect($whitelist, $group)) > 0) {
-        $configured_groups[$group_key] = $group;
-      }
-    }
+	public function get_purchase($purchase_id) {
+		return $this->call('GET', "/purchases/{$purchase_id}/");
+	}
 
-    if (count($configured_groups) == 0) {
-      return $whitelist;
-    }
+	public function payment_methods($currency, $amount) {
+		return $this->call('GET', "/payment_methods/?brand_id={$this->brand_id}&currency={$currency}&amount={$amount}");
+	}
 
-    // 2. Expand all configured groups in-memory.
-    $expanded = $whitelist;
-    foreach ($configured_groups as $group) {
-      $expanded = array_merge($expanded, $group);
-    }
-    $expanded = array_values(array_unique($expanded));
+	public function resolve_payment_method_whitelist($whitelist, $currency, $amount) {
+		static $cache = array();
 
-    // 3. Cache key: brand + currency + amount-bucket (round to 100-sen steps).
-    $cache_key = 'chip_pm_' . md5($this->brand_id . '|' . $currency . '|' . intval($amount / 100));
+		// In-memory migration: legacy razer_shopeepay key -> shopee_pay (modern).
+		// Keeps backward compatibility for merchants with the old key saved.
+		if (in_array('razer_shopeepay', $whitelist) && !in_array('shopee_pay', $whitelist)) {
+			$whitelist = array_map(function ($method) {
+				return $method === 'razer_shopeepay' ? 'shopee_pay' : $method;
+			}, $whitelist);
+			$whitelist = array_values(array_unique($whitelist));
+		}
 
-    if (isset($cache[$cache_key])) {
-      $available = $cache[$cache_key];
-    } else {
-      $response = $this->payment_methods($currency, $amount);
-      if (!is_array($response) || !isset($response['available_payment_methods'])) {
-        // 4. Fallback: return expanded whitelist unchanged if the API fails.
-        return $expanded;
-      }
-      $available = $response['available_payment_methods'];
-      $cache[$cache_key] = $available;
-    }
+		$groups = array(
+			'dnqr'   => self::DUITNOW_GROUP,
+			'shopee' => self::SHOPEE_GROUP,
+		);
 
-    // 5. Resolve each configured group against what the merchant actually has.
-    $resolved = array();
-    foreach ($configured_groups as $group_key => $group) {
-      $resolved_group = array_values(array_intersect($group, $available));
+		// 1. Short-circuit: no group member configured -> return unchanged (no API call).
+		$configured_groups = array();
+		foreach ($groups as $group_key => $group) {
+			if (count(array_intersect($whitelist, $group)) > 0) {
+				$configured_groups[$group_key] = $group;
+			}
+		}
 
-      if ($group_key == 'dnqr') {
-        // dnqr wins when both are present.
-        if (in_array('dnqr', $resolved_group)) {
-          $resolved_group = array_values(array_diff($resolved_group, array('duitnow_qr')));
-        }
-      } elseif ($group_key == 'shopee') {
-        // shopee_pay wins when both are present.
-        if (in_array('shopee_pay', $resolved_group)) {
-          $resolved_group = array_values(array_diff($resolved_group, array('razer_shopeepay')));
-        }
-      }
+		if (count($configured_groups) == 0) {
+			return $whitelist;
+		}
 
-      $resolved = array_merge($resolved, $resolved_group);
-    }
+		// 2. Expand all configured groups in-memory.
+		$expanded = $whitelist;
+		foreach ($configured_groups as $group) {
+			$expanded = array_merge($expanded, $group);
+		}
+		$expanded = array_values(array_unique($expanded));
 
-    // 6. Final: original non-group entries + resolved groups.
-    $final = $expanded;
-    foreach ($configured_groups as $group) {
-      $final = array_values(array_diff($final, $group));
-    }
-    $final = array_merge($final, $resolved);
+		// 3. Cache key: brand + currency + amount-bucket (round to 100-sen steps).
+		$cache_key = 'chip_pm_' . md5($this->brand_id . '|' . $currency . '|' . intval($amount / 100));
 
-    return $final;
-  }
+		if (isset($cache[$cache_key])) {
+			$available = $cache[$cache_key];
+		} else {
+			$response = $this->payment_methods($currency, $amount);
+			if (!is_array($response) || !isset($response['available_payment_methods'])) {
+				// 4. Fallback: return expanded whitelist unchanged if the API fails.
+				return $expanded;
+			}
+			$available = $response['available_payment_methods'];
+			$cache[$cache_key] = $available;
+		}
 
-  private function call($method, $route, $params = [])
-  {
-    $private_key = $this->private_key;
-    if (!empty($params)) {
-      $params = json_encode($params);
-    }
+		// 5. Resolve each configured group against what the merchant actually has.
+		$resolved = array();
+		foreach ($configured_groups as $group_key => $group) {
+			$resolved_group = array_values(array_intersect($group, $available));
 
-    $response = $this->request(
-      $method,
-      sprintf("%s/api/v1%s", 'https://gate.chip-in.asia', $route),
-      $params,
-      [
-        'Content-type: application/json',
-        'Authorization: ' . "Bearer " . $private_key,
-      ]
-    );
+			if ($group_key == 'dnqr') {
+				// dnqr wins when both are present.
+				if (in_array('dnqr', $resolved_group)) {
+					$resolved_group = array_values(array_diff($resolved_group, array('duitnow_qr')));
+				}
+			} elseif ($group_key == 'shopee') {
+				// shopee_pay wins when both are present.
+				if (in_array('shopee_pay', $resolved_group)) {
+					$resolved_group = array_values(array_diff($resolved_group, array('razer_shopeepay')));
+				}
+			}
 
-    $result = json_decode($response, true);
-    if (!$result) {
-      return null;
-    }
+			$resolved = array_merge($resolved, $resolved_group);
+		}
 
-    if (!empty($result['errors'])) {
-      return null;
-    }
+		// 6. Final: original non-group entries + resolved groups.
+		$final = $expanded;
+		foreach ($configured_groups as $group) {
+			$final = array_values(array_diff($final, $group));
+		}
+		$final = array_merge($final, $resolved);
 
-    return $result;
-  }
+		return $final;
+	}
 
-  private function request($method, $url, $params = [], $headers = [])
-  {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
+	private function call($method, $route, $params = []) {
+		$private_key = $this->private_key;
+		if (!empty($params)) {
+			$params = json_encode($params);
+		}
 
-    if ($method == 'POST') {
-      curl_setopt($ch, CURLOPT_POST, 1);
-    }
+		$response = $this->request(
+			$method,
+			sprintf("%s/api/v1%s", 'https://gate.chip-in.asia', $route),
+			$params,
+			[
+				'Content-type: application/json',
+				'Authorization: ' . "Bearer " . $private_key,
+			]
+		);
 
-    if ($method == 'PUT') {
-      curl_setopt($ch, CURLOPT_PUT, 1);
-    }
+		$result = json_decode($response, true);
+		if (!$result) {
+			return null;
+		}
 
-    if ($method == 'PUT' or $method == 'POST') {
-      curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-    }
+		if (!empty($result['errors'])) {
+			return null;
+		}
 
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_FRESH_CONNECT, 1);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+		return $result;
+	}
 
-    // this to prevent error when account balance called
-    if ($this->require_empty_string_encoding){
-      curl_setopt($ch, CURLOPT_ENCODING, '');
-    }
+	private function request($method, $url, $params = [], $headers = []) {
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
 
-    $response = curl_exec($ch);
+		if ($method == 'POST') {
+			curl_setopt($ch, CURLOPT_POST, 1);
+		}
 
-    curl_close($ch);
+		if ($method == 'PUT') {
+			curl_setopt($ch, CURLOPT_PUT, 1);
+		}
 
-    return $response;
-  }
+		if ($method == 'PUT' or $method == 'POST') {
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+		}
+
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_FRESH_CONNECT, 1);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+		// this to prevent error when account balance called
+		if ($this->require_empty_string_encoding){
+			curl_setopt($ch, CURLOPT_ENCODING, '');
+		}
+
+		$response = curl_exec($ch);
+
+		curl_close($ch);
+
+		return $response;
+	}
 }
