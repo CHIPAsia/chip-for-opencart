@@ -60,6 +60,15 @@ class ModelPaymentChip extends Model {
   {
     static $cache = array();
 
+    // In-memory migration: legacy razer_shopeepay key -> shopee_pay (modern).
+    // Keeps backward compatibility for merchants with the old key saved.
+    if (in_array('razer_shopeepay', $whitelist) && !in_array('shopee_pay', $whitelist)) {
+      $whitelist = array_map(function ($method) {
+        return $method === 'razer_shopeepay' ? 'shopee_pay' : $method;
+      }, $whitelist);
+      $whitelist = array_values(array_unique($whitelist));
+    }
+
     $groups = array(
       'dnqr'   => self::DUITNOW_GROUP,
       'shopee' => self::SHOPEE_GROUP,

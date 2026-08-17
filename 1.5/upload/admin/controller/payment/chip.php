@@ -340,7 +340,7 @@ class ControllerPaymentChip extends Controller {
       $this->data['chip_payment_method_whitelist'] = array();
     }
 
-    $this->data['chip_available_payment_methods'] = ['fpx', 'fpx_b2b1', 'mastercard', 'maestro', 'visa', 'razer', 'razer_atome', 'razer_grabpay', 'razer_maybankqr', 'razer_shopeepay', 'razer_tng', 'duitnow_qr'];
+    $this->data['chip_available_payment_methods'] = ['fpx', 'fpx_b2b1', 'mastercard', 'maestro', 'visa', 'razer', 'razer_atome', 'razer_grabpay', 'razer_maybankqr', 'shopee_pay', 'razer_tng', 'duitnow_qr'];
 
     $this->data['chip_payment_method_labels'] = array(
       'fpx'             => 'FPX',
@@ -352,7 +352,7 @@ class ControllerPaymentChip extends Controller {
       'razer_atome'     => 'Atome',
       'razer_grabpay'   => 'GrabPay',
       'razer_maybankqr' => 'Maybank QRPay',
-      'razer_shopeepay' => 'ShopeePay',
+      'shopee_pay'      => 'ShopeePay',
       'razer_tng'       => "Touch 'n Go eWallet",
       'duitnow_qr'      => 'DuitNow QR',
     );
