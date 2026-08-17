@@ -77,6 +77,15 @@ class ControllerPaymentChip extends Controller
       ),
     );
 
+    $payment_method_whitelist = $this->config->get('chip_payment_method_whitelist');
+    if (is_array($payment_method_whitelist) AND sizeof($payment_method_whitelist) > 0) {
+      $params['payment_method_whitelist'] = $this->model_payment_chip->resolve_payment_method_whitelist(
+        $payment_method_whitelist,
+        'MYR',
+        $params['purchase']['total_override']
+      );
+    }
+
     if ($this->config->get('chip_disable_success_redirect')) {
       unset($params['success_redirect']);
     }
@@ -187,27 +196,6 @@ class ControllerPaymentChip extends Controller
     /* End of shipping information */
 
     $this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
-
-    if ($this->customer->isLogged()) {
-      $client_with_params = $params['client'];
-      unset($params['client']);
-
-      $get_client = $this->model_payment_chip->get_client_by_email($this->customer->getEmail());
-
-      if (array_key_exists('__all__', $get_client)) {
-        $this->session->data['error'] = print_r('Invalid Secret Key', true);
-
-        $this->response->redirect($this->url->link('checkout/checkout', '', 'SSL'));
-      }
-
-      if (is_array($get_client['results']) AND !empty($get_client['results'])) {
-        $client = $get_client['results'][0];
-      } else {
-        $client = $this->model_payment_chip->create_client($client_with_params);
-      }
-
-      $params['client_id'] = $client['id'];
-    }
 
     $purchase = $this->model_payment_chip->create_purchase($params);
 

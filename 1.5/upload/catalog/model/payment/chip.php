@@ -46,11 +46,6 @@ class ModelPaymentChip extends Model {
     return $this->call('GET', "/purchases/{$purchase_id}/");
   }
 
-  public function create_client($params) 
-  {
-    return $this->call('POST', "/clients/", $params);
-  }
-
   public function payment_methods($currency, $amount)
   {
     return $this->call('GET', "/payment_methods/?brand_id={$this->brand_id}&currency={$currency}&amount={$amount}");
@@ -136,13 +131,6 @@ class ModelPaymentChip extends Model {
     $final = array_merge($final, $resolved);
 
     return $final;
-  }
-
-  // this is secret feature
-  public function get_client_by_email($email)
-  {
-    $email_encoded = urlencode($email);
-    return $this->call('GET', "/clients/?q={$email_encoded}");
   }
 
   private function call($method, $route, $params = [])

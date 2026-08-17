@@ -1,6 +1,9 @@
 <?php
 namespace Opencart\Catalog\Model\Extension\Chip\Payment;
 class Chip extends \Opencart\System\Engine\Model {
+  const DUITNOW_GROUP = array('duitnow_qr', 'dnqr');
+  const SHOPEE_GROUP = array('razer_shopeepay', 'shopee_pay');
+
   private $private_key;
   private $brand_id;
   public function getMethod($address): array {
@@ -46,16 +49,91 @@ class Chip extends \Opencart\System\Engine\Model {
     return $this->call('GET', "/purchases/{$purchase_id}/");
   }
 
-  public function create_client($params) 
+  public function payment_methods($currency, $amount)
   {
-    return $this->call('POST', "/clients/", $params);
+    return $this->call('GET', "/payment_methods/?brand_id={$this->brand_id}&currency={$currency}&amount={$amount}");
   }
 
-  // this is secret feature
-  public function get_client_by_email($email)
+  public function resolve_payment_method_whitelist($whitelist, $currency, $amount)
   {
-    $email_encoded = urlencode($email);
-    return $this->call('GET', "/clients/?q={$email_encoded}");
+    static $cache = array();
+
+    // In-memory migration: legacy razer_shopeepay key -> shopee_pay (modern).
+    // Keeps backward compatibility for merchants with the old key saved.
+    if (in_array('razer_shopeepay', $whitelist) && !in_array('shopee_pay', $whitelist)) {
+      $whitelist = array_map(function ($method) {
+        return $method === 'razer_shopeepay' ? 'shopee_pay' : $method;
+      }, $whitelist);
+      $whitelist = array_values(array_unique($whitelist));
+    }
+
+    $groups = array(
+      'dnqr'   => self::DUITNOW_GROUP,
+      'shopee' => self::SHOPEE_GROUP,
+    );
+
+    // 1. Short-circuit: no group member configured -> return unchanged (no API call).
+    $configured_groups = array();
+    foreach ($groups as $group_key => $group) {
+      if (count(array_intersect($whitelist, $group)) > 0) {
+        $configured_groups[$group_key] = $group;
+      }
+    }
+
+    if (count($configured_groups) == 0) {
+      return $whitelist;
+    }
+
+    // 2. Expand all configured groups in-memory.
+    $expanded = $whitelist;
+    foreach ($configured_groups as $group) {
+      $expanded = array_merge($expanded, $group);
+    }
+    $expanded = array_values(array_unique($expanded));
+
+    // 3. Cache key: brand + currency + amount-bucket (round to 100-sen steps).
+    $cache_key = 'chip_pm_' . md5($this->brand_id . '|' . $currency . '|' . intval($amount / 100));
+
+    if (isset($cache[$cache_key])) {
+      $available = $cache[$cache_key];
+    } else {
+      $response = $this->payment_methods($currency, $amount);
+      if (!is_array($response) || !isset($response['available_payment_methods'])) {
+        // 4. Fallback: return expanded whitelist unchanged if the API fails.
+        return $expanded;
+      }
+      $available = $response['available_payment_methods'];
+      $cache[$cache_key] = $available;
+    }
+
+    // 5. Resolve each configured group against what the merchant actually has.
+    $resolved = array();
+    foreach ($configured_groups as $group_key => $group) {
+      $resolved_group = array_values(array_intersect($group, $available));
+
+      if ($group_key == 'dnqr') {
+        // dnqr wins when both are present.
+        if (in_array('dnqr', $resolved_group)) {
+          $resolved_group = array_values(array_diff($resolved_group, array('duitnow_qr')));
+        }
+      } elseif ($group_key == 'shopee') {
+        // shopee_pay wins when both are present.
+        if (in_array('shopee_pay', $resolved_group)) {
+          $resolved_group = array_values(array_diff($resolved_group, array('razer_shopeepay')));
+        }
+      }
+
+      $resolved = array_merge($resolved, $resolved_group);
+    }
+
+    // 6. Final: original non-group entries + resolved groups.
+    $final = $expanded;
+    foreach ($configured_groups as $group) {
+      $final = array_values(array_diff($final, $group));
+    }
+    $final = array_merge($final, $resolved);
+
+    return $final;
   }
 
   private function call($method, $route, $params = [])
