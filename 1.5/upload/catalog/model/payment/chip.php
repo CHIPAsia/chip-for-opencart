@@ -1,5 +1,8 @@
 <?php
 class ModelPaymentChip extends Model {
+  const DUITNOW_GROUP = array('duitnow_qr', 'dnqr');
+  const SHOPEE_GROUP = array('razer_shopeepay', 'shopee_pay');
+
   public function getMethod($address, $total) {
     $this->language->load('payment/chip');
 
@@ -57,15 +60,29 @@ class ModelPaymentChip extends Model {
   {
     static $cache = array();
 
-    $duitnow_group = array('duitnow_qr', 'dnqr');
+    $groups = array(
+      'dnqr'   => self::DUITNOW_GROUP,
+      'shopee' => self::SHOPEE_GROUP,
+    );
 
-    // 1. Short-circuit: no dnqr-group member configured -> return unchanged (no API call).
-    if (count(array_intersect($whitelist, $duitnow_group)) == 0) {
+    // 1. Short-circuit: no group member configured -> return unchanged (no API call).
+    $configured_groups = array();
+    foreach ($groups as $group_key => $group) {
+      if (count(array_intersect($whitelist, $group)) > 0) {
+        $configured_groups[$group_key] = $group;
+      }
+    }
+
+    if (count($configured_groups) == 0) {
       return $whitelist;
     }
 
-    // 2. Expand the group in-memory.
-    $expanded = array_values(array_unique(array_merge($whitelist, $duitnow_group)));
+    // 2. Expand all configured groups in-memory.
+    $expanded = $whitelist;
+    foreach ($configured_groups as $group) {
+      $expanded = array_merge($expanded, $group);
+    }
+    $expanded = array_values(array_unique($expanded));
 
     // 3. Cache key: brand + currency + amount-bucket (round to 100-sen steps).
     $cache_key = 'chip_pm_' . md5($this->brand_id . '|' . $currency . '|' . intval($amount / 100));
@@ -82,17 +99,32 @@ class ModelPaymentChip extends Model {
       $cache[$cache_key] = $available;
     }
 
-    // 5. Intersect: keep only group members the merchant actually has.
-    $resolved_group = array_values(array_intersect($duitnow_group, $available));
+    // 5. Resolve each configured group against what the merchant actually has.
+    $resolved = array();
+    foreach ($configured_groups as $group_key => $group) {
+      $resolved_group = array_values(array_intersect($group, $available));
 
-    // 6. Priority: dnqr wins when both are present.
-    if (in_array('dnqr', $resolved_group)) {
-      $resolved_group = array_values(array_diff($resolved_group, array('duitnow_qr')));
+      if ($group_key == 'dnqr') {
+        // dnqr wins when both are present.
+        if (in_array('dnqr', $resolved_group)) {
+          $resolved_group = array_values(array_diff($resolved_group, array('duitnow_qr')));
+        }
+      } elseif ($group_key == 'shopee') {
+        // shopee_pay wins when both are present.
+        if (in_array('shopee_pay', $resolved_group)) {
+          $resolved_group = array_values(array_diff($resolved_group, array('razer_shopeepay')));
+        }
+      }
+
+      $resolved = array_merge($resolved, $resolved_group);
     }
 
-    // 7. Final: original non-group entries + resolved group.
-    $final = array_values(array_diff($expanded, $duitnow_group));
-    $final = array_merge($final, $resolved_group);
+    // 6. Final: original non-group entries + resolved groups.
+    $final = $expanded;
+    foreach ($configured_groups as $group) {
+      $final = array_values(array_diff($final, $group));
+    }
+    $final = array_merge($final, $resolved);
 
     return $final;
   }
