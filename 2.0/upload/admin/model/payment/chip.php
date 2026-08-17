@@ -1,89 +1,99 @@
 <?php
-class ModelPaymentChip extends Model
-{
+class ModelPaymentChip extends Model {
+	private $require_empty_string_encoding = false;
+	private $private_key;
+	private $brand_id;
 
-  private $require_empty_string_encoding = false;
-  private $private_key;
-  private $brand_id;
+	public function install() {
+		$this->db->query("
+			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "chip_report` (
+				`chip_report_id` bigint(20) NOT NULL AUTO_INCREMENT,
+				`customer_id` bigint(20) NOT NULL,
+				`chip_id` varchar(64) NOT NULL,
+				`order_id` bigint(20) NOT NULL,
+				`status` varchar(64) NOT NULL,
+				`amount` decimal(15,2) NOT NULL,
+				`environment_type` varchar(32) NOT NULL,
+				`date_added` datetime NOT NULL,
+				PRIMARY KEY (`chip_report_id`),
+				KEY `order_id` (`order_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+		");
+	}
 
-  public function install() {
-  }
+	public function uninstall() {
+		$this->db->query("DROP TABLE IF EXISTS `" . DB_PREFIX . "chip_report`");
+	}
 
-  public function uninstall() {
-  }
+	public function set_keys($private_key, $brand_id) {
+		$this->private_key = $private_key;
+		$this->brand_id    = $brand_id;
+	}
 
-  public function set_keys($private_key, $brand_id) {
-    $this->private_key = $private_key;
-    $this->brand_id    = $brand_id;
-  }
+	public function get_public_key() {
+		$result = $this->call('GET', "/public_key/");
 
-  public function get_public_key()
-  {
-    $result = $this->call('GET', "/public_key/");
+		return $result;
+	}
 
-    return $result;
-  }
+	private function call($method, $route, $params = array()) {
+		$private_key = $this->private_key;
+		if (!empty($params)) {
+			$params = json_encode($params);
+		}
 
-  private function call($method, $route, $params = [])
-  {
-    $private_key = $this->private_key;
-    if (!empty($params)) {
-      $params = json_encode($params);
-    }
+		$response = $this->request(
+			$method,
+			sprintf("%s/api/v1%s", 'https://gate.chip-in.asia', $route),
+			$params,
+			array(
+				'Content-type: application/json',
+				'Authorization: ' . "Bearer " . $private_key,
+			)
+		);
 
-    $response = $this->request(
-      $method,
-      sprintf("%s/api/v1%s", 'https://gate.chip-in.asia', $route),
-      $params,
-      [
-        'Content-type: application/json',
-        'Authorization: ' . "Bearer " . $private_key,
-      ]
-    );
+		$result = json_decode($response, true);
+		if (!$result) {
+			return null;
+		}
 
-    $result = json_decode($response, true);
-    if (!$result) {
-      return null;
-    }
+		if (!empty($result['errors'])) {
+			return null;
+		}
 
-    if (!empty($result['errors'])) {
-      return null;
-    }
+		return $result;
+	}
 
-    return $result;
-  }
+	private function request($method, $url, $params = array(), $headers = array()) {
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
 
-  private function request($method, $url, $params = [], $headers = [])
-  {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
+		if ($method == 'POST') {
+			curl_setopt($ch, CURLOPT_POST, 1);
+		}
 
-    if ($method == 'POST') {
-      curl_setopt($ch, CURLOPT_POST, 1);
-    }
+		if ($method == 'PUT') {
+			curl_setopt($ch, CURLOPT_PUT, 1);
+		}
 
-    if ($method == 'PUT') {
-      curl_setopt($ch, CURLOPT_PUT, 1);
-    }
+		if ($method == 'PUT' or $method == 'POST') {
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+		}
 
-    if ($method == 'PUT' or $method == 'POST') {
-      curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-    }
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_FRESH_CONNECT, 1);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_FRESH_CONNECT, 1);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+		// this to prevent error when account balance called
+		if ($this->require_empty_string_encoding) {
+			curl_setopt($ch, CURLOPT_ENCODING, '');
+		}
 
-    // this to prevent error when account balance called
-    if ($this->require_empty_string_encoding){
-      curl_setopt($ch, CURLOPT_ENCODING, '');
-    }
+		$response = curl_exec($ch);
 
-    $response = curl_exec($ch);
+		curl_close($ch);
 
-    curl_close($ch);
-
-    return $response;
-  }
+		return $response;
+	}
 }

@@ -32,29 +32,49 @@ class ModelPaymentChip extends Model {
     return $method_data;
   }
 
-  public function set_keys($private_key, $brand_id) {
-    $this->private_key = $private_key;
-    $this->brand_id    = $brand_id;
-  }
+	public function set_keys($private_key, $brand_id) {
+		$this->private_key = $private_key;
+		$this->brand_id    = $brand_id;
+	}
 
-  public function create_purchase($params)
-  {
-    return $this->call('POST', '/purchases/', $params);
-  }
+	public function create_purchase($params) {
+		return $this->call('POST', '/purchases/', $params);
+	}
 
-  public function get_purchase($purchase_id)
-  {
-    return $this->call('GET', "/purchases/{$purchase_id}/");
-  }
+	public function get_purchase($purchase_id) {
+		return $this->call('GET', "/purchases/{$purchase_id}/");
+	}
 
-  public function payment_methods($currency, $amount)
-  {
-    return $this->call('GET', "/payment_methods/?brand_id={$this->brand_id}&currency={$currency}&amount={$amount}");
-  }
+	public function payment_methods($currency, $amount) {
+		return $this->call('GET', "/payment_methods/?brand_id={$this->brand_id}&currency={$currency}&amount={$amount}");
+	}
 
-  public function resolve_payment_method_whitelist($whitelist, $currency, $amount)
-  {
-    static $cache = array();
+	public function addReport($data) {
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "chip_report`
+			(`customer_id`, `chip_id`, `order_id`, `status`, `amount`, `environment_type`, `date_added`)
+			VALUES (" . (int)$data['customer_id'] . ", '" . $this->db->escape($data['chip_id']) . "', " . (int)$data['order_id'] . ",
+			'" . $this->db->escape($data['status']) . "', '" . (float)$data['amount'] . "',
+			'" . $this->db->escape($data['environment_type']) . "', NOW())");
+	}
+
+	public function updateReportStatus($chip_id, $status) {
+		$this->db->query("UPDATE `" . DB_PREFIX . "chip_report`
+			SET `status` = '" . $this->db->escape($status) . "'
+			WHERE `chip_id` = '" . $this->db->escape($chip_id) . "'");
+	}
+
+	public function getReportByOrderId($order_id) {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_report` WHERE `order_id` = " . (int)$order_id . " ORDER BY `date_added` DESC LIMIT 1");
+
+		if ($query->num_rows) {
+			return $query->row;
+		}
+
+		return null;
+	}
+
+	public function resolve_payment_method_whitelist($whitelist, $currency, $amount) {
+		static $cache = array();
 
     // In-memory migration: legacy razer_shopeepay key -> shopee_pay (modern).
     // Keeps backward compatibility for merchants with the old key saved.
@@ -134,38 +154,36 @@ class ModelPaymentChip extends Model {
     return $final;
   }
 
-  private function call($method, $route, $params = [])
-  {
-    $private_key = $this->private_key;
-    if (!empty($params)) {
-      $params = json_encode($params);
-    }
+	private function call($method, $route, $params = array()) {
+		$private_key = $this->private_key;
+		if (!empty($params)) {
+			$params = json_encode($params);
+		}
 
-    $response = $this->request(
-      $method,
-      sprintf("%s/api/v1%s", 'https://gate.chip-in.asia', $route),
-      $params,
-      [
-        'Content-type: application/json',
-        'Authorization: ' . "Bearer " . $private_key,
-      ]
-    );
+		$response = $this->request(
+			$method,
+			sprintf("%s/api/v1%s", 'https://gate.chip-in.asia', $route),
+			$params,
+			array(
+				'Content-type: application/json',
+				'Authorization: ' . "Bearer " . $private_key,
+			)
+		);
 
-    $result = json_decode($response, true);
-    if (!$result) {
-      return null;
-    }
+		$result = json_decode($response, true);
+		if (!$result) {
+			return null;
+		}
 
-    if (!empty($result['errors'])) {
-      return null;
-    }
+		if (!empty($result['errors'])) {
+			return null;
+		}
 
-    return $result;
-  }
+		return $result;
+	}
 
-  private function request($method, $url, $params = [], $headers = [])
-  {
-    $ch = curl_init();
+	private function request($method, $url, $params = array(), $headers = array()) {
+		$ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
 
     if ($method == 'POST') {
