@@ -12,6 +12,7 @@ class Chip extends \Opencart\System\Engine\Controller {
 
     $this->load->model('localisation/order_status');
     $this->load->model('localisation/geo_zone');
+    $this->load->model('localisation/language');
 
     $languages = $this->model_localisation_language->getLanguages();
 
@@ -39,6 +40,23 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['payment_chip_brand_id'] = $this->config->get('payment_chip_brand_id');
     $data['payment_chip_public_key'] = $this->config->get('payment_chip_public_key');
     $data['payment_chip_general_public_key'] = $this->config->get('payment_chip_general_public_key');
+    $data['payment_chip_payment_method_whitelist'] = $this->config->get('payment_chip_payment_method_whitelist');
+
+    $data['payment_chip_available_payment_methods'] = array('fpx', 'fpx_b2b1', 'mastercard', 'maestro', 'visa', 'razer_atome', 'razer_grabpay', 'razer_maybankqr', 'shopee_pay', 'razer_tng', 'duitnow_qr');
+
+    $data['payment_chip_payment_method_labels'] = array(
+      'fpx'             => 'FPX',
+      'fpx_b2b1'        => 'FPX B2B1',
+      'mastercard'      => 'Mastercard',
+      'maestro'         => 'Maestro',
+      'visa'            => 'Visa',
+      'razer_atome'     => 'Atome',
+      'razer_grabpay'   => 'GrabPay',
+      'razer_maybankqr' => 'Maybank QR',
+      'shopee_pay'      => 'ShopeePay',
+      'razer_tng'       => "Touch 'n Go",
+      'duitnow_qr'      => 'DuitNow QR',
+    );
     $data['payment_chip_purchase_send_receipt'] = $this->config->get('payment_chip_purchase_send_receipt');
     $data['payment_chip_due_strict'] = $this->config->get('payment_chip_due_strict');
     $data['payment_chip_due_strict_timing'] = !empty($this->config->get('payment_chip_due_strict_timing')) ? $this->config->get('payment_chip_due_strict_timing') : '60';

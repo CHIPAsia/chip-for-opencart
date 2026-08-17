@@ -111,6 +111,30 @@ class ControllerExtensionPaymentChip extends Controller {
       $data['payment_chip_general_public_key'] = $this->config->get('payment_chip_general_public_key');
     }
 
+    if (isset($this->request->post['payment_chip_payment_method_whitelist'])) {
+      $data['payment_chip_payment_method_whitelist'] = $this->request->post['payment_chip_payment_method_whitelist'];
+    } elseif ($this->config->get('payment_chip_payment_method_whitelist')) {
+      $data['payment_chip_payment_method_whitelist'] = $this->config->get('payment_chip_payment_method_whitelist');
+    } else {
+      $data['payment_chip_payment_method_whitelist'] = array();
+    }
+
+    $data['payment_chip_available_payment_methods'] = array('fpx', 'fpx_b2b1', 'mastercard', 'maestro', 'visa', 'razer_atome', 'razer_grabpay', 'razer_maybankqr', 'shopee_pay', 'razer_tng', 'duitnow_qr');
+
+    $data['payment_chip_payment_method_labels'] = array(
+      'fpx'             => 'FPX',
+      'fpx_b2b1'        => 'FPX B2B1',
+      'mastercard'      => 'Mastercard',
+      'maestro'         => 'Maestro',
+      'visa'            => 'Visa',
+      'razer_atome'     => 'Atome',
+      'razer_grabpay'   => 'GrabPay',
+      'razer_maybankqr' => 'Maybank QR',
+      'shopee_pay'      => 'ShopeePay',
+      'razer_tng'       => "Touch 'n Go",
+      'duitnow_qr'      => 'DuitNow QR',
+    );
+
     if (isset($this->request->post['payment_chip_purchase_send_receipt'])) {
       $data['payment_chip_purchase_send_receipt'] = $this->request->post['payment_chip_purchase_send_receipt'];
     } else {

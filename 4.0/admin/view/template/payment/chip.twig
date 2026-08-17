@@ -74,6 +74,23 @@
      <textarea name="payment_chip_general_public_key" cols="80" rows="10" placeholder="{{ entry_general_public_key }}" id="input-general-public-key" class="form-control" readonly>{{ payment_chip_general_public_key }}</textarea>
     </div>
     </div>
+    <div class="row mb-3">
+    <label class="col-sm-2 col-form-label"><span data-bs-toggle="tooltip" title="{{ help_payment_method_whitelist }}" class="col-sm-2 col-form-label">{{ entry_payment_method_whitelist }}</span></label>
+    <div class="col-sm-10">
+     <div class="form-control" style="height: 150px; overflow: auto;">
+      {% for payment_method in payment_chip_available_payment_methods %}
+       {% set payment_method_label = payment_chip_payment_method_labels[payment_method] is defined ? payment_chip_payment_method_labels[payment_method] : payment_method %}
+       <div class="form-check">
+        {% if payment_method in payment_chip_payment_method_whitelist %}
+         <label><input type="checkbox" name="payment_chip_payment_method_whitelist[]" value="{{ payment_method }}" class="form-check-input" checked /> {{ payment_method_label }}</label>
+        {% else %}
+         <label><input type="checkbox" name="payment_chip_payment_method_whitelist[]" value="{{ payment_method }}" class="form-check-input" /> {{ payment_method_label }}</label>
+        {% endif %}
+       </div>
+      {% endfor %}
+     </div>
+    </div>
+    </div>
    </div>
    <div class="tab-pane" id="tab-general">
     <div class="row mb-3">

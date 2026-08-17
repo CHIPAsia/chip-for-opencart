@@ -28,7 +28,7 @@ class Chip extends \Opencart\System\Engine\Controller
       return;
     }
 
-    if (!isset($this->session->data['payment_method']) || $this->session->data['payment_method'] != 'chip') {
+    if (!isset($this->session->data['payment_method']) || (is_array($this->session->data['payment_method']) ? (strpos((string)$this->session->data['payment_method']['code'], 'chip') !== 0) : ($this->session->data['payment_method'] != 'chip'))) {
       $json['error'] = $this->language->get('error_payment_method');
       $this->response->addHeader('Content-Type: application/json');
 		  $this->response->setOutput(json_encode($json));
