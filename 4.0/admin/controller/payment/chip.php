@@ -42,7 +42,7 @@ class Chip extends \Opencart\System\Engine\Controller {
     $data['payment_chip_general_public_key'] = $this->config->get('payment_chip_general_public_key');
     $data['payment_chip_payment_method_whitelist'] = $this->config->get('payment_chip_payment_method_whitelist');
 
-    $data['payment_chip_available_payment_methods'] = array('fpx', 'fpx_b2b1', 'mastercard', 'maestro', 'visa', 'razer_atome', 'razer_grabpay', 'razer_maybankqr', 'shopee_pay', 'razer_tng', 'duitnow_qr');
+    $data['payment_chip_available_payment_methods'] = array('fpx', 'fpx_b2b1', 'mastercard', 'maestro', 'visa', 'razer_atome', 'razer_grabpay', 'razer_maybankqr', 'shopee_pay', 'razer_tng', 'duitnow_qr', 'crypto_coin');
 
     $data['payment_chip_payment_method_labels'] = array(
       'fpx'             => 'FPX',
@@ -56,6 +56,7 @@ class Chip extends \Opencart\System\Engine\Controller {
       'shopee_pay'      => 'ShopeePay',
       'razer_tng'       => "Touch 'n Go",
       'duitnow_qr'      => 'DuitNow QR',
+      'crypto_coin'     => 'Crypto Coin',
     );
     $data['payment_chip_purchase_send_receipt'] = $this->config->get('payment_chip_purchase_send_receipt');
     $data['payment_chip_due_strict'] = $this->config->get('payment_chip_due_strict');
