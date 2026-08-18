@@ -67,3 +67,11 @@ $_['column_environment'] = 'Environment';
 $_['column_date_added'] = 'Date Added';
 $_['text_no_results'] = 'No Results';
 $_['text_pagination'] = 'Showing {start} to {end} of {total} ({pages} Pages)';
+$_['tab_token'] = 'Token';
+
+$_['column_customer'] = 'Customer';
+$_['column_token_id'] = 'Token ID';
+$_['column_card_type'] = 'Card Type';
+$_['column_card_name'] = 'Card Name';
+$_['column_card_number'] = 'Card Number';
+$_['column_card_expire'] = 'Card Expire';

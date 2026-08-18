@@ -28,6 +28,7 @@
                 <a href="#tab-customise"><?php echo $tab_customise; ?></a>
                 <a href="#tab-troubleshooting"><?php echo $tab_troubleshooting; ?></a>
                 <a href="#tab-report"><?php echo $tab_report; ?></a>
+                <a href="#tab-token"><?php echo $tab_token; ?></a>
             </div>
 
             <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form">
@@ -398,6 +399,9 @@
                 </div>
                 <div id="tab-report">
                     <?php echo $report; ?>
+                </div>
+                <div id="tab-token">
+                    <?php echo $token; ?>
                 </div>
             </form>
         </div>

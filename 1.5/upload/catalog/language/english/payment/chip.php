@@ -19,3 +19,15 @@ $_['invalid_redirect'] = 'Invalid redirect.';
 
 $_['heading_title'] = 'CHIP  - Better Payment & Business Solutions';
 $_['text_payment_failed'] = 'Your payment has failed. Please contact the shop administrator for assistance or use a different payment option.';
+$_['error_invalid_token'] = 'The selected stored card is no longer available.';
+
+$_['text_stored_cards'] = 'Stored Cards';
+$_['text_card_use'] = 'Use';
+$_['text_card_new'] = 'New Card';
+
+$_['text_visa'] = 'Visa';
+$_['text_mastercard'] = 'Mastercard';
+$_['text_amex'] = 'American Express';
+$_['text_discover'] = 'Discover';
+$_['text_jcb'] = 'JCB';
+$_['text_maestro'] = 'Maestro';

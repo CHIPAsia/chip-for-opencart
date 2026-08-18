@@ -374,6 +374,7 @@ class ControllerPaymentChip extends Controller {
 		$this->data['token'] = $this->session->data['token'];
 
 		$this->data['report'] = $this->getReport();
+		$this->data['token'] = $this->getToken();
 
 		$this->template = 'payment/chip.tpl';
 		$this->children = array(
@@ -431,6 +432,59 @@ class ControllerPaymentChip extends Controller {
 		$this->data['report_pagination'] = $pagination->render();
 
 		$this->template = 'payment/chip_report.tpl';
+
+		return $this->render();
+	}
+
+	public function getToken() {
+		$page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
+		$limit = $this->config->get('config_admin_limit');
+		$start = ($page - 1) * $limit;
+
+		$total_query = $this->db->query("SELECT COUNT(*) AS total FROM `" . DB_PREFIX . "chip_token`");
+		$total = $total_query->row['total'];
+
+		$tokens = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token` ORDER BY `date_added` DESC LIMIT " . (int)$start . ", " . (int)$limit);
+
+		$this->data['tokens'] = array();
+
+		if ($tokens->num_rows) {
+			foreach ($tokens->rows as $token) {
+				$customer_url = $this->url->link('sale/customer', 'token=' . $this->session->data['token'] . '&customer_id=' . $token['customer_id'], 'SSL');
+
+				$this->data['tokens'][] = array(
+					'customer_id' => $token['customer_id'],
+					'customer' => $customer_url,
+					'token_id' => $token['token_id'],
+					'type' => $token['type'],
+					'card_name' => $token['card_name'],
+					'card_number' => $token['card_number'],
+					'card_expire' => $token['card_expire_month'] . '/' . $token['card_expire_year'],
+					'date_added' => date('Y-m-d H:i:s', strtotime($token['date_added']))
+				);
+			}
+		}
+
+		$this->data['column_customer'] = $this->language->get('column_customer');
+		$this->data['column_token_id'] = $this->language->get('column_token_id');
+		$this->data['column_card_type'] = $this->language->get('column_card_type');
+		$this->data['column_card_name'] = $this->language->get('column_card_name');
+		$this->data['column_card_number'] = $this->language->get('column_card_number');
+		$this->data['column_card_expire'] = $this->language->get('column_card_expire');
+		$this->data['column_date_added'] = $this->language->get('column_date_added');
+		$this->data['text_no_results'] = $this->language->get('text_no_results');
+		$this->data['text_pagination'] = $this->language->get('text_pagination');
+
+		$pagination = new Pagination();
+		$pagination->total = $total;
+		$pagination->page = $page;
+		$pagination->limit = $limit;
+		$pagination->text = $this->data['text_pagination'];
+		$pagination->url = $this->url->link('payment/chip', 'token=' . $this->session->data['token'] . '&page={page}', 'SSL');
+
+		$this->data['token_pagination'] = $pagination->render();
+
+		$this->template = 'payment/chip_token.tpl';
 
 		return $this->render();
 	}
