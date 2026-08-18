@@ -93,3 +93,11 @@ $_['error_public_key'] = 'Error! The public key is not valid';
 $_['error_due_strict_timing'] = 'Error! You are required to set Due Strict Timing';
 $_['error_payment_name'] = 'Error! You are required to set Payment Name';
 $_['error_instruction'] = 'Error! You are required to set CHIP Instructions';
+$_['tab_token'] = 'Token';
+
+$_['column_customer'] = 'Customer';
+$_['column_token_id'] = 'Token ID';
+$_['column_card_type'] = 'Card Type';
+$_['column_card_name'] = 'Card Name';
+$_['column_card_number'] = 'Card Number';
+$_['column_card_expire'] = 'Card Expire';

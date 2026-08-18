@@ -35,6 +35,7 @@
       <li><a href="#tab-checkout" data-toggle="tab"><?php echo $tab_checkout; ?></a></li>
       <li><a href="#tab-troubleshoot" data-toggle="tab"><?php echo $tab_troubleshoot; ?></a></li>
       <li><a href="#tab-report" data-toggle="tab"><?php echo $tab_report; ?></a></li>
+      <li><a href="#tab-token" data-toggle="tab"><?php echo $tab_token; ?></a></li>
       </ul>
       <div class="tab-content">
       <div class="tab-pane active" id="tab-api">
@@ -451,6 +452,9 @@
       </div>
       <div class="tab-pane" id="tab-report">
         <?php echo $report; ?>
+      </div>
+      <div class="tab-pane" id="tab-token">
+        <?php echo $token; ?>
       </div>
       </div>
     </form>

@@ -16,3 +16,15 @@ $_['chip_invoice_url'] = 'CHIP invoice: <a href="https://gate.chip-in.asia/p/%1$
 $_['payment_method'] = 'Payment method: ';
 $_['test_mode_disclaimer'] = 'The payment made in test mode where it does not involve real payment.';
 $_['invalid_redirect'] = 'Invalid redirect.';
+$_['error_invalid_token'] = 'The selected stored card is no longer available.';
+
+$_['text_stored_cards'] = 'Stored Cards';
+$_['text_card_use'] = 'Use';
+$_['text_card_new'] = 'New Card';
+
+$_['text_visa'] = 'Visa';
+$_['text_mastercard'] = 'Mastercard';
+$_['text_amex'] = 'American Express';
+$_['text_discover'] = 'Discover';
+$_['text_jcb'] = 'JCB';
+$_['text_maestro'] = 'Maestro';

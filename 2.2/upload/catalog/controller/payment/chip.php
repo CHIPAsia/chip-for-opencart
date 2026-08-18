@@ -11,12 +11,253 @@ class ControllerPaymentChip extends Controller {
 		$data['button_continue'] = $this->language->get('button_continue');
 		$data['button_continue_action'] = $this->url->link('payment/chip/create_purchase', '', true);
 
+		// Stored cards for logged-in customers
+		$data['chip_tokens'] = array();
+
+		if ($this->customer->isLogged()) {
+			$this->load->model('payment/chip');
+
+			$tokens = $this->model_payment_chip->getTokens($this->customer->getId());
+
+			foreach ($tokens as $token) {
+				$data['chip_tokens'][] = array(
+					'chip_token_id' => $token['chip_token_id'],
+					'name'          => $this->language->get('text_card_use') . ' ' . $this->language->get('text_' . $token['type']) . ' ' . $token['card_number'],
+					'href'          => $this->url->link('payment/chip/create_purchase_stored', 'chip_token_id=' . $token['chip_token_id'], true)
+				);
+			}
+		}
+
 		/**
 			* if there is any other chip session data, clear it
 			*/
 		unset($this->session->data['chip']);
 
 		return $this->load->view('payment/chip', $data);
+	}
+
+	public function create_purchase_stored() {
+		if ($this->session->data['payment_method']['code'] != 'chip') {
+			exit;
+		}
+
+		$this->language->load('payment/chip');
+
+		if (!isset($this->request->get['chip_token_id'])) {
+			$this->session->data['error'] = $this->language->get('error_invalid_token');
+			$this->response->redirect($this->url->link('checkout/checkout', '', true));
+		}
+
+		$chip_token_id = (int)$this->request->get['chip_token_id'];
+
+		$this->load->model('payment/chip');
+		$this->load->model('checkout/order');
+		$this->load->model('account/order');
+
+		$token_data = $this->model_payment_chip->getTokenByChipTokenId($chip_token_id);
+
+		if (!$token_data || !isset($token_data['token_id'])) {
+			$this->session->data['error'] = $this->language->get('error_invalid_token');
+			$this->response->redirect($this->url->link('checkout/checkout', '', true));
+		}
+
+		$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+		$products = $this->model_account_order->getOrderProducts($this->session->data['order_id']);
+
+		/* Reject if MYR currency is not set up */
+
+		if (!$this->currency->has('MYR')){
+			$this->session->data['error'] = $this->language->get('pending_myr_setup');
+			$this->response->redirect($this->url->link('checkout/checkout', '', true));
+		}
+
+		$total_override = $order_info['total'];
+		
+		if ($this->config->get('chip_convert_to_processing') == 0 AND $this->config->get('config_currency') != 'MYR') {
+			$this->session->data['error'] = $this->language->get('convert_to_processing_disabled');
+			$this->response->redirect($this->url->link('checkout/checkout', '', true));
+		}
+
+		if ($this->config->get('config_currency') != 'MYR') {
+			$total_override = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
+		}
+
+		$params = array(
+			'success_callback' => $this->url->link('payment/chip/success_callback', '', true),
+			'success_redirect' => $this->url->link('payment/chip/success_redirect', '', true),
+			'failure_redirect' => $this->url->link('checkout/checkout', '', true),
+			'cancel_redirect'  => $this->url->link('checkout/cart', '', true),
+			'creator_agent'    => 'OC22: 1.0.0',
+			'reference'        => $this->session->data['order_id'],
+			'platform'         => 'opencart',
+			'send_receipt'     => $this->config->get('chip_purchase_send_receipt'),
+			'due'              => time() + (abs( (int) $this->config->get('chip_due_strict_timing') ) * 60),
+			'brand_id'         => $this->config->get('chip_brand_id'),
+			'client'           => [],
+			'purchase'         => array(
+				'total_override' => round($total_override * 100),
+				'timezone'       => $this->config->get('chip_time_zone'),
+				'currency'       => 'MYR',
+				'due_strict'     => $this->config->get('chip_due_strict'),
+				'products'       => array(),
+			),
+		);
+
+		$payment_method_whitelist = $this->config->get('chip_payment_method_whitelist');
+		if (is_array($payment_method_whitelist) AND sizeof($payment_method_whitelist) > 0) {
+			$params['payment_method_whitelist'] = $this->model_payment_chip->resolve_payment_method_whitelist(
+				$payment_method_whitelist,
+				'MYR',
+				$params['purchase']['total_override']
+			);
+		}
+
+		if ($this->config->get('chip_disable_success_redirect')) {
+			unset($params['success_redirect']);
+		}
+
+		if ($this->config->get('chip_disable_success_callback')) {
+			unset($params['success_callback']);
+		}
+
+		if ($this->config->get('chip_canceled_behavior') == 'cancel_order') {
+			$params['cancel_redirect'] = $this->url->link('payment/chip/cancel_redirect', '', true);
+		}
+
+		if ($this->config->get('chip_failed_behavior') == 'fail_order') {
+			$params['failure_redirect'] = $this->url->link('payment/chip/failure_redirect', '', true);
+		}
+
+		foreach ($products as $product) {
+			$product_price = $this->currency->convert($product['price'], $this->config->get('config_currency'), 'MYR');
+
+			$params['purchase']['products'][] = array(
+				'name' => substr($product['name'], 0, 256),
+				'quantity' => $product['quantity'],
+				'price' => round($product_price * 100),
+				'category' => $product['product_id']
+			);
+		}
+
+		if (!empty($order_info['comment'])) {
+			$params['purchase']['notes'] = substr($order_info['comment'], 0, 10000);
+		}
+
+		if (!empty($order_info['email'])) {
+			$params['client']['email'] = $order_info['email'];
+		}
+
+		if (!empty($order_info['telephone'])) {
+			$params['client']['phone'] = $order_info['telephone'];
+		}
+
+		$params_client_full_name = array();
+		if ($order_info['payment_firstname']) {
+			$params_client_full_name[] = $order_info['payment_firstname'];
+		}
+
+		if ($order_info['payment_lastname']) {
+			$params_client_full_name[] = ' ' . $order_info['payment_lastname'];
+		}
+
+		if (!empty(trim(implode($params_client_full_name)))){
+			$params['client']['full_name'] = substr(implode($params_client_full_name), 0, 30);
+		}
+
+		/* Start of payment information */
+
+		$params_client_street_address = array();
+		if (!empty($order_info['payment_address_1'])) {
+			$params_client_street_address[] = $order_info['payment_address_1'];
+		}
+
+		if (!empty($order_info['payment_address_2'])) {
+			$params_client_street_address[] = $order_info['payment_address_2'];
+		}
+
+		if (!empty($params_client_street_address)){
+			$params['client']['street_address'] = substr(implode($params_client_street_address), 0, 128);
+		}
+
+		if (!empty($order_info['payment_postcode'])) {
+			$params['client']['zip_code'] = substr($order_info['payment_postcode'], 0, 32);
+		}
+
+		if (!empty($order_info['payment_city'])) {
+			$params['client']['city'] = substr($order_info['payment_city'], 0, 128);
+		}
+
+		if (!empty($order_info['payment_iso_code_2'])) {
+			$params['client']['country'] = $order_info['payment_iso_code_2'];
+		}
+
+		/* End of payment information */
+		/* Start of shipping information */
+
+		$params_client_shipping_street_address = array();
+		if (!empty($order_info['shipping_address_1'])) {
+			$params_client_shipping_street_address[] = $order_info['shipping_address_1'];
+		}
+
+		if (!empty($order_info['shipping_address_2'])) {
+			$params_client_shipping_street_address[] = ' ' . $order_info['shipping_address_2'];
+		}
+
+		if (!empty($params_client_shipping_street_address)) {
+			$params['client']['shipping_street_address'] = substr(implode($params_client_shipping_street_address), 0, 128);
+		}
+
+		if (!empty($order_info['shipping_postcode'])) {
+			$params['client']['shipping_zip_code'] = substr($order_info['shipping_postcode'], 0, 32);
+		}
+
+		if (!empty($order_info['shipping_city'])) {
+			$params['client']['shipping_city'] = substr($order_info['shipping_city'], 0, 128);
+		}
+
+		if (!empty($order_info['shipping_iso_code_2'])) {
+			$params['client']['shipping_country'] = $order_info['shipping_iso_code_2'];
+		}
+
+		/* End of shipping information */
+
+		$this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
+
+		$purchase = $this->model_payment_chip->create_purchase($params);
+
+		if ( !array_key_exists('id', $purchase) ) {
+			$this->session->data['error'] = print_r($purchase, true);
+
+			if ($this->config->get('chip_debug')) {
+				$this->log->write('CHIP API /purchase/ failed for order #' . $this->session->data['order_id'] . '. Response Body: ' . json_encode($purchase));
+			}
+
+			$this->response->redirect($this->url->link('checkout/checkout', '', true));
+		}
+
+		$this->session->data['chip'] = $purchase;
+
+		// Save to chip_report table
+		$customer_id = $order_info['customer_id'];
+		$chip_id = $purchase['id'];
+		$order_id = $order_info['order_id'];
+		$status = isset($purchase['status']) ? $purchase['status'] : 'pending';
+		$amount = $params['purchase']['total_override'] / 100;
+		$environment_type = isset($purchase['is_test']) && $purchase['is_test'] ? 'staging' : 'production';
+
+		$this->model_payment_chip->addReport(array(
+			'customer_id' => $customer_id,
+			'chip_id' => $chip_id,
+			'order_id' => $order_id,
+			'status' => $status,
+			'amount' => $amount,
+			'environment_type' => $environment_type
+		));
+
+		// Charge the stored token
+		$this->model_payment_chip->chargeToken($chip_id, $token_data['token_id']);
+
+		$this->response->redirect($purchase['checkout_url']);
 	}
 
 	public function create_purchase() {
@@ -335,6 +576,11 @@ class ControllerPaymentChip extends Controller {
 		// Update chip_report status to paid
 		$this->model_payment_chip->updateReportStatus($purchase_id, 'paid');
 
+		// Save token if is_recurring_token is true
+		if (isset($purchase['is_recurring_token']) && $purchase['is_recurring_token'] === true) {
+			$this->saveToken($purchase, $order_info['customer_id']);
+		}
+
 		$this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
 		exit;
@@ -386,6 +632,11 @@ class ControllerPaymentChip extends Controller {
 
 		// Update chip_report status to paid
 		$this->model_payment_chip->updateReportStatus($purchase_id, 'paid');
+
+		// Save token if is_recurring_token is true
+		if (isset($purchase['is_recurring_token']) && $purchase['is_recurring_token'] === true) {
+			$this->saveToken($purchase, $order_info['customer_id']);
+		}
 
 		$this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
@@ -450,5 +701,31 @@ class ControllerPaymentChip extends Controller {
 		$this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
 		$this->response->redirect($this->url->link('checkout/failure', '', true));
+	}
+
+	private function saveToken($purchase, $customer_id) {
+		if (!isset($purchase['transaction_data']['extra'])) {
+			return;
+		}
+
+		$extra = $purchase['transaction_data']['extra'];
+
+		// Check if required fields exist
+		if (!isset($extra['card_type']) || !isset($extra['masked_pan']) ||
+				!isset($extra['expiry_month']) || !isset($extra['expiry_year'])) {
+			return;
+		}
+
+		$token_data = array(
+			'customer_id' => $customer_id,
+			'token_id' => $purchase['id'],
+			'type' => $extra['card_brand'],
+			'card_name' => isset($extra['cardholder_name']) ? $extra['cardholder_name'] : '',
+			'card_number' => $extra['masked_pan'],
+			'card_expire_month' => $extra['expiry_month'],
+			'card_expire_year' => $extra['expiry_year']
+		);
+
+		$this->model_payment_chip->addToken($token_data);
 	}
 }
