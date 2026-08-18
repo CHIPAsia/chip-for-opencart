@@ -38,6 +38,8 @@ class ControllerExtensionPaymentChip extends Controller {
 			exit;
 		}
 
+		$this->load->language('extension/payment/chip');
+
 		if (!isset($this->request->get['chip_token_id'])) {
 			$this->session->data['error'] = $this->language->get('error_invalid_token');
 			$this->response->redirect($this->url->link('checkout/checkout', '', true));
@@ -48,8 +50,6 @@ class ControllerExtensionPaymentChip extends Controller {
 		$this->load->model('extension/payment/chip');
 		$this->load->model('checkout/order');
 		$this->load->model('account/order');
-
-		$this->load->language('extension/payment/chip');
 
 		$token_data = $this->model_extension_payment_chip->getTokenByChipTokenId($chip_token_id);
 

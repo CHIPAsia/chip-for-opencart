@@ -371,8 +371,6 @@ class ControllerPaymentChip extends Controller {
 			$this->data['chip_atome_product_whitelist'] = $this->config->get('chip_atome_product_whitelist');
 		}
 
-		$this->data['token'] = $this->session->data['token'];
-
 		$this->data['report'] = $this->getReport();
 		$this->data['token'] = $this->getToken();
 

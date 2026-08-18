@@ -388,8 +388,6 @@ class ControllerPaymentChip extends Controller {
 
 		$data['webhook'] = HTTPS_CATALOG . 'index.php?route=payment/chip/callback';
 
-		$data['token'] = $this->session->data['token'];
-
 		$data['report'] = $this->getReport();
 		$data['token'] = $this->getToken();
 
