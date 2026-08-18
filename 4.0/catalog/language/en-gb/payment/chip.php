@@ -19,3 +19,16 @@ $_['invalid_redirect'] = 'Invalid redirect.';
 
 $_['error_order_id'] = 'No order ID in the session!';
 $_['error_payment_method'] = 'Payment method is incorrect!';
+$_['button_confirm'] = 'Confirm';
+
+$_['error_invalid_token'] = 'The selected stored card is no longer available.';
+
+$_['text_card_use'] = 'Use';
+$_['text_card_new'] = 'New Card';
+
+$_['text_visa'] = 'Visa';
+$_['text_mastercard'] = 'Mastercard';
+$_['text_amex'] = 'American Express';
+$_['text_discover'] = 'Discover';
+$_['text_jcb'] = 'JCB';
+$_['text_maestro'] = 'Maestro';

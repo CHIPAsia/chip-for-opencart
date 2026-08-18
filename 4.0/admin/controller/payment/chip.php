@@ -134,6 +134,7 @@ class Chip extends \Opencart\System\Engine\Controller {
 		$data['payment_chip_failed_behavior'] = $this->config->get('payment_chip_failed_behavior');
 
 		$data['report'] = $this->getReport();
+		$data['token'] = $this->getToken();
 
 		$data['webhook'] = HTTP_CATALOG . 'index.php?route=extension/chip/payment/chip|callback';
 
@@ -295,5 +296,62 @@ class Chip extends \Opencart\System\Engine\Controller {
 		$data['text_no_results'] = $this->language->get('text_no_results');
 
 		return $this->load->view('extension/chip/payment/chip_report', $data);
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getToken(): string {
+		$page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
+		$limit = $this->config->get('config_pagination_admin');
+		$start = ($page - 1) * $limit;
+
+		// Get total count for tokens.
+		$total_query = $this->db->query("SELECT COUNT(*) AS total FROM `" . DB_PREFIX . "chip_token`");
+		$total = $total_query->row['total'];
+
+		// Get paginated tokens.
+		$tokens = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token` ORDER BY `date_added` DESC LIMIT " . (int)$start . ", " . (int)$limit);
+
+		$data['tokens'] = [];
+
+		if ($tokens->num_rows) {
+			foreach ($tokens->rows as $token) {
+				$customer_url = $this->url->link('customer/customer.form', 'user_token=' . $this->session->data['user_token'] . '&customer_id=' . $token['customer_id']);
+
+				$data['tokens'][] = [
+					'customer_id' => $token['customer_id'],
+					'customer'    => $customer_url,
+					'token_id'    => $token['token_id'],
+					'type'        => $token['type'],
+					'card_name'   => $token['card_name'],
+					'card_number' => $token['card_number'],
+					'card_expire' => $token['card_expire_month'] . '/' . $token['card_expire_year'],
+					'date_added'  => date('Y-m-d H:i:s', strtotime($token['date_added']))
+				];
+			}
+		}
+
+		// Pagination.
+		$data['token_pagination'] = $this->load->controller('common/pagination', [
+			'total' => $total,
+			'page'  => $page,
+			'limit' => $this->config->get('config_pagination_admin'),
+			'url'   => $this->url->link('extension/chip/payment/chip', 'user_token=' . $this->session->data['user_token'] . '&page={page}')
+		]);
+
+		// Load language.
+		$this->load->language('extension/chip/payment/chip');
+
+		$data['column_customer'] = $this->language->get('column_customer');
+		$data['column_token_id'] = $this->language->get('column_token_id');
+		$data['column_card_type'] = $this->language->get('column_card_type');
+		$data['column_card_name'] = $this->language->get('column_card_name');
+		$data['column_card_number'] = $this->language->get('column_card_number');
+		$data['column_card_expire'] = $this->language->get('column_card_expire');
+		$data['column_date_added'] = $this->language->get('column_date_added');
+		$data['text_no_results'] = $this->language->get('text_no_results');
+
+		return $this->load->view('extension/chip/payment/chip_token', $data);
 	}
 }

@@ -1,0 +1,37 @@
+<div class="table-responsive">
+ <table class="table table-bordered table-hover">
+  <thead>
+   <tr>
+    <td class="text-left">{{ column_customer }}</td>
+    <td class="text-left">{{ column_token_id }}</td>
+    <td class="text-left">{{ column_card_type }}</td>
+    <td class="text-left">{{ column_card_name }}</td>
+    <td class="text-left">{{ column_card_number }}</td>
+    <td class="text-left">{{ column_card_expire }}</td>
+    <td class="text-left">{{ column_date_added }}</td>
+   </tr>
+  </thead>
+  <tbody>
+   {% if tokens %}
+    {% for token in tokens %}
+     <tr>
+      <td class="text-left"><a href="{{ token.customer }}" target="_blank">{{ token.customer_id }}</a></td>
+      <td class="text-left">{{ token.token_id }}</td>
+      <td class="text-left">{{ token.type }}</td>
+      <td class="text-left">{{ token.card_name }}</td>
+      <td class="text-left">{{ token.card_number }}</td>
+      <td class="text-left">{{ token.card_expire }}</td>
+      <td class="text-left">{{ token.date_added }}</td>
+     </tr>
+    {% endfor %}
+   {% else %}
+    <tr>
+     <td class="text-center" colspan="7">{{ text_no_results }}</td>
+    </tr>
+   {% endif %}
+  </tbody>
+ </table>
+</div>
+<div class="row">
+ <div class="col-sm-12 text-left">{{ token_pagination }}</div>
+</div>

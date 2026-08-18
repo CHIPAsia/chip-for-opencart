@@ -69,6 +69,17 @@ class Chip extends \Opencart\System\Engine\Model {
 				'name' => nl2br($this->config->get('payment_chip_payment_name_' . $this->config->get('config_language_id')))
 			];
 
+			if ($this->customer->getId()) {
+				$tokens = $this->getTokens($this->customer->getId());
+
+				foreach ($tokens as $token) {
+					$option_data[$token['chip_token_id']] = [
+						'code' => 'chip.' . $token['chip_token_id'],
+						'name' => $this->language->get('text_card_use') . ' ' . $this->language->get('text_' . $token['type']) . ' ' . $token['card_number']
+					];
+				}
+			}
+
 			$method_data = [
 				'code'       => 'chip',
 				'name'       => nl2br($this->config->get('payment_chip_payment_name_' . $this->config->get('config_language_id'))),
@@ -253,6 +264,96 @@ class Chip extends \Opencart\System\Engine\Model {
 		}
 
 		return null;
+	}
+
+	/**
+	 * @param string $purchase_id
+	 * @param string $token_id
+	 *
+	 * @return mixed
+	 */
+	public function chargeToken($purchase_id, $token_id) {
+		$params = [
+			'recurring_token' => $token_id
+		];
+
+		return $this->call('POST', "/purchases/{$purchase_id}/charge/", $params);
+	}
+
+	/**
+	 * @param int $chip_token_id
+	 *
+	 * @return ?array
+	 */
+	public function getTokenByChipTokenId(int $chip_token_id): ?array {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token` WHERE `chip_token_id` = " . (int)$chip_token_id);
+
+		if ($query->num_rows) {
+			return $query->row;
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param array $data
+	 *
+	 * @return void
+	 */
+	public function addToken(array $data): void {
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "chip_token`
+			(`customer_id`, `token_id`, `type`, `card_name`, `card_number`, `card_expire_month`, `card_expire_year`, `date_added`)
+			VALUES (" . (int)$data['customer_id'] . ",
+			'" . $this->db->escape($data['token_id']) . "',
+			'" . $this->db->escape($data['type']) . "',
+			'" . $this->db->escape($data['card_name']) . "',
+			'" . $this->db->escape($data['card_number']) . "',
+			'" . $this->db->escape($data['card_expire_month']) . "',
+			'" . $this->db->escape($data['card_expire_year']) . "',
+			NOW())");
+	}
+
+	/**
+	 * @param int $customer_id
+	 *
+	 * @return array
+	 */
+	public function getTokens(int $customer_id): array {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token`
+			WHERE `customer_id` = " . (int)$customer_id . "
+			ORDER BY `date_added` DESC");
+
+		return $query->rows;
+	}
+
+	/**
+	 * @param int $customer_id
+	 * @param int $chip_token_id
+	 *
+	 * @return ?array
+	 */
+	public function getToken(int $customer_id, int $chip_token_id): ?array {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token`
+			WHERE `customer_id` = " . (int)$customer_id . "
+			AND `chip_token_id` = " . (int)$chip_token_id);
+
+		if ($query->num_rows) {
+			return $query->row;
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param int $customer_id
+	 * @param int $chip_token_id
+	 *
+	 * @return void
+	 */
+	public function deleteToken(int $customer_id, int $chip_token_id): void {
+		$this->db->query("DELETE FROM `" . DB_PREFIX . "chip_token`
+			WHERE `customer_id` = " . (int)$customer_id . "
+			AND `chip_token_id` = " . (int)$chip_token_id);
 	}
 
 	/**

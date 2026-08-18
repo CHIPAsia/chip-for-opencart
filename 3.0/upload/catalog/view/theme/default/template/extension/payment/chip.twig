@@ -4,8 +4,30 @@
  <p>{{ payment_chip_instruction }}</p>
 </div>
 {% endif %}
+{% if chip_tokens %}
+<div class="form-group">
+ <label class="control-label" for="input-chip-stored-card">{{ text_stored_cards }}</label>
+ <select name="chip_stored_card" id="input-chip-stored-card" class="form-control">
+  <option value="">{{ text_card_new }}</option>
+  {% for chip_token in chip_tokens %}
+   <option value="{{ chip_token.href }}">{{ chip_token.name }}</option>
+  {% endfor %}
+ </select>
+</div>
+{% endif %}
 <div class="buttons">
  <div class="pull-right">
-  <a href="{{ button_continue_action }}" class="btn btn-primary">{{ button_continue }}</a>
+  <a href="{{ button_continue_action }}" id="button-chip-continue" class="btn btn-primary">{{ button_continue }}</a>
  </div>
 </div>
+{% if chip_tokens %}
+<script type="text/javascript"><!--
+$('#input-chip-stored-card').on('change', function () {
+  if ($(this).val()) {
+    $('#button-chip-continue').attr('href', $(this).val());
+  } else {
+    $('#button-chip-continue').attr('href', '{{ button_continue_action }}');
+  }
+});
+//--></script>
+{% endif %}
