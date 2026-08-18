@@ -6,9 +6,41 @@ class ModelExtensionPaymentChip extends Model {
 	public static $brand_id;
 
 	public function install() {
+		$this->db->query("
+			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "chip_report` (
+				`chip_report_id` bigint(20) NOT NULL AUTO_INCREMENT,
+				`customer_id` bigint(20) NOT NULL,
+				`chip_id` varchar(64) NOT NULL,
+				`order_id` bigint(20) NOT NULL,
+				`status` varchar(64) NOT NULL,
+				`amount` decimal(15,2) NOT NULL,
+				`environment_type` varchar(32) NOT NULL,
+				`date_added` datetime NOT NULL,
+				PRIMARY KEY (`chip_report_id`),
+				KEY `order_id` (`order_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+		");
+
+		$this->db->query("
+			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "chip_token` (
+				`chip_token_id` bigint(20) NOT NULL AUTO_INCREMENT,
+				`customer_id` bigint(20) NOT NULL,
+				`token_id` varchar(64) NOT NULL,
+				`type` varchar(64) NOT NULL,
+				`card_name` varchar(64) NOT NULL,
+				`card_number` varchar(64) NOT NULL,
+				`card_expire_month` varchar(64) NOT NULL,
+				`card_expire_year` varchar(64) NOT NULL,
+				`date_added` datetime NOT NULL,
+				PRIMARY KEY (`chip_token_id`),
+				KEY `customer_id` (`customer_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+		");
 	}
 
 	public function uninstall() {
+		$this->db->query("DROP TABLE IF EXISTS `" . DB_PREFIX . "chip_report`");
+		$this->db->query("DROP TABLE IF EXISTS `" . DB_PREFIX . "chip_token`");
 	}
 
 	public function set_keys($private_key, $brand_id) {
