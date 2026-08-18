@@ -34,6 +34,7 @@
       <li><a href="#tab-order-status" data-toggle="tab"><?php echo $tab_order_status; ?></a></li>
       <li><a href="#tab-checkout" data-toggle="tab"><?php echo $tab_checkout; ?></a></li>
       <li><a href="#tab-troubleshoot" data-toggle="tab"><?php echo $tab_troubleshoot; ?></a></li>
+      <li><a href="#tab-report" data-toggle="tab"><?php echo $tab_report; ?></a></li>
       </ul>
       <div class="tab-content">
       <div class="tab-pane active" id="tab-api">
@@ -89,6 +90,23 @@
         <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $help_general_public_key; ?>"><?php echo $entry_general_public_key; ?></span></label>
         <div class="col-sm-10">
           <textarea name="chip_general_public_key" cols="80" rows="10" placeholder="<?php echo $entry_general_public_key; ?>" id="input-general-public-key" class="form-control" readonly><?php echo $chip_general_public_key; ?></textarea>
+        </div>
+        </div>
+        <div class="form-group">
+        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $help_payment_method_whitelist; ?>"><?php echo $entry_payment_method_whitelist; ?></span></label>
+        <div class="col-sm-10">
+          <div class="well well-sm" style="height: 150px; overflow: auto;">
+            <?php foreach ($chip_available_payment_methods as $payment_method) { ?>
+            <?php $payment_method_label = isset($chip_payment_method_labels[$payment_method]) ? $chip_payment_method_labels[$payment_method] : $payment_method; ?>
+            <div class="checkbox">
+              <?php if (in_array($payment_method, $chip_payment_method_whitelist)) { ?>
+              <label><input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" checked="checked" /> <?php echo $payment_method_label; ?></label>
+              <?php } else { ?>
+              <label><input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" /> <?php echo $payment_method_label; ?></label>
+              <?php } ?>
+            </div>
+            <?php } ?>
+          </div>
         </div>
         </div>
       </div>
@@ -430,6 +448,9 @@
           </label>
         </div>
         </div>
+      </div>
+      <div class="tab-pane" id="tab-report">
+        <?php echo $report; ?>
       </div>
       </div>
     </form>

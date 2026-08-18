@@ -25,6 +25,7 @@
     <li class="nav-item"><a href="#tab-order-status" data-bs-toggle="tab" class="nav-link">{{ tab_order_status }}</a></li>
     <li class="nav-item"><a href="#tab-checkout" data-bs-toggle="tab" class="nav-link">{{ tab_checkout }}</a></li>
     <li class="nav-item"><a href="#tab-troubleshoot" data-bs-toggle="tab" class="nav-link">{{ tab_troubleshoot }}</a></li>
+    <li class="nav-item"><a href="#tab-report" data-bs-toggle="tab" class="nav-link">{{ tab_report }}</a></li>
    </ol>
    <div class="tab-content">
    <div class="tab-pane active" id="tab-api">
@@ -72,6 +73,23 @@
     <label class="col-sm-2 col-form-label"><span data-bs-toggle="tooltip" title="{{ help_general_public_key }}" class="col-sm-2 col-form-label">{{ entry_general_public_key }}</span></label>
     <div class="col-sm-10">
      <textarea name="payment_chip_general_public_key" cols="80" rows="10" placeholder="{{ entry_general_public_key }}" id="input-general-public-key" class="form-control" readonly>{{ payment_chip_general_public_key }}</textarea>
+    </div>
+    </div>
+    <div class="row mb-3">
+    <label class="col-sm-2 col-form-label"><span data-bs-toggle="tooltip" title="{{ help_payment_method_whitelist }}" class="col-sm-2 col-form-label">{{ entry_payment_method_whitelist }}</span></label>
+    <div class="col-sm-10">
+     <div class="form-control" style="height: 150px; overflow: auto;">
+      {% for payment_method in payment_chip_available_payment_methods %}
+       {% set payment_method_label = payment_chip_payment_method_labels[payment_method] is defined ? payment_chip_payment_method_labels[payment_method] : payment_method %}
+       <div class="form-check">
+        {% if payment_method in payment_chip_payment_method_whitelist %}
+         <label><input type="checkbox" name="payment_chip_payment_method_whitelist[]" value="{{ payment_method }}" class="form-check-input" checked /> {{ payment_method_label }}</label>
+        {% else %}
+         <label><input type="checkbox" name="payment_chip_payment_method_whitelist[]" value="{{ payment_method }}" class="form-check-input" /> {{ payment_method_label }}</label>
+        {% endif %}
+       </div>
+      {% endfor %}
+     </div>
     </div>
     </div>
    </div>
@@ -291,6 +309,12 @@
      </div>
     </div>
     </div>
+   </div>
+   <div class="tab-pane" id="tab-report">
+    <fieldset>
+     <legend>{{ tab_report }}</legend>
+     <div id="report">{{ report }}</div>
+    </fieldset>
    </div>
    </div>
   </form>

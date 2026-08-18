@@ -1,435 +1,454 @@
 <?php
-class ControllerPaymentChip extends Controller
-{
-  public function index() {
-    $this->language->load('payment/chip');
-
-    $data['text_instruction'] = $this->language->get('text_instruction');
-
-    $data['chip_allow_instruction'] = $this->config->get('chip_allow_instruction');
-    $data['chip_instruction'] = nl2br($this->config->get('chip_instruction_' . $this->config->get('config_language_id')));
-
-    $data['button_continue'] = $this->language->get('button_continue');
-    $data['button_continue_action'] = $this->url->link('payment/chip/create_purchase', '', true);
-
-    /**
-     * if there is any other chip session data, clear it
-     */
-    unset($this->session->data['chip']);
-
-    return $this->load->view('payment/chip', $data);
-  }
-
-  public function create_purchase() {
-    if ($this->session->data['payment_method']['code'] != 'chip') {
-      exit;
-    }
-
-    $this->load->model('payment/chip');
-    $this->load->model('checkout/order');
-    $this->load->model('account/order');
-
-    $this->language->load('payment/chip');
-
-    $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
-    $products = $this->model_account_order->getOrderProducts($this->session->data['order_id']);
-
-    /* Reject if MYR currency is not set up */
-
-    if (!$this->currency->has('MYR')){
-      $this->session->data['error'] = $this->language->get('pending_myr_setup');
-      $this->response->redirect($this->url->link('checkout/checkout', '', true));
-    }
-
-    $total_override = $order_info['total'];
-    
-    if ($this->config->get('chip_convert_to_processing') == 0 AND $this->config->get('config_currency') != 'MYR') {
-      $this->session->data['error'] = $this->language->get('convert_to_processing_disabled');
-      $this->response->redirect($this->url->link('checkout/checkout', '', true));
-    }
-
-    if ($this->config->get('config_currency') != 'MYR') {
-      $total_override = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
-    }
-
-    $params = array(
-      'success_callback' => $this->url->link('payment/chip/success_callback', '', true),
-      'success_redirect' => $this->url->link('payment/chip/success_redirect', '', true),
-      'failure_redirect' => $this->url->link('checkout/checkout', '', true),
-      'cancel_redirect'  => $this->url->link('checkout/cart', '', true),
-      'creator_agent'    => 'OC22: 1.0.0',
-      'reference'        => $this->session->data['order_id'],
-      'platform'         => 'opencart',
-      'send_receipt'     => $this->config->get('chip_purchase_send_receipt'),
-      'due'              => time() + (abs( (int) $this->config->get('chip_due_strict_timing') ) * 60),
-      'brand_id'         => $this->config->get('chip_brand_id'),
-      'client'           => [],
-      'purchase'         => array(
-        'total_override' => round($total_override * 100),
-        'timezone'       => $this->config->get('chip_time_zone'),
-        'currency'       => 'MYR',
-        'due_strict'     => $this->config->get('chip_due_strict'),
-        'products'       => array(),
-      ),
-    );
-
-    if ($this->config->get('chip_disable_success_redirect')) {
-      unset($params['success_redirect']);
-    }
-
-    if ($this->config->get('chip_disable_success_callback')) {
-      unset($params['success_callback']);
-    }
-
-    if ($this->config->get('chip_canceled_behavior') == 'cancel_order') {
-      $params['cancel_redirect'] = $this->url->link('payment/chip/cancel_redirect', '', true);
-    }
-
-    if ($this->config->get('chip_failed_behavior') == 'fail_order') {
-      $params['failure_redirect'] = $this->url->link('payment/chip/failure_redirect', '', true);
-    }
-
-    foreach ($products as $product) {
-      $product_price = $this->currency->convert($product['price'], $this->config->get('config_currency'), 'MYR');
-
-      $params['purchase']['products'][] = array(
-        'name' => substr($product['name'], 0, 256),
-        'quantity' => $product['quantity'],
-        'price' => round($product_price * 100),
-        'category' => $product['product_id']
-      );
-    }
-
-    if (!empty($order_info['comment'])) {
-      $params['purchase']['notes'] = substr($order_info['comment'], 0, 10000);
-    }
+class ControllerPaymentChip extends Controller {
+	public function index() {
+		$this->language->load('payment/chip');
+
+		$data['text_instruction'] = $this->language->get('text_instruction');
+
+		$data['chip_allow_instruction'] = $this->config->get('chip_allow_instruction');
+		$data['chip_instruction'] = nl2br($this->config->get('chip_instruction_' . $this->config->get('config_language_id')));
+
+		$data['button_continue'] = $this->language->get('button_continue');
+		$data['button_continue_action'] = $this->url->link('payment/chip/create_purchase', '', true);
+
+		/**
+			* if there is any other chip session data, clear it
+			*/
+		unset($this->session->data['chip']);
+
+		return $this->load->view('payment/chip', $data);
+	}
+
+	public function create_purchase() {
+		if ($this->session->data['payment_method']['code'] != 'chip') {
+			exit;
+		}
+
+		$this->load->model('payment/chip');
+		$this->load->model('checkout/order');
+		$this->load->model('account/order');
+
+		$this->language->load('payment/chip');
+
+		$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+		$products = $this->model_account_order->getOrderProducts($this->session->data['order_id']);
+
+		/* Reject if MYR currency is not set up */
+
+		if (!$this->currency->has('MYR')){
+			$this->session->data['error'] = $this->language->get('pending_myr_setup');
+			$this->response->redirect($this->url->link('checkout/checkout', '', true));
+		}
+
+		$total_override = $order_info['total'];
+		
+		if ($this->config->get('chip_convert_to_processing') == 0 AND $this->config->get('config_currency') != 'MYR') {
+			$this->session->data['error'] = $this->language->get('convert_to_processing_disabled');
+			$this->response->redirect($this->url->link('checkout/checkout', '', true));
+		}
+
+		if ($this->config->get('config_currency') != 'MYR') {
+			$total_override = $this->currency->convert($order_info['total'], $this->config->get('config_currency'), 'MYR');
+		}
+
+		$params = array(
+			'success_callback' => $this->url->link('payment/chip/success_callback', '', true),
+			'success_redirect' => $this->url->link('payment/chip/success_redirect', '', true),
+			'failure_redirect' => $this->url->link('checkout/checkout', '', true),
+			'cancel_redirect'  => $this->url->link('checkout/cart', '', true),
+			'creator_agent'    => 'OC22: 1.0.0',
+			'reference'        => $this->session->data['order_id'],
+			'platform'         => 'opencart',
+			'send_receipt'     => $this->config->get('chip_purchase_send_receipt'),
+			'due'              => time() + (abs( (int) $this->config->get('chip_due_strict_timing') ) * 60),
+			'brand_id'         => $this->config->get('chip_brand_id'),
+			'client'           => [],
+			'purchase'         => array(
+				'total_override' => round($total_override * 100),
+				'timezone'       => $this->config->get('chip_time_zone'),
+				'currency'       => 'MYR',
+				'due_strict'     => $this->config->get('chip_due_strict'),
+				'products'       => array(),
+			),
+		);
+
+		$payment_method_whitelist = $this->config->get('chip_payment_method_whitelist');
+		if (is_array($payment_method_whitelist) AND sizeof($payment_method_whitelist) > 0) {
+			$params['payment_method_whitelist'] = $this->model_payment_chip->resolve_payment_method_whitelist(
+				$payment_method_whitelist,
+				'MYR',
+				$params['purchase']['total_override']
+			);
+		}
+
+		if ($this->config->get('chip_disable_success_redirect')) {
+			unset($params['success_redirect']);
+		}
+
+		if ($this->config->get('chip_disable_success_callback')) {
+			unset($params['success_callback']);
+		}
+
+		if ($this->config->get('chip_canceled_behavior') == 'cancel_order') {
+			$params['cancel_redirect'] = $this->url->link('payment/chip/cancel_redirect', '', true);
+		}
+
+		if ($this->config->get('chip_failed_behavior') == 'fail_order') {
+			$params['failure_redirect'] = $this->url->link('payment/chip/failure_redirect', '', true);
+		}
+
+		foreach ($products as $product) {
+			$product_price = $this->currency->convert($product['price'], $this->config->get('config_currency'), 'MYR');
+
+			$params['purchase']['products'][] = array(
+				'name' => substr($product['name'], 0, 256),
+				'quantity' => $product['quantity'],
+				'price' => round($product_price * 100),
+				'category' => $product['product_id']
+			);
+		}
 
-    if (!empty($order_info['email'])) {
-      $params['client']['email'] = $order_info['email'];
-    }
+		if (!empty($order_info['comment'])) {
+			$params['purchase']['notes'] = substr($order_info['comment'], 0, 10000);
+		}
 
-    if (!empty($order_info['telephone'])) {
-      $params['client']['phone'] = $order_info['telephone'];
-    }
+		if (!empty($order_info['email'])) {
+			$params['client']['email'] = $order_info['email'];
+		}
 
-    $params_client_full_name = array();
-    if ($order_info['payment_firstname']) {
-      $params_client_full_name[] = $order_info['payment_firstname'];
-    }
+		if (!empty($order_info['telephone'])) {
+			$params['client']['phone'] = $order_info['telephone'];
+		}
 
-    if ($order_info['payment_lastname']) {
-      $params_client_full_name[] = ' ' . $order_info['payment_lastname'];
-    }
+		$params_client_full_name = array();
+		if ($order_info['payment_firstname']) {
+			$params_client_full_name[] = $order_info['payment_firstname'];
+		}
+
+		if ($order_info['payment_lastname']) {
+			$params_client_full_name[] = ' ' . $order_info['payment_lastname'];
+		}
+
+		if (!empty(trim(implode($params_client_full_name)))){
+			$params['client']['full_name'] = substr(implode($params_client_full_name), 0, 30);
+		}
+
+		/* Start of payment information */
+
+		$params_client_street_address = array();
+		if (!empty($order_info['payment_address_1'])) {
+			$params_client_street_address[] = $order_info['payment_address_1'];
+		}
 
-    if (!empty(trim(implode($params_client_full_name)))){
-      $params['client']['full_name'] = substr(implode($params_client_full_name), 0, 30);
-    }
+		if (!empty($order_info['payment_address_2'])) {
+			$params_client_street_address[] = $order_info['payment_address_2'];
+		}
 
-    /* Start of payment information */
+		if (!empty($params_client_street_address)){
+			$params['client']['street_address'] = substr(implode($params_client_street_address), 0, 128);
+		}
 
-    $params_client_street_address = array();
-    if (!empty($order_info['payment_address_1'])) {
-      $params_client_street_address[] = $order_info['payment_address_1'];
-    }
+		if (!empty($order_info['payment_postcode'])) {
+			$params['client']['zip_code'] = substr($order_info['payment_postcode'], 0, 32);
+		}
 
-    if (!empty($order_info['payment_address_2'])) {
-      $params_client_street_address[] = $order_info['payment_address_2'];
-    }
+		if (!empty($order_info['payment_city'])) {
+			$params['client']['city'] = substr($order_info['payment_city'], 0, 128);
+		}
 
-    if (!empty($params_client_street_address)){
-      $params['client']['street_address'] = substr(implode($params_client_street_address), 0, 128);
-    }
+		if (!empty($order_info['payment_iso_code_2'])) {
+			$params['client']['country'] = $order_info['payment_iso_code_2'];
+		}
 
-    if (!empty($order_info['payment_postcode'])) {
-      $params['client']['zip_code'] = substr($order_info['payment_postcode'], 0, 32);
-    }
+		/* End of payment information */
+		/* Start of shipping information */
 
-    if (!empty($order_info['payment_city'])) {
-      $params['client']['city'] = substr($order_info['payment_city'], 0, 128);
-    }
+		$params_client_shipping_street_address = array();
+		if (!empty($order_info['shipping_address_1'])) {
+			$params_client_shipping_street_address[] = $order_info['shipping_address_1'];
+		}
 
-    if (!empty($order_info['payment_iso_code_2'])) {
-      $params['client']['country'] = $order_info['payment_iso_code_2'];
-    }
+		if (!empty($order_info['shipping_address_2'])) {
+			$params_client_shipping_street_address[] = ' ' . $order_info['shipping_address_2'];
+		}
 
-    /* End of payment information */
-    /* Start of shipping information */
+		if (!empty($params_client_shipping_street_address)) {
+			$params['client']['shipping_street_address'] = substr(implode($params_client_shipping_street_address), 0, 128);
+		}
 
-    $params_client_shipping_street_address = array();
-    if (!empty($order_info['shipping_address_1'])) {
-      $params_client_shipping_street_address[] = $order_info['shipping_address_1'];
-    }
+		if (!empty($order_info['shipping_postcode'])) {
+			$params['client']['shipping_zip_code'] = substr($order_info['shipping_postcode'], 0, 32);
+		}
 
-    if (!empty($order_info['shipping_address_2'])) {
-      $params_client_shipping_street_address[] = ' ' . $order_info['shipping_address_2'];
-    }
+		if (!empty($order_info['shipping_city'])) {
+			$params['client']['shipping_city'] = substr($order_info['shipping_city'], 0, 128);
+		}
 
-    if (!empty($params_client_shipping_street_address)) {
-      $params['client']['shipping_street_address'] = substr(implode($params_client_shipping_street_address), 0, 128);
-    }
+		if (!empty($order_info['shipping_iso_code_2'])) {
+			$params['client']['shipping_country'] = $order_info['shipping_iso_code_2'];
+		}
 
-    if (!empty($order_info['shipping_postcode'])) {
-      $params['client']['shipping_zip_code'] = substr($order_info['shipping_postcode'], 0, 32);
-    }
+		/* End of shipping information */
 
-    if (!empty($order_info['shipping_city'])) {
-      $params['client']['shipping_city'] = substr($order_info['shipping_city'], 0, 128);
-    }
+		$this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
 
-    if (!empty($order_info['shipping_iso_code_2'])) {
-      $params['client']['shipping_country'] = $order_info['shipping_iso_code_2'];
-    }
+		$purchase = $this->model_payment_chip->create_purchase($params);
 
-    /* End of shipping information */
+		if ( !array_key_exists('id', $purchase) ) {
+			$this->session->data['error'] = print_r($purchase, true);
 
-    $this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
+			if ($this->config->get('chip_debug')) {
+				$this->log->write('CHIP API /purchase/ failed for order #' . $this->session->data['order_id'] . '. Response Body: ' . json_encode($purchase));
+			}
 
-    if ($this->customer->isLogged()) {
-      $client_with_params = $params['client'];
-      unset($params['client']);
+			$this->response->redirect($this->url->link('checkout/checkout', '', true));
+		}
 
-      $get_client = $this->model_payment_chip->get_client_by_email($this->customer->getEmail());
+		$this->session->data['chip'] = $purchase;
 
-      if (array_key_exists('__all__', $get_client)) {
-        $this->session->data['error'] = print_r('Invalid Secret Key', true);
+		// Save to chip_report table
+		$customer_id = $order_info['customer_id'];
+		$chip_id = $purchase['id'];
+		$order_id = $order_info['order_id'];
+		$status = isset($purchase['status']) ? $purchase['status'] : 'pending';
+		$amount = $params['purchase']['total_override'] / 100;
+		$environment_type = isset($purchase['is_test']) && $purchase['is_test'] ? 'staging' : 'production';
 
-        $this->response->redirect($this->url->link('checkout/checkout', '', true));
-      }
+		$this->model_payment_chip->addReport(array(
+			'customer_id' => $customer_id,
+			'chip_id' => $chip_id,
+			'order_id' => $order_id,
+			'status' => $status,
+			'amount' => $amount,
+			'environment_type' => $environment_type
+		));
 
-      if (is_array($get_client['results']) AND !empty($get_client['results'])) {
-        $client = $get_client['results'][0];
-      } else {
-        $client = $this->model_payment_chip->create_client($client_with_params);
-      }
+		$this->response->redirect($purchase['checkout_url']);
+	}
 
-      $params['client_id'] = $client['id'];
-    }
+	public function callback() {
+		if (empty($this->config->get('chip_public_key'))) {
+			exit;
+		}
 
-    $purchase = $this->model_payment_chip->create_purchase($params);
+		$this->load->model('payment/chip');
+		$this->load->model('checkout/order');
+		$this->language->load('payment/chip');
 
-    if ( !array_key_exists('id', $purchase) ) {
-      $this->session->data['error'] = print_r($purchase, true);
+		$public_key = $this->config->get('chip_public_key');
 
-      if ($this->config->get('chip_debug')) {
-        $this->log->write('CHIP API /purchase/ failed for order #' . $this->session->data['order_id'] . '. Response Body: ' . json_encode($purchase));
-      }
+		if (!isset($this->request->server['HTTP_X_SIGNATURE'])) {
+			exit('No HTTP_X_SIGNATURE detected');
+		}
 
-      $this->response->redirect($this->url->link('checkout/checkout', '', true));
-    }
+		$HTTP_X_SIGNATURE = $this->request->server['HTTP_X_SIGNATURE'];
 
-    $this->session->data['chip'] = $purchase;
+		$purchase_json = file_get_contents('php://input');
 
-    $this->response->redirect($purchase['checkout_url']);
-  }
+		if (openssl_verify( $purchase_json,  base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption' ) != 1) {
+			$this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401 Unauthorized');
+			exit;
+		}
 
-  public function callback() {
-    if (empty($this->config->get('chip_public_key'))) {
-      exit;
-    }
+		$purchase = json_decode($purchase_json, true);
 
-    $this->load->model('payment/chip');
-    $this->load->model('checkout/order');
-    $this->language->load('payment/chip');
+		if (!in_array($purchase['event_type'], array('payment.refunded'))) {
+			exit;
+		}
 
-    $public_key = $this->config->get('chip_public_key');
+		if (!array_key_exists('id', $purchase)) {
+			exit;
+		}
 
-    if (!isset($this->request->server['HTTP_X_SIGNATURE'])) {
-      exit('No HTTP_X_SIGNATURE detected');
-    }
+		$purchase_id = $purchase['related_to']['id'];
+		$order_id = $purchase['related_to']['reference'];
 
-    $HTTP_X_SIGNATURE = $this->request->server['HTTP_X_SIGNATURE'];
+		if ($purchase['payment']['payment_type'] == 'refund' && $purchase['status'] == 'success') {
+			$order_status_id = $this->config->get('chip_refunded_order_status_id');
+		} else {
+			exit;
+		}
 
-    $purchase_json = file_get_contents('php://input');
+		$order_info = $this->model_checkout_order->getOrder($order_id);
 
-    if (openssl_verify( $purchase_json,  base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption' ) != 1) {
-      $this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401 Unauthorized');
-      exit;
-    }
+		if (!$order_info) {
+			exit;
+		}
 
-    $purchase = json_decode($purchase_json, true);
+		$this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
 
-    if (!in_array($purchase['event_type'], array('payment.refunded'))) {
-      exit;
-    }
+		/* requery to ensure sequential process */
+		$order_info = $this->model_checkout_order->getOrder($order_id);
 
-    if (!array_key_exists('id', $purchase)) {
-      exit;
-    }
+		if ($order_info['order_status_id'] != $order_status_id) {
+			$this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $this->language->get('payment_refunded') . ' ' . $purchase['payment']['currency'] . ' ' . number_format($purchase['payment']['amount'] / 100, 2) . '.');
 
-    $purchase_id = $purchase['related_to']['id'];
-    $order_id = $purchase['related_to']['reference'];
+			if ($purchase['is_test'] == true) {
+				$this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $this->language->get('test_mode_disclaimer'));
+			}
+		}
 
-    if ($purchase['payment']['payment_type'] == 'refund' && $purchase['status'] == 'success') {
-      $order_status_id = $this->config->get('chip_refunded_order_status_id');
-    } else {
-      exit;
-    }
+		$this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
-    $order_info = $this->model_checkout_order->getOrder($order_id);
+		exit;
+	}
+	public function success_callback() {
+		$this->load->model('checkout/order');
+		$this->load->model('payment/chip');
+		$this->language->load('payment/chip');
 
-    if (!$order_info) {
-      exit;
-    }
+		$public_key = $this->config->get('chip_general_public_key');
 
-    $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
+		if (!isset($this->request->server['HTTP_X_SIGNATURE'])) {
+			exit('No HTTP_X_SIGNATURE detected');
+		}
 
-    /* requery to ensure sequential process */
-    $order_info = $this->model_checkout_order->getOrder($order_id);
+		$HTTP_X_SIGNATURE = $this->request->server['HTTP_X_SIGNATURE'];
 
-    if ($order_info['order_status_id'] != $order_status_id) {
-      $this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $this->language->get('payment_refunded') . ' ' . $purchase['payment']['currency'] . ' ' . number_format($purchase['payment']['amount'] / 100, 2) . '.');
+		$purchase_json = file_get_contents('php://input');
 
-      if ($purchase['is_test'] == true) {
-        $this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $this->language->get('test_mode_disclaimer'));
-      }
-    }
+		if (openssl_verify( $purchase_json,  base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption' ) != 1) {
+			$this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401 Unauthorized');
+			exit;
+		}
 
-    $this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
+		$purchase = json_decode($purchase_json, true);
 
-    exit;
-  }
-  public function success_callback() {
-    $this->load->model('checkout/order');
-    $this->language->load('payment/chip');
+		if ($purchase['status'] != 'paid') {
+			exit;
+		}
 
-    $public_key = $this->config->get('chip_general_public_key');
+		$purchase_id = $purchase['id'];
 
-    if (!isset($this->request->server['HTTP_X_SIGNATURE'])) {
-      exit('No HTTP_X_SIGNATURE detected');
-    }
+		$this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
 
-    $HTTP_X_SIGNATURE = $this->request->server['HTTP_X_SIGNATURE'];
+		$order_info = $this->model_checkout_order->getOrder($purchase['reference']);
+		if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
+			$this->model_checkout_order->addOrderHistory($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
+			$this->model_checkout_order->addOrderHistory($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
 
-    $purchase_json = file_get_contents('php://input');
+			if ($purchase['is_test'] == true) {
+				$this->model_checkout_order->addOrderHistory($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('test_mode_disclaimer'));
+			}
+		}
 
-    if (openssl_verify( $purchase_json,  base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption' ) != 1) {
-      $this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401 Unauthorized');
-      exit;
-    }
+		// Update chip_report status to paid
+		$this->model_payment_chip->updateReportStatus($purchase_id, 'paid');
 
-    $purchase = json_decode($purchase_json, true);
+		$this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
-    if ($purchase['status'] != 'paid') {
-      exit;
-    }
+		exit;
+	}
 
-    $purchase_id = $purchase['id'];
+	public function success_redirect() {
+		$this->language->load('payment/chip');
 
-    $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
+		if (!isset($this->session->data['chip'])) {
+			exit($this->language->get('invalid_redirect'));
+		}
 
-    $order_info = $this->model_checkout_order->getOrder($purchase['reference']);
-    if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
-      $this->model_checkout_order->addOrderHistory($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
-      $this->model_checkout_order->addOrderHistory($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
+		$purchase_id = $this->session->data['chip']['id'];
+		$order_id = $this->session->data['chip']['reference'];
 
-      if ($purchase['is_test'] == true) {
-        $this->model_checkout_order->addOrderHistory($purchase['reference'], $this->config->get('chip_paid_order_status_id'), $this->language->get('test_mode_disclaimer'));
-      }
-    }
+		$this->load->model('checkout/order');
+		$this->load->model('payment/chip');
 
-    $this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
+		$this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
+		$purchase = $this->model_payment_chip->get_purchase($purchase_id);
 
-    exit;
-  }
+		if ( !array_key_exists('id', $purchase) ) {
+			$this->session->data['error'] = print_r($purchase, true);
 
-  public function success_redirect() {
-    $this->language->load('payment/chip');
+			if ($this->config->get('chip_debug')) {
+				$this->log->write('CHIP API /purchase/'.$purchase_id. '/ failed for order #' . $order_id . '. Response Body: ' . json_encode($purchase));
+			}
 
-    if (!isset($this->session->data['chip'])) {
-      exit($this->language->get('invalid_redirect'));
-    }
+			$this->response->redirect($this->session->data['chip']['checkout_url'] . 'receipt/');
+		}
 
-    $purchase_id = $this->session->data['chip']['id'];
-    $order_id = $this->session->data['chip']['reference'];
+		if ($purchase['status'] != 'paid') {
+			exit;
+		}
 
-    $this->load->model('checkout/order');
-    $this->load->model('payment/chip');
+		unset($this->session->data['chip']);
 
-    $this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
-    $purchase = $this->model_payment_chip->get_purchase($purchase_id);
+		$this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
 
-    if ( !array_key_exists('id', $purchase) ) {
-      $this->session->data['error'] = print_r($purchase, true);
+		$order_info = $this->model_checkout_order->getOrder($order_id);
+		if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
+			$this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
+			$this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
 
-      if ($this->config->get('chip_debug')) {
-        $this->log->write('CHIP API /purchase/'.$purchase_id. '/ failed for order #' . $order_id . '. Response Body: ' . json_encode($purchase));
-      }
+			if ($purchase['is_test'] == true) {
+				$this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('test_mode_disclaimer'));
+			}
+		}
 
-      $this->response->redirect($this->session->data['chip']['checkout_url'] . 'receipt/');
-    }
+		// Update chip_report status to paid
+		$this->model_payment_chip->updateReportStatus($purchase_id, 'paid');
 
-    if ($purchase['status'] != 'paid') {
-      exit;
-    }
+		$this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
-    unset($this->session->data['chip']);
+		$this->response->redirect($this->url->link('checkout/success', '', true));
+	}
 
-    $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
+	public function cancel_redirect() {
+		$this->language->load('payment/chip');
 
-    $order_info = $this->model_checkout_order->getOrder($order_id);
-    if ($order_info['order_status_id'] != $this->config->get('chip_paid_order_status_id')) {
-      $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_successful') .' '. sprintf($this->language->get('chip_receipt_url'), $purchase_id), true);
-      $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('payment_method') . strtoupper($purchase['transaction_data']['payment_method']));
+		if (!isset($this->session->data['chip'])) {
+			exit($this->language->get('invalid_redirect'));
+		}
 
-      if ($purchase['is_test'] == true) {
-        $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_paid_order_status_id'), $this->language->get('test_mode_disclaimer'));
-      }
-    }
+		$purchase_id = $this->session->data['chip']['id'];
+		$order_id = $this->session->data['chip']['reference'];
 
-    $this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
+		$this->load->model('checkout/order');
+		$this->load->model('payment/chip');
 
-    $this->response->redirect($this->url->link('checkout/success', '', true));
-  }
+		unset($this->session->data['chip']);
 
-  public function cancel_redirect() {
-    $this->language->load('payment/chip');
+		$this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
 
-    if (!isset($this->session->data['chip'])) {
-      exit($this->language->get('invalid_redirect'));
-    }
+		$order_info = $this->model_checkout_order->getOrder($order_id);
+		if ($order_info['order_status_id'] != $this->config->get('chip_canceled_order_status_id')) {
+			$this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_canceled_order_status_id'), $this->language->get('payment_canceled') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
+		}
 
-    $purchase_id = $this->session->data['chip']['id'];
-    $order_id = $this->session->data['chip']['reference'];
+		// Update chip_report status to canceled
+		$this->model_payment_chip->updateReportStatus($purchase_id, 'canceled');
 
-    $this->load->model('checkout/order');
+		$this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
-    unset($this->session->data['chip']);
+		$this->response->redirect($this->url->link('checkout/failure', '', true));
+	}
 
-    $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
+	public function failure_redirect() {
+		$this->language->load('payment/chip');
 
-    $order_info = $this->model_checkout_order->getOrder($order_id);
-    if ($order_info['order_status_id'] != $this->config->get('chip_canceled_order_status_id')) {
-      $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_canceled_order_status_id'), $this->language->get('payment_canceled') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
-    }
+		if (!isset($this->session->data['chip'])) {
+			exit($this->language->get('invalid_redirect'));
+		}
 
-    $this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
+		$purchase_id = $this->session->data['chip']['id'];
+		$order_id = $this->session->data['chip']['reference'];
 
-    $this->response->redirect($this->url->link('checkout/failure', '', true));
-  }
+		$this->load->model('checkout/order');
+		$this->load->model('payment/chip');
 
-  public function failure_redirect() {
-    $this->language->load('payment/chip');
+		unset($this->session->data['chip']);
 
-    if (!isset($this->session->data['chip'])) {
-      exit($this->language->get('invalid_redirect'));
-    }
+		$this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
 
-    $purchase_id = $this->session->data['chip']['id'];
-    $order_id = $this->session->data['chip']['reference'];
+		$order_info = $this->model_checkout_order->getOrder($order_id);
+		if ($order_info['order_status_id'] != $this->config->get('chip_failed_order_status_id')) {
+			$this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_failed_order_status_id'), $this->language->get('payment_failed') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
+		}
 
-    $this->load->model('checkout/order');
+		// Update chip_report status to failed
+		$this->model_payment_chip->updateReportStatus($purchase_id, 'failed');
 
-    unset($this->session->data['chip']);
+		$this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
-    $this->db->query("SELECT GET_LOCK('chip_payment_$purchase_id', 15);");
-
-    $order_info = $this->model_checkout_order->getOrder($order_id);
-    if ($order_info['order_status_id'] != $this->config->get('chip_failed_order_status_id')) {
-      $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('chip_failed_order_status_id'), $this->language->get('payment_failed') .' '. sprintf($this->language->get('chip_invoice_url'), $purchase_id), true);
-    }
-
-    $this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
-
-    $this->response->redirect($this->url->link('checkout/failure', '', true));
-  }
+		$this->response->redirect($this->url->link('checkout/failure', '', true));
+	}
 }

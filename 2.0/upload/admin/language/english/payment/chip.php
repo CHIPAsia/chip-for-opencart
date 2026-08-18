@@ -18,6 +18,7 @@ $_['tab_order_status'] = 'Order status';
 $_['tab_api_details'] = 'API details';
 $_['tab_checkout'] = 'Customize checkout';
 $_['tab_troubleshoot'] = 'Troubleshoot';
+$_['tab_report'] = 'Report';
 
 $_['behavior_missing_order'] = 'Missing Order';
 $_['behavior_cancel_order'] = 'Cancel Order';
@@ -49,6 +50,9 @@ $_['entry_disable_success_redirect'] = 'Disable Success Redirect';
 $_['entry_disable_success_callback'] = 'Disable Success Callback';
 $_['entry_canceled_behavior'] = 'Canceled Order Behavior';
 $_['entry_failed_behavior'] = 'Failed Order Behavior';
+$_['entry_payment_method_whitelist'] = 'Payment Method Whitelist';
+
+$_['help_payment_method_whitelist'] = 'This controls what payment method will be available on the payment page. Leave empty to allow all payment methods.';
 
 $_['help_payment_name'] = 'Name that will be displayed on checkout page';
 $_['help_secret_key'] = 'Secret Key can be retrieved from CHIP Collect Dashboard';
@@ -82,3 +86,11 @@ $_['error_public_key'] = 'Error! The public key is not valid';
 $_['error_due_strict_timing'] = 'Error! You are required to set Due Strict Timing';
 $_['error_payment_name'] = 'Error! You are required to set Payment Name';
 $_['error_instruction'] = 'Error! You are required to set CHIP Instructions';
+
+$_['column_order'] = 'Order';
+$_['column_chip_id'] = 'Purchase ID';
+$_['column_status'] = 'Status';
+$_['column_amount'] = 'Amount';
+$_['column_environment'] = 'Environment';
+$_['column_date_added'] = 'Date Added';
+$_['text_no_results'] = 'No Results';

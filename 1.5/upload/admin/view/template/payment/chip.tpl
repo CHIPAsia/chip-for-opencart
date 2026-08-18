@@ -27,6 +27,7 @@
                 <a href="#tab-status"><?php echo $tab_order_status; ?></a>
                 <a href="#tab-customise"><?php echo $tab_customise; ?></a>
                 <a href="#tab-troubleshooting"><?php echo $tab_troubleshooting; ?></a>
+                <a href="#tab-report"><?php echo $tab_report; ?></a>
             </div>
 
             <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form">
@@ -83,11 +84,12 @@
                                 <?php $class = 'odd'; ?>
                                 <?php foreach ($chip_available_payment_methods as $payment_method) { ?>
                                 <?php $class = ($class == 'even' ? 'odd' : 'even'); ?>
+                                <?php $payment_method_label = isset($chip_payment_method_labels[$payment_method]) ? $chip_payment_method_labels[$payment_method] : $payment_method; ?>
                                 <div class="<?php echo $class; ?>">
                                   <?php if (in_array($payment_method, $chip_payment_method_whitelist)) { ?>
-                                  <input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" checked="checked" /><?php echo $payment_method; ?>
+                                  <input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" checked="checked" /><?php echo $payment_method_label; ?>
                                   <?php } else { ?>
-                                  <input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" /><?php echo $payment_method; ?>
+                                  <input type="checkbox" name="chip_payment_method_whitelist[]" value="<?php echo $payment_method; ?>" /><?php echo $payment_method_label; ?>
                                   <?php } ?>
                                 </div>
                                 <?php } ?>
@@ -393,6 +395,9 @@
                             </td>
                         </tr>
                     </table>
+                </div>
+                <div id="tab-report">
+                    <?php echo $report; ?>
                 </div>
             </form>
         </div>
