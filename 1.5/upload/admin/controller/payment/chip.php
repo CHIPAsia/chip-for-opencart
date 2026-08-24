@@ -47,10 +47,7 @@ class ControllerPaymentChip extends Controller {
 		$this->data['entry_payment_name'] = $this->language->get('entry_payment_name');
 		$this->data['entry_secret_key'] = $this->language->get('entry_secret_key');
 		$this->data['entry_brand_id'] = $this->language->get('entry_brand_id');
-		$this->data['entry_webhook_url'] = $this->language->get('entry_webhook_url');
-		$this->data['entry_public_key'] = $this->language->get('entry_public_key');
 		$this->data['entry_general_public_key'] = $this->language->get('entry_general_public_key');
-		$this->data['entry_purchase_send_receipt'] = $this->language->get('entry_purchase_send_receipt');
 		$this->data['entry_due_strict'] = $this->language->get('entry_due_strict');
 		$this->data['entry_due_strict_timing'] = $this->language->get('entry_due_strict_timing');
 		$this->data['entry_time_zone'] = $this->language->get('entry_time_zone');
@@ -111,11 +108,6 @@ class ControllerPaymentChip extends Controller {
 			$this->data['error_brand_id'] = '';
 		}
 
-		if (isset($this->error['public_key'])) {
-			$this->data['error_public_key'] = $this->error['public_key'];
-		} else {
-			$this->data['error_public_key'] = '';
-		}
 
 		if (isset($this->error['due_strict_timing'])) {
 			$this->data['error_due_strict_timing'] = $this->error['due_strict_timing'];
@@ -159,11 +151,6 @@ class ControllerPaymentChip extends Controller {
 			$this->data['chip_brand_id'] = $this->config->get('chip_brand_id');
 		}
 
-		if (isset($this->request->post['chip_public_key'])) {
-			$this->data['chip_public_key'] = $this->request->post['chip_public_key'];
-		} else {
-			$this->data['chip_public_key'] = $this->config->get('chip_public_key');
-		}
 
 		if (isset($this->request->post['chip_general_public_key'])) {
 			$this->data['chip_general_public_key'] = $this->request->post['chip_general_public_key'];
@@ -171,11 +158,6 @@ class ControllerPaymentChip extends Controller {
 			$this->data['chip_general_public_key'] = $this->config->get('chip_general_public_key');
 		}
 
-		if (isset($this->request->post['chip_purchase_send_receipt'])) {
-			$this->data['chip_purchase_send_receipt'] = $this->request->post['chip_purchase_send_receipt'];
-		} else {
-			$this->data['chip_purchase_send_receipt'] = $this->config->get('chip_purchase_send_receipt');
-		}
 
 		if (isset($this->request->post['chip_due_strict'])) {
 			$this->data['chip_due_strict'] = $this->request->post['chip_due_strict'];
@@ -330,8 +312,6 @@ class ControllerPaymentChip extends Controller {
 			'missing_order' => $this->language->get('behavior_missing_order'),
 			'fail_order' => $this->language->get('behavior_fail_order'),
 		);
-
-		$this->data['webhook'] = HTTPS_CATALOG . 'index.php?route=payment/chip/callback';
 
 		if (isset($this->request->post['chip_payment_method_whitelist'])) {
 			$this->data['chip_payment_method_whitelist'] = $this->request->post['chip_payment_method_whitelist'];
@@ -518,14 +498,6 @@ class ControllerPaymentChip extends Controller {
 
 		if (!$this->request->post['chip_brand_id']) {
 			$this->error['brand_id'] = $this->language->get('error_brand_id');
-		}
-
-		if ($this->request->post['chip_public_key']) {
-			$public_key_validity = openssl_pkey_get_public($this->request->post['chip_public_key']);
-
-			if (!$public_key_validity) {
-				$this->error['public_key'] = $this->language->get('error_public_key');
-			}
 		}
 
 		if (!$this->error) {

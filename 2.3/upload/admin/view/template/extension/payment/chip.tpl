@@ -71,23 +71,6 @@
         </div>
         </div>
         <div class="form-group">
-        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $help_webhook_url; ?>"><?php echo $entry_webhook_url; ?></span></label>
-        <div class="col-sm-10">
-          <div class="input-group"> <span class="input-group-addon"><i class="fa fa-link"></i></span>
-          <input type="text" value="<?php echo $webhook; ?>" class="form-control" readonly/>
-          </div>
-        </div>
-        </div>
-        <div class="form-group">
-        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $help_public_key; ?>"><?php echo $entry_public_key; ?></span></label>
-        <div class="col-sm-10">
-          <textarea name="chip_public_key" cols="80" rows="10" placeholder="<?php echo $entry_public_key; ?>" id="input-public-key" class="form-control"><?php echo $chip_public_key; ?></textarea>
-          <?php if ($error_public_key) { ?>
-            <div class="text-danger"><?php echo $error_public_key; ?></div>
-          <?php } ?>
-        </div>
-        </div>
-        <div class="form-group">
         <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $help_general_public_key; ?>"><?php echo $entry_general_public_key; ?></span></label>
         <div class="col-sm-10">
           <textarea name="chip_general_public_key" cols="80" rows="10" placeholder="<?php echo $entry_general_public_key; ?>" id="input-general-public-key" class="form-control" readonly><?php echo $chip_general_public_key; ?></textarea>
@@ -130,29 +113,6 @@
             <?php echo $text_no; ?>
             <?php } else { ?>
             <input type="radio" name="chip_convert_to_processing" value="0" />
-            <?php echo $text_no; ?>
-            <?php } ?>
-          </label>
-        </div>
-        </div>
-        <div class="form-group">
-        <label class="col-sm-2 control-label" for="input-purchase-send-receipt"><?php echo $entry_purchase_send_receipt; ?></label>
-        <div class="col-sm-10">
-          <label class="radio-inline">
-            <?php if ($chip_purchase_send_receipt) { ?>
-            <input type="radio" name="chip_purchase_send_receipt" value="1" checked="checked" />
-            <?php echo $text_yes; ?>
-            <?php } else { ?>
-            <input type="radio" name="chip_purchase_send_receipt" value="1" />
-            <?php echo $text_yes; ?>
-            <?php } ?>
-          </label>
-          <label class="radio-inline">
-            <?php if (!$chip_purchase_send_receipt) { ?>
-            <input type="radio" name="chip_purchase_send_receipt" value="0" checked="checked" />
-            <?php echo $text_no; ?>
-            <?php } else { ?>
-            <input type="radio" name="chip_purchase_send_receipt" value="0" />
             <?php echo $text_no; ?>
             <?php } ?>
           </label>

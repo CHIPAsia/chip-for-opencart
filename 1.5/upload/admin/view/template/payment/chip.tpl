@@ -64,18 +64,6 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><?php echo $entry_webhook_url; ?></td>
-                            <td><b><?php echo $webhook; ?></b></td>
-                        </tr>
-                        <tr>
-                            <td><?php echo $entry_public_key; ?></td>
-                            <td><textarea cols="50" rows="10" name="chip_public_key"><?php echo $chip_public_key; ?></textarea>
-                                <?php if (isset($error['public_key'])) { ?>
-                                    <span class="error"><?php echo $error['public_key']; ?></span>
-                                <?php } ?>
-                            </td>
-                        </tr>
-                        <tr>
                             <td><?php echo $entry_general_public_key; ?></td>
                             <td><textarea cols="50" rows="10" name="chip_general_public_key" readonly><?php echo $chip_general_public_key; ?></textarea></td>
                         </tr>
@@ -126,22 +114,6 @@
                                     <input type="radio" name="chip_convert_to_processing" value="1"/>
                                     <?php echo $text_yes; ?>
                                     <input type="radio" name="chip_convert_to_processing" value="0" checked="checked"/>
-                                    <?php echo $text_no; ?>
-                                <?php } ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><?php echo $entry_purchase_send_receipt; ?></td>
-                            <td>
-                                <?php if ($chip_purchase_send_receipt) { ?>
-                                    <input type="radio" name="chip_purchase_send_receipt" value="1" checked="checked"/>
-                                    <?php echo $text_yes; ?>
-                                    <input type="radio" name="chip_purchase_send_receipt" value="0"/>
-                                    <?php echo $text_no; ?>
-                                <?php } else { ?>
-                                    <input type="radio" name="chip_purchase_send_receipt" value="1"/>
-                                    <?php echo $text_yes; ?>
-                                    <input type="radio" name="chip_purchase_send_receipt" value="0" checked="checked"/>
                                     <?php echo $text_no; ?>
                                 <?php } ?>
                             </td>

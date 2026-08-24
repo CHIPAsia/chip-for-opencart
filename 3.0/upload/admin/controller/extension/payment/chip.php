@@ -54,11 +54,6 @@ class ControllerExtensionPaymentChip extends Controller {
 			$data['error_brand_id'] = '';
 		}
 
-		if (isset($this->error['public_key'])) {
-			$data['error_public_key'] = $this->error['public_key'];
-		} else {
-			$data['error_public_key'] = '';
-		}
 
 		if (isset($this->error['due_strict_timing'])) {
 			$data['error_due_strict_timing'] = $this->error['due_strict_timing'];
@@ -99,11 +94,6 @@ class ControllerExtensionPaymentChip extends Controller {
 			$data['payment_chip_brand_id'] = $this->config->get('payment_chip_brand_id');
 		}
 
-		if (isset($this->request->post['payment_chip_public_key'])) {
-			$data['payment_chip_public_key'] = $this->request->post['payment_chip_public_key'];
-		} else {
-			$data['payment_chip_public_key'] = $this->config->get('payment_chip_public_key');
-		}
 
 		if (isset($this->request->post['payment_chip_general_public_key'])) {
 			$data['payment_chip_general_public_key'] = $this->request->post['payment_chip_general_public_key'];
@@ -136,11 +126,6 @@ class ControllerExtensionPaymentChip extends Controller {
 			'crypto_coin'     => 'Crypto Coin',
 		);
 
-		if (isset($this->request->post['payment_chip_purchase_send_receipt'])) {
-			$data['payment_chip_purchase_send_receipt'] = $this->request->post['payment_chip_purchase_send_receipt'];
-		} else {
-			$data['payment_chip_purchase_send_receipt'] = $this->config->get('payment_chip_purchase_send_receipt');
-		}
 
 		if (isset($this->request->post['payment_chip_due_strict'])) {
 			$data['payment_chip_due_strict'] = $this->request->post['payment_chip_due_strict'];
@@ -308,7 +293,6 @@ class ControllerExtensionPaymentChip extends Controller {
 			'fail_order' => $this->language->get('behavior_fail_order'),
 		);
 
-		$data['webhook'] = HTTPS_CATALOG . 'index.php?route=extension/payment/chip/callback';
 
 		$data['report'] = $this->getReport();
 		$data['token'] = $this->getToken();
@@ -351,14 +335,6 @@ class ControllerExtensionPaymentChip extends Controller {
 
 		if (!$this->request->post['payment_chip_brand_id']) {
 			$this->error['brand_id'] = $this->language->get('error_brand_id');
-		}
-
-		if ($this->request->post['payment_chip_public_key']) {
-			$public_key_validity = openssl_pkey_get_public($this->request->post['payment_chip_public_key']);
-
-			if (!$public_key_validity) {
-				$this->error['public_key'] = $this->language->get('error_public_key');
-			}
 		}
 
 		return !$this->error;
