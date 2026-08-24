@@ -1,0 +1,35 @@
+name: Create Release Zips
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create zip files
+        run: |
+          # OpenCart 4.0 (ocmod: admin/ + catalog/ + install.json at zip root)
+          cd 4.0
+          zip -r ../chip-opencart-4.0.zip admin/ catalog/ install.json README.md -x "*.DS_Store" "*.git*"
+          cd ..
+
+          # OpenCart 1.5 - 3.0 (manual upload: upload/ folder)
+          for v in 1.5 2.0 2.2 2.3 3.0; do
+            cd "$v"
+            zip -r "../chip-opencart-$v.zip" upload/ README.md -x "*.DS_Store" "*.git*"
+            cd ..
+          done
+
+      - name: Upload release assets
+        run: |
+          for f in chip-opencart-*.zip; do
+            gh release upload "${{ github.event.release.tag_name }}" "$f" --clobber
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
