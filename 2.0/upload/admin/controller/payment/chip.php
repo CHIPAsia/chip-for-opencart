@@ -48,10 +48,7 @@ class ControllerPaymentChip extends Controller {
 		$data['entry_payment_name'] = $this->language->get('entry_payment_name');
 		$data['entry_secret_key'] = $this->language->get('entry_secret_key');
 		$data['entry_brand_id'] = $this->language->get('entry_brand_id');
-		$data['entry_webhook_url'] = $this->language->get('entry_webhook_url');
-		$data['entry_public_key'] = $this->language->get('entry_public_key');
 		$data['entry_general_public_key'] = $this->language->get('entry_general_public_key');
-		$data['entry_purchase_send_receipt'] = $this->language->get('entry_purchase_send_receipt');
 		$data['entry_due_strict'] = $this->language->get('entry_due_strict');
 		$data['entry_due_strict_timing'] = $this->language->get('entry_due_strict_timing');
 		$data['entry_time_zone'] = $this->language->get('entry_time_zone');
@@ -78,8 +75,6 @@ class ControllerPaymentChip extends Controller {
 		$data['help_payment_name'] = $this->language->get('help_payment_name');
 		$data['help_secret_key'] = $this->language->get('help_secret_key');
 		$data['help_brand_id'] = $this->language->get('help_brand_id');
-		$data['help_webhook_url'] = $this->language->get('help_webhook_url');
-		$data['help_public_key'] = $this->language->get('help_public_key');
 		$data['help_general_public_key'] = $this->language->get('help_general_public_key');
 		$data['help_due_strict'] = $this->language->get('help_due_strict');
 		$data['help_due_strict_timing'] = $this->language->get('help_due_strict_timing');
@@ -136,11 +131,6 @@ class ControllerPaymentChip extends Controller {
 			$data['error_brand_id'] = '';
 		}
 
-		if (isset($this->error['public_key'])) {
-			$data['error_public_key'] = $this->error['public_key'];
-		} else {
-			$data['error_public_key'] = '';
-		}
 
 		if (isset($this->error['due_strict_timing'])) {
 			$data['error_due_strict_timing'] = $this->error['due_strict_timing'];
@@ -181,11 +171,6 @@ class ControllerPaymentChip extends Controller {
 			$data['chip_brand_id'] = $this->config->get('chip_brand_id');
 		}
 
-		if (isset($this->request->post['chip_public_key'])) {
-			$data['chip_public_key'] = $this->request->post['chip_public_key'];
-		} else {
-			$data['chip_public_key'] = $this->config->get('chip_public_key');
-		}
 
 		if (isset($this->request->post['chip_general_public_key'])) {
 			$data['chip_general_public_key'] = $this->request->post['chip_general_public_key'];
@@ -218,11 +203,6 @@ class ControllerPaymentChip extends Controller {
 			'crypto_coin'     => 'Crypto Coin',
 		);
 
-		if (isset($this->request->post['chip_purchase_send_receipt'])) {
-			$data['chip_purchase_send_receipt'] = $this->request->post['chip_purchase_send_receipt'];
-		} else {
-			$data['chip_purchase_send_receipt'] = $this->config->get('chip_purchase_send_receipt');
-		}
 
 		if (isset($this->request->post['chip_due_strict'])) {
 			$data['chip_due_strict'] = $this->request->post['chip_due_strict'];
@@ -386,11 +366,9 @@ class ControllerPaymentChip extends Controller {
 			'fail_order' => $this->language->get('behavior_fail_order'),
 		);
 
-		$data['webhook'] = HTTPS_CATALOG . 'index.php?route=payment/chip/callback';
-
-		$data['token'] = $this->session->data['token'];
 
 		$data['report'] = $this->getReport();
+		$data['token'] = $this->getToken();
 
 		$this->template = 'payment/chip.tpl';
 		$this->children = array(
@@ -436,14 +414,6 @@ class ControllerPaymentChip extends Controller {
 
 		if (!$this->request->post['chip_brand_id']) {
 			$this->error['brand_id'] = $this->language->get('error_brand_id');
-		}
-
-		if ($this->request->post['chip_public_key']) {
-			$public_key_validity = openssl_pkey_get_public($this->request->post['chip_public_key']);
-
-			if (!$public_key_validity) {
-				$this->error['public_key'] = $this->language->get('error_public_key');
-			}
 		}
 
 		return !$this->error;
@@ -526,5 +496,57 @@ class ControllerPaymentChip extends Controller {
 		$data['text_no_results'] = $this->language->get('text_no_results');
 
 		return $this->load->view('payment/chip_report.tpl', $data);
+	}
+
+	public function getToken() {
+		$page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
+		$limit = $this->config->get('config_limit_admin');
+		$start = ($page - 1) * $limit;
+
+		// Get total count for tokens
+		$total_query = $this->db->query("SELECT COUNT(*) as total FROM `" . DB_PREFIX . "chip_token`");
+		$total = $total_query->row['total'];
+
+		// Get paginated tokens
+		$tokens = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token` ORDER BY `date_added` DESC LIMIT " . (int)$start . ", " . (int)$limit);
+
+		$data = array();
+		$data['tokens'] = array();
+		if ($tokens->num_rows) {
+			foreach ($tokens->rows as $token) {
+				$customer_url = $this->url->link('sale/customer', 'token=' . $this->session->data['token'] . '&customer_id=' . $token['customer_id']);
+				$data['tokens'][] = array(
+					'customer_id' => $token['customer_id'],
+					'customer' => $customer_url,
+					'token_id' => $token['token_id'],
+					'type' => $token['type'],
+					'card_name' => $token['card_name'],
+					'card_number' => $token['card_number'],
+					'card_expire' => $token['card_expire_month'] . '/' . $token['card_expire_year'],
+					'date_added' => date('Y-m-d H:i:s', strtotime($token['date_added']))
+				);
+			}
+		}
+
+		// Pagination
+		$pagination = new Pagination();
+		$pagination->total = $total;
+		$pagination->page = $page;
+		$pagination->limit = $this->config->get('config_limit_admin');
+		$pagination->url = $this->url->link('payment/chip', 'token=' . $this->session->data['token'] . '&page={page}');
+		$data['token_pagination'] = $pagination->render();
+
+		// Load language
+		$this->language->load('payment/chip');
+		$data['column_customer'] = $this->language->get('column_customer');
+		$data['column_token_id'] = $this->language->get('column_token_id');
+		$data['column_card_type'] = $this->language->get('column_card_type');
+		$data['column_card_name'] = $this->language->get('column_card_name');
+		$data['column_card_number'] = $this->language->get('column_card_number');
+		$data['column_card_expire'] = $this->language->get('column_card_expire');
+		$data['column_date_added'] = $this->language->get('column_date_added');
+		$data['text_no_results'] = $this->language->get('text_no_results');
+
+		return $this->load->view('payment/chip_token.tpl', $data);
 	}
 }

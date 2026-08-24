@@ -42,6 +42,7 @@
    <li><a href="#tab-checkout" data-toggle="tab">{{ tab_checkout }}</a></li>
    <li><a href="#tab-troubleshoot" data-toggle="tab">{{ tab_troubleshoot }}</a></li>
    <li><a href="#tab-report" data-toggle="tab">{{ tab_report }}</a></li>
+   <li><a href="#tab-token" data-toggle="tab">{{ tab_token }}</a></li>
    </ul>
    <div class="tab-content">
    <div class="tab-pane active" id="tab-api">
@@ -73,23 +74,6 @@
      <input type="text" name="payment_chip_brand_id" value="{{ payment_chip_brand_id }}" placeholder="{{ entry_brand_id }}" id="input-brand-id" class="form-control" />
      {% if error_brand_id %}
       <div class="text-danger">{{ error_brand_id }}</div>
-     {% endif %}
-    </div>
-    </div>
-    <div class="form-group">
-    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_webhook_url }}">{{ entry_webhook_url }}</span></label>
-    <div class="col-sm-10">
-     <div class="input-group"> <span class="input-group-addon"><i class="fa fa-link"></i></span>
-     <input type="text" value="{{ webhook }}" class="form-control" readonly/>
-     </div>
-    </div>
-    </div>
-    <div class="form-group">
-    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="{{ help_public_key }}">{{ entry_public_key }}</span></label>
-    <div class="col-sm-10">
-     <textarea name="payment_chip_public_key" cols="80" rows="10" placeholder="{{ entry_public_key }}" id="input-public-key" class="form-control">{{ payment_chip_public_key }}</textarea>
-     {% if error_public_key %}
-      <div class="text-danger">{{ error_public_key }}</div>
      {% endif %}
     </div>
     </div>
@@ -136,29 +120,6 @@
       {{ text_no }}
 {% else %} 
       <input type="radio" name="payment_chip_convert_to_processing" value="0" />
-      {{ text_no }}
-      {% endif %}
-     </label>
-    </div>
-    </div>
-    <div class="form-group">
-    <label class="col-sm-2 control-label" for="input-purchase-send-receipt">{{ entry_purchase_send_receipt }}</label>
-    <div class="col-sm-10">
-     <label class="radio-inline">
-      {% if payment_chip_purchase_send_receipt %}
-      <input type="radio" name="payment_chip_purchase_send_receipt" value="1" checked="checked" />
-      {{ text_yes }}
-{% else %} 
-      <input type="radio" name="payment_chip_purchase_send_receipt" value="1" />
-      {{ text_yes }}
-      {% endif %}
-     </label>
-     <label class="radio-inline">
-      {% if not payment_chip_purchase_send_receipt %}
-      <input type="radio" name="payment_chip_purchase_send_receipt" value="0" checked="checked" />
-      {{ text_no }}
-{% else %} 
-      <input type="radio" name="payment_chip_purchase_send_receipt" value="0" />
       {{ text_no }}
       {% endif %}
      </label>
@@ -460,6 +421,12 @@
     <fieldset>
      <legend>{{ tab_report }}</legend>
      <div id="report">{{ report }}</div>
+    </fieldset>
+   </div>
+   <div class="tab-pane" id="tab-token">
+    <fieldset>
+     <legend>{{ tab_token }}</legend>
+     <div id="token">{{ token }}</div>
     </fieldset>
    </div>
    </div>

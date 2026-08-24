@@ -35,6 +35,7 @@
       <li><a href="#tab-checkout" data-toggle="tab"><?php echo $tab_checkout; ?></a></li>
       <li><a href="#tab-troubleshoot" data-toggle="tab"><?php echo $tab_troubleshoot; ?></a></li>
       <li><a href="#tab-report" data-toggle="tab"><?php echo $tab_report; ?></a></li>
+      <li><a href="#tab-token" data-toggle="tab"><?php echo $tab_token; ?></a></li>
       </ul>
       <div class="tab-content">
       <div class="tab-pane active" id="tab-api">
@@ -66,23 +67,6 @@
           <input type="text" name="chip_brand_id" value="<?php echo $chip_brand_id; ?>" placeholder="<?php echo $entry_brand_id; ?>" id="input-brand-id" class="form-control" />
           <?php if ($error_brand_id) { ?>
             <div class="text-danger"><?php echo $error_brand_id; ?></div>
-          <?php } ?>
-        </div>
-        </div>
-        <div class="form-group">
-        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $help_webhook_url; ?>"><?php echo $entry_webhook_url; ?></span></label>
-        <div class="col-sm-10">
-          <div class="input-group"> <span class="input-group-addon"><i class="fa fa-link"></i></span>
-          <input type="text" value="<?php echo $webhook; ?>" class="form-control" readonly/>
-          </div>
-        </div>
-        </div>
-        <div class="form-group">
-        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $help_public_key; ?>"><?php echo $entry_public_key; ?></span></label>
-        <div class="col-sm-10">
-          <textarea name="chip_public_key" cols="80" rows="10" placeholder="<?php echo $entry_public_key; ?>" id="input-public-key" class="form-control"><?php echo $chip_public_key; ?></textarea>
-          <?php if ($error_public_key) { ?>
-            <div class="text-danger"><?php echo $error_public_key; ?></div>
           <?php } ?>
         </div>
         </div>
@@ -129,29 +113,6 @@
             <?php echo $text_no; ?>
             <?php } else { ?>
             <input type="radio" name="chip_convert_to_processing" value="0" />
-            <?php echo $text_no; ?>
-            <?php } ?>
-          </label>
-        </div>
-        </div>
-        <div class="form-group">
-        <label class="col-sm-2 control-label" for="input-purchase-send-receipt"><?php echo $entry_purchase_send_receipt; ?></label>
-        <div class="col-sm-10">
-          <label class="radio-inline">
-            <?php if ($chip_purchase_send_receipt) { ?>
-            <input type="radio" name="chip_purchase_send_receipt" value="1" checked="checked" />
-            <?php echo $text_yes; ?>
-            <?php } else { ?>
-            <input type="radio" name="chip_purchase_send_receipt" value="1" />
-            <?php echo $text_yes; ?>
-            <?php } ?>
-          </label>
-          <label class="radio-inline">
-            <?php if (!$chip_purchase_send_receipt) { ?>
-            <input type="radio" name="chip_purchase_send_receipt" value="0" checked="checked" />
-            <?php echo $text_no; ?>
-            <?php } else { ?>
-            <input type="radio" name="chip_purchase_send_receipt" value="0" />
             <?php echo $text_no; ?>
             <?php } ?>
           </label>
@@ -451,6 +412,9 @@
       </div>
       <div class="tab-pane" id="tab-report">
         <?php echo $report; ?>
+      </div>
+      <div class="tab-pane" id="tab-token">
+        <?php echo $token; ?>
       </div>
       </div>
     </form>

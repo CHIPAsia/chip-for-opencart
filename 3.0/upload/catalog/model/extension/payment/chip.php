@@ -69,6 +69,63 @@ class ModelExtensionPaymentChip extends Model {
 		return null;
 	}
 
+	public function chargeToken($purchase_id, $token_id) {
+		$params = array(
+			'recurring_token' => $token_id
+		);
+
+		return $this->call('POST', "/purchases/{$purchase_id}/charge/", $params);
+	}
+
+	public function getTokenByChipTokenId($chip_token_id) {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token` WHERE `chip_token_id` = " . (int)$chip_token_id);
+
+		if ($query->num_rows) {
+			return $query->row;
+		}
+
+		return null;
+	}
+
+	public function addToken($data) {
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "chip_token`
+			(`customer_id`, `token_id`, `type`, `card_name`, `card_number`, `card_expire_month`, `card_expire_year`, `date_added`)
+			VALUES (" . (int)$data['customer_id'] . ",
+			'" . $this->db->escape($data['token_id']) . "',
+			'" . $this->db->escape($data['type']) . "',
+			'" . $this->db->escape($data['card_name']) . "',
+			'" . $this->db->escape($data['card_number']) . "',
+			'" . $this->db->escape($data['card_expire_month']) . "',
+			'" . $this->db->escape($data['card_expire_year']) . "',
+			NOW())");
+	}
+
+	public function getTokens($customer_id) {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token`
+			WHERE `customer_id` = " . (int)$customer_id . "
+			ORDER BY `date_added` DESC");
+
+		return $query->rows;
+	}
+
+	public function getToken($customer_id, $chip_token_id) {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token`
+			WHERE `customer_id` = " . (int)$customer_id . "
+			AND `chip_token_id` = " . (int)$chip_token_id);
+
+		if ($query->num_rows) {
+			return $query->row;
+		}
+
+		return null;
+	}
+
+	public function deleteToken($customer_id, $chip_token_id) {
+		$this->db->query("DELETE FROM `" . DB_PREFIX . "chip_token`
+			WHERE `customer_id` = " . (int)$customer_id . "
+			AND `chip_token_id` = " . (int)$chip_token_id);
+	}
+
 	public function payment_methods($currency, $amount) {
 		return $this->call('GET', "/payment_methods/?brand_id={$this->brand_id}&currency={$currency}&amount={$amount}");
 	}

@@ -54,11 +54,6 @@ class ControllerExtensionPaymentChip extends Controller {
 			$data['error_brand_id'] = '';
 		}
 
-		if (isset($this->error['public_key'])) {
-			$data['error_public_key'] = $this->error['public_key'];
-		} else {
-			$data['error_public_key'] = '';
-		}
 
 		if (isset($this->error['due_strict_timing'])) {
 			$data['error_due_strict_timing'] = $this->error['due_strict_timing'];
@@ -99,11 +94,6 @@ class ControllerExtensionPaymentChip extends Controller {
 			$data['payment_chip_brand_id'] = $this->config->get('payment_chip_brand_id');
 		}
 
-		if (isset($this->request->post['payment_chip_public_key'])) {
-			$data['payment_chip_public_key'] = $this->request->post['payment_chip_public_key'];
-		} else {
-			$data['payment_chip_public_key'] = $this->config->get('payment_chip_public_key');
-		}
 
 		if (isset($this->request->post['payment_chip_general_public_key'])) {
 			$data['payment_chip_general_public_key'] = $this->request->post['payment_chip_general_public_key'];
@@ -136,11 +126,6 @@ class ControllerExtensionPaymentChip extends Controller {
 			'crypto_coin'     => 'Crypto Coin',
 		);
 
-		if (isset($this->request->post['payment_chip_purchase_send_receipt'])) {
-			$data['payment_chip_purchase_send_receipt'] = $this->request->post['payment_chip_purchase_send_receipt'];
-		} else {
-			$data['payment_chip_purchase_send_receipt'] = $this->config->get('payment_chip_purchase_send_receipt');
-		}
 
 		if (isset($this->request->post['payment_chip_due_strict'])) {
 			$data['payment_chip_due_strict'] = $this->request->post['payment_chip_due_strict'];
@@ -308,9 +293,9 @@ class ControllerExtensionPaymentChip extends Controller {
 			'fail_order' => $this->language->get('behavior_fail_order'),
 		);
 
-		$data['webhook'] = HTTPS_CATALOG . 'index.php?route=extension/payment/chip/callback';
 
 		$data['report'] = $this->getReport();
+		$data['token'] = $this->getToken();
 
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
@@ -350,14 +335,6 @@ class ControllerExtensionPaymentChip extends Controller {
 
 		if (!$this->request->post['payment_chip_brand_id']) {
 			$this->error['brand_id'] = $this->language->get('error_brand_id');
-		}
-
-		if ($this->request->post['payment_chip_public_key']) {
-			$public_key_validity = openssl_pkey_get_public($this->request->post['payment_chip_public_key']);
-
-			if (!$public_key_validity) {
-				$this->error['public_key'] = $this->language->get('error_public_key');
-			}
 		}
 
 		return !$this->error;
@@ -443,5 +420,60 @@ class ControllerExtensionPaymentChip extends Controller {
 		$data['text_no_results'] = $this->language->get('text_no_results');
 
 		return $this->load->view('extension/payment/chip_report', $data);
+	}
+
+	public function getToken() {
+		$page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
+		$limit = $this->config->get('config_limit_admin');
+		$start = ($page - 1) * $limit;
+
+		// Get total count for tokens
+		$total_query = $this->db->query("SELECT COUNT(*) as total FROM `" . DB_PREFIX . "chip_token`");
+		$total = $total_query->row['total'];
+
+		// Get paginated tokens
+		$tokens = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token` ORDER BY `date_added` DESC LIMIT " . (int)$start . ", " . (int)$limit);
+
+		$data = array();
+		$data['tokens'] = array();
+
+		if ($tokens->num_rows) {
+			foreach ($tokens->rows as $token) {
+				$customer_url = $this->url->link('customer/customer', 'user_token=' . $this->session->data['user_token'] . '&customer_id=' . $token['customer_id'], true);
+
+				$data['tokens'][] = array(
+					'customer_id' => $token['customer_id'],
+					'customer' => $customer_url,
+					'token_id' => $token['token_id'],
+					'type' => $token['type'],
+					'card_name' => $token['card_name'],
+					'card_number' => $token['card_number'],
+					'card_expire' => $token['card_expire_month'] . '/' . $token['card_expire_year'],
+					'date_added' => date('Y-m-d H:i:s', strtotime($token['date_added']))
+				);
+			}
+		}
+
+		// Pagination
+		$pagination = new Pagination();
+		$pagination->total = $total;
+		$pagination->page = $page;
+		$pagination->limit = $limit;
+		$pagination->url = $this->url->link('extension/payment/chip', 'user_token=' . $this->session->data['user_token'] . '&page={page}', true);
+
+		$data['token_pagination'] = $pagination->render();
+
+		// Load language
+		$this->load->language('extension/payment/chip');
+		$data['column_customer'] = $this->language->get('column_customer');
+		$data['column_token_id'] = $this->language->get('column_token_id');
+		$data['column_card_type'] = $this->language->get('column_card_type');
+		$data['column_card_name'] = $this->language->get('column_card_name');
+		$data['column_card_number'] = $this->language->get('column_card_number');
+		$data['column_card_expire'] = $this->language->get('column_card_expire');
+		$data['column_date_added'] = $this->language->get('column_date_added');
+		$data['text_no_results'] = $this->language->get('text_no_results');
+
+		return $this->load->view('extension/payment/chip_token', $data);
 	}
 }

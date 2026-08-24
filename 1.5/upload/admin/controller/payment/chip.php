@@ -47,10 +47,7 @@ class ControllerPaymentChip extends Controller {
 		$this->data['entry_payment_name'] = $this->language->get('entry_payment_name');
 		$this->data['entry_secret_key'] = $this->language->get('entry_secret_key');
 		$this->data['entry_brand_id'] = $this->language->get('entry_brand_id');
-		$this->data['entry_webhook_url'] = $this->language->get('entry_webhook_url');
-		$this->data['entry_public_key'] = $this->language->get('entry_public_key');
 		$this->data['entry_general_public_key'] = $this->language->get('entry_general_public_key');
-		$this->data['entry_purchase_send_receipt'] = $this->language->get('entry_purchase_send_receipt');
 		$this->data['entry_due_strict'] = $this->language->get('entry_due_strict');
 		$this->data['entry_due_strict_timing'] = $this->language->get('entry_due_strict_timing');
 		$this->data['entry_time_zone'] = $this->language->get('entry_time_zone');
@@ -111,11 +108,6 @@ class ControllerPaymentChip extends Controller {
 			$this->data['error_brand_id'] = '';
 		}
 
-		if (isset($this->error['public_key'])) {
-			$this->data['error_public_key'] = $this->error['public_key'];
-		} else {
-			$this->data['error_public_key'] = '';
-		}
 
 		if (isset($this->error['due_strict_timing'])) {
 			$this->data['error_due_strict_timing'] = $this->error['due_strict_timing'];
@@ -159,11 +151,6 @@ class ControllerPaymentChip extends Controller {
 			$this->data['chip_brand_id'] = $this->config->get('chip_brand_id');
 		}
 
-		if (isset($this->request->post['chip_public_key'])) {
-			$this->data['chip_public_key'] = $this->request->post['chip_public_key'];
-		} else {
-			$this->data['chip_public_key'] = $this->config->get('chip_public_key');
-		}
 
 		if (isset($this->request->post['chip_general_public_key'])) {
 			$this->data['chip_general_public_key'] = $this->request->post['chip_general_public_key'];
@@ -171,11 +158,6 @@ class ControllerPaymentChip extends Controller {
 			$this->data['chip_general_public_key'] = $this->config->get('chip_general_public_key');
 		}
 
-		if (isset($this->request->post['chip_purchase_send_receipt'])) {
-			$this->data['chip_purchase_send_receipt'] = $this->request->post['chip_purchase_send_receipt'];
-		} else {
-			$this->data['chip_purchase_send_receipt'] = $this->config->get('chip_purchase_send_receipt');
-		}
 
 		if (isset($this->request->post['chip_due_strict'])) {
 			$this->data['chip_due_strict'] = $this->request->post['chip_due_strict'];
@@ -331,8 +313,6 @@ class ControllerPaymentChip extends Controller {
 			'fail_order' => $this->language->get('behavior_fail_order'),
 		);
 
-		$this->data['webhook'] = HTTPS_CATALOG . 'index.php?route=payment/chip/callback';
-
 		if (isset($this->request->post['chip_payment_method_whitelist'])) {
 			$this->data['chip_payment_method_whitelist'] = $this->request->post['chip_payment_method_whitelist'];
 		} elseif ($this->config->get('chip_payment_method_whitelist')) {
@@ -371,9 +351,8 @@ class ControllerPaymentChip extends Controller {
 			$this->data['chip_atome_product_whitelist'] = $this->config->get('chip_atome_product_whitelist');
 		}
 
-		$this->data['token'] = $this->session->data['token'];
-
 		$this->data['report'] = $this->getReport();
+		$this->data['token'] = $this->getToken();
 
 		$this->template = 'payment/chip.tpl';
 		$this->children = array(
@@ -435,6 +414,59 @@ class ControllerPaymentChip extends Controller {
 		return $this->render();
 	}
 
+	public function getToken() {
+		$page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
+		$limit = $this->config->get('config_admin_limit');
+		$start = ($page - 1) * $limit;
+
+		$total_query = $this->db->query("SELECT COUNT(*) AS total FROM `" . DB_PREFIX . "chip_token`");
+		$total = $total_query->row['total'];
+
+		$tokens = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_token` ORDER BY `date_added` DESC LIMIT " . (int)$start . ", " . (int)$limit);
+
+		$this->data['tokens'] = array();
+
+		if ($tokens->num_rows) {
+			foreach ($tokens->rows as $token) {
+				$customer_url = $this->url->link('sale/customer', 'token=' . $this->session->data['token'] . '&customer_id=' . $token['customer_id'], 'SSL');
+
+				$this->data['tokens'][] = array(
+					'customer_id' => $token['customer_id'],
+					'customer' => $customer_url,
+					'token_id' => $token['token_id'],
+					'type' => $token['type'],
+					'card_name' => $token['card_name'],
+					'card_number' => $token['card_number'],
+					'card_expire' => $token['card_expire_month'] . '/' . $token['card_expire_year'],
+					'date_added' => date('Y-m-d H:i:s', strtotime($token['date_added']))
+				);
+			}
+		}
+
+		$this->data['column_customer'] = $this->language->get('column_customer');
+		$this->data['column_token_id'] = $this->language->get('column_token_id');
+		$this->data['column_card_type'] = $this->language->get('column_card_type');
+		$this->data['column_card_name'] = $this->language->get('column_card_name');
+		$this->data['column_card_number'] = $this->language->get('column_card_number');
+		$this->data['column_card_expire'] = $this->language->get('column_card_expire');
+		$this->data['column_date_added'] = $this->language->get('column_date_added');
+		$this->data['text_no_results'] = $this->language->get('text_no_results');
+		$this->data['text_pagination'] = $this->language->get('text_pagination');
+
+		$pagination = new Pagination();
+		$pagination->total = $total;
+		$pagination->page = $page;
+		$pagination->limit = $limit;
+		$pagination->text = $this->data['text_pagination'];
+		$pagination->url = $this->url->link('payment/chip', 'token=' . $this->session->data['token'] . '&page={page}', 'SSL');
+
+		$this->data['token_pagination'] = $pagination->render();
+
+		$this->template = 'payment/chip_token.tpl';
+
+		return $this->render();
+	}
+
 	protected function validate() {
 		if (!$this->user->hasPermission('modify', 'payment/chip')) {
 			$this->error['warning'] = $this->language->get('error_permission');
@@ -466,14 +498,6 @@ class ControllerPaymentChip extends Controller {
 
 		if (!$this->request->post['chip_brand_id']) {
 			$this->error['brand_id'] = $this->language->get('error_brand_id');
-		}
-
-		if ($this->request->post['chip_public_key']) {
-			$public_key_validity = openssl_pkey_get_public($this->request->post['chip_public_key']);
-
-			if (!$public_key_validity) {
-				$this->error['public_key'] = $this->language->get('error_public_key');
-			}
 		}
 
 		if (!$this->error) {
