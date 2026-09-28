@@ -232,7 +232,7 @@ class Chip extends \Opencart\System\Engine\Controller {
 
 		$purchase = $this->model_extension_chip_payment_chip->create_purchase($params);
 
-		if (!array_key_exists('id', $purchase)) {
+		if ( !is_array($purchase) || !array_key_exists('id', $purchase) ) {
 			$json['error'] = print_r($purchase, true);
 
 			if ($this->config->get('payment_chip_debug')) {
@@ -487,7 +487,7 @@ class Chip extends \Opencart\System\Engine\Controller {
 
 		$purchase = $this->model_extension_chip_payment_chip->create_purchase($params);
 
-		if (!array_key_exists('id', $purchase)) {
+		if ( !is_array($purchase) || !array_key_exists('id', $purchase) ) {
 			$json['error'] = print_r($purchase, true);
 
 			if ($this->config->get('payment_chip_debug')) {
@@ -631,7 +631,7 @@ class Chip extends \Opencart\System\Engine\Controller {
 		$this->model_extension_chip_payment_chip->set_keys($this->config->get('payment_chip_secret_key'), '');
 		$purchase = $this->model_extension_chip_payment_chip->get_purchase($purchase_id);
 
-		if (!array_key_exists('id', $purchase)) {
+		if ( !is_array($purchase) || !array_key_exists('id', $purchase) ) {
 			$json['error'] = print_r($purchase, true);
 
 			if ($this->config->get('payment_chip_debug')) {

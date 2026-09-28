@@ -256,7 +256,7 @@ class ControllerPaymentChip extends Controller {
 
 		$purchase = $this->model_payment_chip->create_purchase($params);
 
-		if ( !array_key_exists('id', $purchase) ) {
+		if ( !is_array($purchase) || !array_key_exists('id', $purchase) ) {
 			$this->session->data['error'] = print_r($purchase, true);
 
 			if ($this->config->get('chip_debug')) {
@@ -499,7 +499,7 @@ class ControllerPaymentChip extends Controller {
 
 		$purchase = $this->model_payment_chip->create_purchase($params);
 
-		if ( !array_key_exists('id', $purchase) ) {
+		if ( !is_array($purchase) || !array_key_exists('id', $purchase) ) {
 			$this->session->data['error'] = print_r($purchase, true);
 
 			if ($this->config->get('chip_debug')) {
@@ -607,7 +607,7 @@ class ControllerPaymentChip extends Controller {
 		$this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
 		$purchase = $this->model_payment_chip->get_purchase($purchase_id);
 
-		if ( !array_key_exists('id', $purchase) ) {
+		if ( !is_array($purchase) || !array_key_exists('id', $purchase) ) {
 			$this->session->data['error'] = print_r($purchase, true);
 
 			if ($this->config->get('chip_debug')) {
@@ -816,7 +816,14 @@ class ControllerPaymentChip extends Controller {
 	private function chargeSubscription($subscription) {
 		$this->load->model('payment/chip');
 
-		$due_date        = $subscription['date_next'];
+		/*
+		 * `date_next` may hold a retry time left by the previous attempt
+		 * rather than the date this cycle was due: claimSubscription() and
+		 * recordSubscriptionFailure() both rewrite the column. Recover the real
+		 * due date first, so the 1/3/5 retry ladder is measured from it and the
+		 * claim below advances the billing schedule from it too.
+		 */
+		$due_date        = $this->model_payment_chip->ladderAnchor($subscription['date_next'], (int)$subscription['retry_count']);
 		$frequency       = $subscription['recurring_frequency'];
 		$cycle           = (int)$subscription['recurring_cycle'];
 		$duration        = (int)$subscription['recurring_duration'];
@@ -952,7 +959,30 @@ class ControllerPaymentChip extends Controller {
 	private function failSubscription($subscription, $due_date, $retry_count, $reason) {
 		$this->load->model('payment/chip');
 
-		$next_retry = $this->model_payment_chip->nextRetryAt($due_date, $retry_count);
+$next_retry = $this->model_payment_chip->nextRetryAt($due_date, $retry_count);
+
+		$error_code = (string)$this->model_payment_chip->getLastErrorCode();
+
+		/*
+		 * A dead or revoked token can never succeed. CHIP documents
+		 * `invalid_recurring_token` as "do not retry, re-prompt the buyer for a new
+		 * card", so suspend now instead of spending the whole ladder on a charge
+		 * that is guaranteed to fail.
+		 */
+		if ($error_code === 'invalid_recurring_token') {
+			$this->model_payment_chip->recordSubscriptionFailure(
+				$subscription['chip_subscription_id'], '0000-00-00 00:00:00', $retry_count + 1, 'suspended');
+
+			$this->model_order_addHistory(
+				$subscription['order_id'],
+				$this->config->get('chip_failed_order_status_id'),
+				$this->language->get('text_renewal_token_dead'),
+				true
+			);
+
+			return false;
+		}
+
 
 		if ($next_retry === null) {
 			/*
