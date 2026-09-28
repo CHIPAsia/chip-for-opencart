@@ -52,6 +52,11 @@ class ControllerPaymentChip extends Controller {
 		$data['entry_secret_key'] = $this->language->get('entry_secret_key');
 		$data['entry_brand_id'] = $this->language->get('entry_brand_id');
 		$data['entry_general_public_key'] = $this->language->get('entry_general_public_key');
+		// The template renders the whitelist label + tooltip; OpenCart's template
+		// engine emits a raw PHP Notice for an unassigned language key, and 2.x has
+		// no auto-language dump (3.0 registers event/language, 2.x does not).
+		$data['entry_payment_method_whitelist'] = $this->language->get('entry_payment_method_whitelist');
+		$data['help_payment_method_whitelist'] = $this->language->get('help_payment_method_whitelist');
 		$data['entry_due_strict'] = $this->language->get('entry_due_strict');
 		$data['entry_due_strict_timing'] = $this->language->get('entry_due_strict_timing');
 		$data['entry_time_zone'] = $this->language->get('entry_time_zone');
