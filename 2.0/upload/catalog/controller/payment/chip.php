@@ -1014,9 +1014,14 @@ class ControllerPaymentChip extends Controller {
 	/**
 	 * Append an order history entry for a renewal.
 	 *
-	 * 1.5 and 2.0 split this over `update()` (history only) and `confirm()`
-	 * (history plus restock / reward side effects). Renewals must not re-run the
-	 * order-confirmation side effects, so only the history is written.
+	 * 1.5 splits this over `update()` (history only) and `confirm()` (history
+	 * plus restock / reward side effects), so 1.5 calls `update()` to avoid
+	 * re-running the order-confirmation side effects.
+	 *
+	 * 2.0 replaced both with `addOrderHistory()` - it has no `update()` at all,
+	 * and there is no Proxy layer to absorb the call, so calling `update()` here
+	 * is a hard fatal ("Call to undefined method ModelCheckoutOrder::update()")
+	 * on the renewal path, i.e. after the card has already been charged.
 	 *
 	 * @param int    $order_id
 	 * @param int    $order_status_id
@@ -1026,7 +1031,7 @@ class ControllerPaymentChip extends Controller {
 	 * @return void
 	 */
 	private function model_order_addHistory($order_id, $order_status_id, $comment = '', $notify = false) {
-		$this->model_checkout_order->update($order_id, $order_status_id, $comment, $notify);
+		$this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $comment, $notify);
 	}
 
 	/**
