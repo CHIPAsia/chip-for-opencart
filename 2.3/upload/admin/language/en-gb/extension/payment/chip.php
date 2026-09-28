@@ -95,3 +95,11 @@ $_['column_card_type'] = 'Card Type';
 $_['column_card_name'] = 'Card Name';
 $_['column_card_number'] = 'Card Number';
 $_['column_card_expire'] = 'Card Expire';
+
+// Recurring renewals. The merchant points their server cron at this URL; the
+// token is generated at install and carried through the settings form so a
+// save cannot drop it.
+$_['tab_subscription']        = 'Subscription';
+$_['help_cron_url']           = 'OpenCart does not renew subscriptions on its own. Add this URL to your server cron (once a day is enough) to charge each stored card when its next payment falls due. Treat the URL as a secret: anyone who has it can trigger the renewal run.';
+$_['entry_cron_url']          = 'Renewal cron URL';
+$_['entry_active_subscriptions'] = 'Active subscriptions';

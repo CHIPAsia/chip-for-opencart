@@ -35,6 +35,9 @@
   </div>
   <div class="panel-body">
   <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-payment" class="form-horizontal">
+  <!-- Kept so a settings save does not drop the renewal cron token:
+       core's editSetting() deletes the whole settings group first. -->
+  <input type="hidden" name="payment_chip_cron_token" value="{{ payment_chip_cron_token }}" />
    <ul class="nav nav-tabs">
    <li class="active"><a href="#tab-api" data-toggle="tab">{{ tab_api_details }}</a></li>
    <li><a href="#tab-general" data-toggle="tab">{{ tab_general }}</a></li>
@@ -427,6 +430,14 @@
     <fieldset>
      <legend>{{ tab_token }}</legend>
      <div id="token">{{ token }}</div>
+
+     <div class="alert alert-info">{{ help_cron_url }}</div>
+     <div class="form-group row">
+      <label class="col-sm-2 col-form-label">{{ entry_cron_url }}</label>
+      <div class="col-sm-10">
+       <input type="text" value="{{ payment_chip_cron_url }}" class="form-control" readonly onclick="this.select();" />
+      </div>
+     </div>
     </fieldset>
    </div>
    </div>
