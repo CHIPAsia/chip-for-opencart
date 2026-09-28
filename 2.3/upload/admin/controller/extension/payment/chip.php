@@ -242,6 +242,19 @@ class ControllerExtensionPaymentChip extends Controller {
 			$data['chip_refunded_order_status_id'] = $this->config->get('chip_refunded_order_status_id');
 		}
 
+		/*
+		 * Carry the cron token through the settings form.
+		 *
+		 * editSetting() persists the whole POST array, so a field that is not
+		 * rendered would be dropped on the next save and the merchant's cron
+		 * would start failing with 403.
+		 */
+		if (isset($this->request->post['chip_cron_token']) && $this->request->post['chip_cron_token'] !== '') {
+			$data['chip_cron_token'] = $this->request->post['chip_cron_token'];
+		} else {
+			$data['chip_cron_token'] = $this->config->get('chip_cron_token');
+		}
+
 		if (isset($this->request->post['chip_allow_instruction'])) {
 			$data['chip_allow_instruction'] = $this->request->post['chip_allow_instruction'];
 		} else {
@@ -412,6 +425,16 @@ class ControllerExtensionPaymentChip extends Controller {
 	public function install() {
 		$this->load->model('extension/payment/chip');
 		$this->model_extension_payment_chip->install();
+
+		$this->load->model('setting/setting');
+
+		// A cron token guards the renewal endpoint, which charges real cards.
+		// Generated once so an unauthenticated request can never reach it.
+		if (!$this->config->get('chip_cron_token')) {
+			$this->model_setting_setting->editSetting('chip', array(
+				'chip_cron_token' => bin2hex(random_bytes(16)),
+			));
+		}
 	}
 
 	public function uninstall() {

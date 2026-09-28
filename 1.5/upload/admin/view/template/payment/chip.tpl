@@ -33,6 +33,9 @@
 
             <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form">
 
+                <!-- Kept so a settings save does not drop the renewal cron token. -->
+                <input type="hidden" name="chip_cron_token" value="<?php echo $chip_cron_token; ?>" />
+
                 <div id="tab-api-details">
                     <table class="form">
                         <?php foreach ($languages as $language) { ?>

@@ -38,6 +38,8 @@
       <li><a href="#tab-token" data-toggle="tab"><?php echo $tab_token; ?></a></li>
       </ul>
       <div class="tab-content">
+      <!-- Kept so a settings save does not drop the renewal cron token. -->
+      <input type="hidden" name="chip_cron_token" value="<?php echo $chip_cron_token; ?>" />
       <div class="tab-pane active" id="tab-api">
         <?php foreach ($languages as $language) { ?>
           <div class="form-group required">

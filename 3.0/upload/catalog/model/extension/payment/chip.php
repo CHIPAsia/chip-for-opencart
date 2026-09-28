@@ -3,6 +3,64 @@ class ModelExtensionPaymentChip extends Model {
 	const DUITNOW_GROUP = array('duitnow_qr', 'dnqr');
 	const SHOPEE_GROUP = array('razer_shopeepay', 'shopee_pay');
 
+	/**
+	 * Declare that this gateway can back recurring products.
+	 *
+	 * OpenCart's checkout filters the payment list down to gateways that answer
+	 * this method whenever the cart holds a recurring product. Without it CHIP
+	 * is silently hidden at checkout on 1.5 - 3.0.
+	 *
+	 * @return bool
+	 */
+	public function recurringPayments() {
+		return true;
+	}
+
+	/**
+	 * Whether the current cart contains a recurring product.
+	 *
+	 * @return bool
+	 */
+	public function cartHasRecurring() {
+		return $this->cart->hasRecurringProducts() > 0;
+	}
+
+	/**
+	 * Extra purchase params required to obtain a recurring token.
+	 *
+	 * Returns an empty array for a normal cart. This must stay gated: an
+	 * unconditional `force_recurring` would tokenise one-time payments too and
+	 * change behaviour for every existing merchant.
+	 *
+	 * @return array
+	 */
+	public function recurringPurchaseParams() {
+		if (!$this->cartHasRecurring()) {
+			return array();
+		}
+
+		return array(
+			'force_recurring'          => true,
+			'payment_method_whitelist' => self::RECURRING_CARD_METHODS,
+		);
+	}
+
+	/**
+	 * Card methods that can back a recurring charge.
+	 *
+	 * CHIP issues recurring tokens for card payments only, so this list must
+	 * never be widened — no other payment method can be charged on a cycle.
+	 */
+	const RECURRING_CARD_METHODS = array('visa', 'mastercard', 'maestro');
+
+	/**
+	 * Days after the due date to retry a failed renewal charge.
+	 *
+	 * Measured from the original due date, not from "now", so a cron that runs
+	 * late cannot stretch the ladder.
+	 */
+	const RETRY_OFFSETS_DAYS = array(1, 3, 5);
+
 	public function getMethod($address, $total) {
 		$this->language->load('extension/payment/chip');
 
@@ -128,6 +186,291 @@ class ModelExtensionPaymentChip extends Model {
 
 	public function payment_methods($currency, $amount) {
 		return $this->call('GET', "/payment_methods/?brand_id={$this->brand_id}&currency={$currency}&amount={$amount}");
+	}
+
+	/**
+	 * Charge a renewal against a stored recurring token.
+	 *
+	 * @param string $purchase_id Purchase to charge (a freshly created one).
+	 * @param string $token_id    The customer's recurring token.
+	 *
+	 * @return array|null Response, or null on failure.
+	 */
+	public function chargeRecurring($purchase_id, $token_id) {
+		return $this->call('POST', "/purchases/{$purchase_id}/charge/", array(
+			'recurring_token' => $token_id,
+		));
+	}
+
+	/**
+	 * Delete a recurring token at the gateway.
+	 *
+	 * @param string $purchase_id The purchase that issued the token.
+	 *
+	 * @return array|null
+	 */
+	public function deleteRecurringToken($purchase_id) {
+		return $this->call('POST', "/purchases/{$purchase_id}/delete_recurring_token/");
+	}
+
+	/**
+	 * Add a subscription row.
+	 *
+	 * @param array $data
+	 *
+	 * @return int The new chip_subscription_id.
+	 */
+	public function addSubscription($data) {
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "chip_subscription`
+			SET `order_id` = " . (int)$data['order_id'] . ",
+			`order_recurring_id` = " . (int)$data['order_recurring_id'] . ",
+			`customer_id` = " . (int)$data['customer_id'] . ",
+			`customer_email` = '" . $this->db->escape($data['customer_email']) . "',
+			`chip_token_id` = " . (int)$data['chip_token_id'] . ",
+			`recurring_token` = '" . $this->db->escape($data['recurring_token']) . "',
+			`product_name` = '" . $this->db->escape($data['product_name']) . "',
+			`product_quantity` = " . (int)$data['product_quantity'] . ",
+			`recurring_frequency` = '" . $this->db->escape($data['recurring_frequency']) . "',
+			`recurring_cycle` = " . (int)$data['recurring_cycle'] . ",
+			`recurring_duration` = " . (int)$data['recurring_duration'] . ",
+			`recurring_price` = '" . (float)$data['recurring_price'] . "',
+			`trial_price` = '" . (float)$data['trial_price'] . "',
+			`trial_cycle` = " . (int)$data['trial_cycle'] . ",
+			`trial_frequency` = '" . $this->db->escape($data['trial_frequency']) . "',
+			`trial_duration` = " . (int)$data['trial_duration'] . ",
+			`remaining` = " . (int)$data['remaining'] . ",
+			`trial_remaining` = " . (int)$data['trial_remaining'] . ",
+			`status` = '" . $this->db->escape($data['status']) . "',
+			`date_next` = '" . $this->db->escape($data['date_next']) . "',
+			`date_last_charge` = '" . $this->db->escape($data['date_last_charge']) . "',
+			`retry_count` = " . (int)$data['retry_count'] . ",
+			`date_added` = NOW(),
+			`date_modified` = NOW()");
+
+		return $this->db->getLastId();
+	}
+
+	/**
+	 * Fetch one subscription.
+	 *
+	 * @param int $chip_subscription_id
+	 *
+	 * @return array|null
+	 */
+	public function getSubscription($chip_subscription_id) {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_subscription`
+			WHERE `chip_subscription_id` = " . (int)$chip_subscription_id);
+
+		if ($query->num_rows) {
+			return $query->row;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Fetch the subscription attached to an order.
+	 *
+	 * @param int $order_id
+	 *
+	 * @return array|null
+	 */
+	public function getSubscriptionByOrderId($order_id) {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_subscription`
+			WHERE `order_id` = " . (int)$order_id . "
+			ORDER BY `chip_subscription_id` DESC LIMIT 1");
+
+		if ($query->num_rows) {
+			return $query->row;
+		}
+
+		return null;
+	}
+
+	/**
+	 * All subscriptions belonging to an order.
+	 *
+	 * @param int $order_id
+	 *
+	 * @return array
+	 */
+	public function getSubscriptionsByOrderId($order_id) {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_subscription`
+			WHERE `order_id` = " . (int)$order_id . "
+			ORDER BY `chip_subscription_id` ASC");
+
+		return $query->rows;
+	}
+
+	/**
+	 * Attach a recurring token and make the subscription chargeable.
+	 *
+	 * Only `active` rows are charged by the cron, so this is the single point
+	 * where a plan becomes live.
+	 *
+	 * @param int    $chip_subscription_id
+	 * @param string $recurring_token
+	 * @param int    $chip_token_id
+	 *
+	 * @return void
+	 */
+	public function activateSubscription($chip_subscription_id, $recurring_token, $chip_token_id) {
+		$this->db->query("UPDATE `" . DB_PREFIX . "chip_subscription`
+			SET `recurring_token` = '" . $this->db->escape($recurring_token) . "',
+			`chip_token_id` = " . (int)$chip_token_id . ",
+			`status` = 'active',
+			`date_last_charge` = NOW(),
+			`date_modified` = NOW()
+			WHERE `chip_subscription_id` = " . (int)$chip_subscription_id);
+	}
+
+	/**
+	 * Subscriptions due to be charged.
+	 *
+	 * Only `active` rows are returned: `suspended` means the dunning ladder was
+	 * exhausted and a human has to intervene, so the cron must leave them alone.
+	 *
+	 * @param string $date_now Cut-off (Y-m-d H:i:s).
+	 * @param int    $limit
+	 *
+	 * @return array
+	 */
+	public function getDueSubscriptions($date_now, $limit = 10) {
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "chip_subscription`
+			WHERE `status` = 'active'
+			AND `date_next` != '0000-00-00 00:00:00'
+			AND `date_next` <= '" . $this->db->escape($date_now) . "'
+			ORDER BY `date_next` ASC
+			LIMIT " . (int)$limit);
+
+		return $query->rows;
+	}
+
+	/**
+	 * Advance the schedule BEFORE the charge is attempted.
+	 *
+	 * The claim-first ordering is deliberate: a crash after this call costs one
+	 * billing cycle, recoverable by hand. A crash before it would re-charge a
+	 * real customer. When in doubt, under-charge.
+	 *
+	 * @param int    $chip_subscription_id
+	 * @param string $date_next
+	 *
+	 * @return void
+	 */
+	public function claimSubscription($chip_subscription_id, $date_next) {
+		$this->db->query("UPDATE `" . DB_PREFIX . "chip_subscription`
+			SET `date_next` = '" . $this->db->escape($date_next) . "',
+			`date_modified` = NOW()
+			WHERE `chip_subscription_id` = " . (int)$chip_subscription_id);
+	}
+
+	/**
+	 * Record a successful renewal.
+	 *
+	 * @param int $chip_subscription_id
+	 * @param int $remaining
+	 *
+	 * @return void
+	 */
+	public function recordSubscriptionPayment($chip_subscription_id, $remaining, $trial_remaining = 0) {
+		$this->db->query("UPDATE `" . DB_PREFIX . "chip_subscription`
+			SET `date_last_charge` = NOW(),
+			`remaining` = " . (int)$remaining . ",
+			`trial_remaining` = " . (int)$trial_remaining . ",
+			`retry_count` = 0,
+			`date_modified` = NOW()
+			WHERE `chip_subscription_id` = " . (int)$chip_subscription_id);
+	}
+
+	/**
+	 * Record a failed attempt: store the next retry time and bump the counter.
+	 *
+	 * @param int    $chip_subscription_id
+	 * @param string $date_next
+	 * @param int    $retry_count
+	 * @param string $status
+	 *
+	 * @return void
+	 */
+	public function recordSubscriptionFailure($chip_subscription_id, $date_next, $retry_count, $status = 'active') {
+		$this->db->query("UPDATE `" . DB_PREFIX . "chip_subscription`
+			SET `date_next` = '" . $this->db->escape($date_next) . "',
+			`retry_count` = " . (int)$retry_count . ",
+			`status` = '" . $this->db->escape($status) . "',
+			`date_modified` = NOW()
+			WHERE `chip_subscription_id` = " . (int)$chip_subscription_id);
+	}
+
+	/**
+	 * The next retry time for a failed charge, or null when the ladder is spent.
+	 *
+	 * Offsets are measured from the ORIGINAL due date so a slow cron cannot
+	 * stretch the ladder.
+	 *
+	 * @param string $due_date    Original due date (Y-m-d H:i:s).
+	 * @param int    $retry_count Failures so far, 0-based.
+	 *
+	 * @return string|null
+	 */
+	public function nextRetryAt($due_date, $retry_count) {
+		$retry_count = (int)$retry_count;
+
+		if ($retry_count >= count(self::RETRY_OFFSETS_DAYS)) {
+			return null;
+		}
+
+		$offset = self::RETRY_OFFSETS_DAYS[$retry_count];
+		$timestamp = strtotime($due_date);
+
+		if ($timestamp === false) {
+			return null;
+		}
+
+		return date('Y-m-d H:i:s', strtotime('+' . $offset . ' day', $timestamp));
+	}
+
+	/**
+	 * Advance a due date by one billing cycle.
+	 *
+	 * Anchored to the previous due date rather than "now", so a subscription
+	 * billed on the 1st stays on the 1st even when the cron runs late.
+	 *
+	 * @param string $from_date Base date (Y-m-d H:i:s).
+	 * @param string $frequency one of day/week/semi_month/month/year.
+	 * @param int    $cycle
+	 *
+	 * @return string|null
+	 */
+	public function nextCycleDate($from_date, $frequency, $cycle) {
+		$cycle = max(1, (int)$cycle);
+		$timestamp = strtotime($from_date);
+
+		if ($timestamp === false) {
+			return null;
+		}
+
+		switch ($frequency) {
+			case 'day':
+				$interval = '+' . $cycle . ' day';
+				break;
+			case 'week':
+				$interval = '+' . ($cycle * 7) . ' day';
+				break;
+			case 'semi_month':
+				$interval = '+' . ($cycle * 15) . ' day';
+				break;
+			case 'month':
+				$interval = '+' . $cycle . ' month';
+				break;
+			case 'year':
+				$interval = '+' . $cycle . ' year';
+				break;
+			default:
+				return null;
+		}
+
+		return date('Y-m-d H:i:s', strtotime($interval, $timestamp));
 	}
 
 	public function resolve_payment_method_whitelist($whitelist, $currency, $amount) {

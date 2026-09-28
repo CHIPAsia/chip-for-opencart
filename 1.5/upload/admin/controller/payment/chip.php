@@ -201,6 +201,19 @@ class ControllerPaymentChip extends Controller {
 			$this->data['chip_refunded_order_status_id'] = $this->config->get('chip_refunded_order_status_id');
 		}
 
+		/*
+		 * Carry the cron token through the settings form.
+		 *
+		 * editSetting() clears the whole settings group before re-inserting the
+		 * POST array, so a field that is not rendered would be dropped on the
+		 * next save and the merchant's cron would start failing with 403.
+		 */
+		if (isset($this->request->post['chip_cron_token']) && $this->request->post['chip_cron_token'] !== '') {
+			$this->data['chip_cron_token'] = $this->request->post['chip_cron_token'];
+		} else {
+			$this->data['chip_cron_token'] = $this->config->get('chip_cron_token');
+		}
+
 		if (isset($this->request->post['chip_allow_instruction'])) {
 			$this->data['chip_allow_instruction'] = $this->request->post['chip_allow_instruction'];
 		} else {
@@ -510,6 +523,23 @@ class ControllerPaymentChip extends Controller {
 	public function install() {
 		$this->load->model('payment/chip');
 		$this->model_payment_chip->install();
+
+		$this->load->model('setting/setting');
+
+		// A cron token guards the renewal endpoint, which charges real cards.
+		// Generated once so an unauthenticated request can never reach it.
+		//
+		// Read-modify-write rather than editSetting() with only the token:
+		// editSetting() deletes the whole settings group first, which would
+		// wipe an existing configuration on an upgrade.
+		if (!$this->config->get('chip_cron_token')) {
+			$settings = $this->model_setting_setting->getSetting('chip');
+			// random_bytes() is PHP 7+; 1.5 / 2.0 shops may run PHP 5.
+			$settings['chip_cron_token'] = bin2hex(function_exists('random_bytes')
+				? random_bytes(16)
+				: openssl_random_pseudo_bytes(16));
+			$this->model_setting_setting->editSetting('chip', $settings);
+		}
 	}
 
 	public function uninstall() {
