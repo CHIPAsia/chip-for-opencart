@@ -1,5 +1,21 @@
 == Changelog ==
 
+## [1.3.0] - 2026-09-30
+
+### Fixed
+- A recovered subscription was never billed again. `rearmDate()` returned an empty schedule, so a plan that came back `active` after a recovery payment kept `date_next = 0000-00-00 00:00:00` and was never selected by the renewal cron again. The helper now receives the loaded model and computes the next date.
+- The renewal cron could charge a customer twice for one billing period. The due list was read before the per-subscription lock was taken, so two overlapping runs both saw the same row as due and both billed it. The row is re-read once the lock is held and the charge proceeds only if it is still due.
+- A dead card no longer walks the whole dunning ladder. `failSubscription()` read the gateway error code from a payment-model instance that had already been replaced, so the check for `invalid_recurring_token` was unreachable on 2.2. The charging instance is now threaded through the failure path. Applies to 1.5 - 2.3.
+- The webhook public key was never normalised on 2.2 and below. Saving it replaced a newline with a newline, so the backslash-n sequences the gateway returns were stored verbatim and every callback signature check failed silently.
+- The cron and callback guards emitted a malformed status line on 2.2 and below (`HTTP/1.1/1.1 ...`), which PHP discards.
+
+### Added
+- Renewal cron token endpoint on 4.0: `index.php?route=extension/chip/cron/chip&token=<cron_token>`. OpenCart 4.0.x core never calls a payment extension's cron controller, so without this a 4.0.x subscription never renews. The token is generated when the settings page is first opened and compared with `hash_equals()`; a missing or wrong token is refused before any charging code runs.
+
+### Changed
+- On 4.0, direct HTTP calls to `extension/chip/cron/chip` are now refused. Renewals run through the token endpoint (or core's internal call).
+- The 4.0 settings page shows the tokenised renewal URL instead of core's `cron/cron`, which does nothing on 4.0.x.
+
 ## [1.2.0] - 2026-09-29
 
 ### Added
