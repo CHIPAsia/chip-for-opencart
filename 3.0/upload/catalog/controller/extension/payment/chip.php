@@ -808,13 +808,13 @@ class ControllerExtensionPaymentChip extends Controller {
 		$purchase = $this->model_extension_payment_chip->create_purchase($params);
 
 		if (!is_array($purchase) || !array_key_exists('id', $purchase)) {
-			return $this->failSubscription($subscription, $due_date, $retry_count, $this->language->get('error_renewal_purchase'));
+			return $this->failSubscription($subscription, $due_date, $retry_count, $this->language->get('error_renewal_purchase'), $this->model_extension_payment_chip);
 		}
 
 		$charge = $this->model_extension_payment_chip->chargeRecurring($purchase['id'], $subscription['recurring_token']);
 
 		if (!is_array($charge) || !isset($charge['status']) || $charge['status'] !== 'paid') {
-			return $this->failSubscription($subscription, $due_date, $retry_count, $this->language->get('error_renewal_charge'));
+			return $this->failSubscription($subscription, $due_date, $retry_count, $this->language->get('error_renewal_charge'), $this->model_extension_payment_chip);
 		}
 
 		// Success.
@@ -854,12 +854,20 @@ class ControllerExtensionPaymentChip extends Controller {
 	 *
 	 * @return bool Always false.
 	 */
-	private function failSubscription($subscription, $due_date, $retry_count, $reason) {
-		$this->load->model('extension/payment/chip');
+	private function failSubscription($subscription, $due_date, $retry_count, $reason, $model_extension_payment_chip) {
+		/*
+		 * `model_extension_payment_chip` MUST be the instance that performed the charge.
+		 *
+		 * Loader::model() always builds a NEW object and re-sets the registry,
+		 * so calling it in here would replace the model that recorded
+		 * `last_error_code` with an empty one and silently discard the code -
+		 * which makes the dead-token check below dead code. It is a required
+		 * parameter for that reason: a default would let it regress silently.
+		 */
 
-$next_retry = $this->model_extension_payment_chip->nextRetryAt($due_date, $retry_count);
+$next_retry = $model_extension_payment_chip->nextRetryAt($due_date, $retry_count);
 
-		$error_code = (string)$this->model_extension_payment_chip->getLastErrorCode();
+		$error_code = (string)$model_extension_payment_chip->getLastErrorCode();
 
 		/*
 		 * A dead or revoked token can never succeed. CHIP documents
@@ -868,7 +876,7 @@ $next_retry = $this->model_extension_payment_chip->nextRetryAt($due_date, $retry
 		 * that is guaranteed to fail.
 		 */
 		if ($error_code === 'invalid_recurring_token') {
-			$this->model_extension_payment_chip->recordSubscriptionFailure(
+			$model_extension_payment_chip->recordSubscriptionFailure(
 				$subscription['chip_subscription_id'], '0000-00-00 00:00:00', $retry_count + 1, 'suspended');
 
 			$this->model_checkout_order->addOrderHistory(
@@ -888,7 +896,7 @@ $next_retry = $this->model_extension_payment_chip->nextRetryAt($due_date, $retry
 			 * the merchant can recover the subscription once the customer tops
 			 * up or replaces the card.
 			 */
-			$this->model_extension_payment_chip->recordSubscriptionFailure(
+			$model_extension_payment_chip->recordSubscriptionFailure(
 				$subscription['chip_subscription_id'], '0000-00-00 00:00:00', $retry_count + 1, 'suspended');
 
 			$this->model_checkout_order->addOrderHistory(
@@ -898,7 +906,7 @@ $next_retry = $this->model_extension_payment_chip->nextRetryAt($due_date, $retry
 				true
 			);
 		} else {
-			$this->model_extension_payment_chip->recordSubscriptionFailure(
+			$model_extension_payment_chip->recordSubscriptionFailure(
 				$subscription['chip_subscription_id'], $next_retry, $retry_count + 1, 'active');
 
 			$this->model_checkout_order->addOrderHistory(
