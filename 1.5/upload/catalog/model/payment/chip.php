@@ -404,13 +404,36 @@ class ModelPaymentChip extends Model {
 	 *
 	 * @return void
 	 */
-	public function activateSubscription($chip_subscription_id, $recurring_token, $chip_token_id) {
+	public function activateSubscription($chip_subscription_id, $recurring_token, $chip_token_id, $date_next = '') {
+		/*
+		 * A suspended subscription is re-armed here, so the schedule MUST be
+		 * restored in the same statement.
+		 *
+		 * Suspension writes date_next='0000-00-00 00:00:00' and leaves
+		 * retry_count at the spent value. Setting status='active' without
+		 * fixing those leaves a row that getDueSubscriptions() never selects
+		 * again (it requires a non-zero date_next) and whose retry ladder is
+		 * already exhausted - so the customer is billed never, while every
+		 * screen says the subscription is active.
+		 *
+		 * The caller passes the next date, computed from the date the plan was
+		 * ORIGINALLY due. Deriving it from "now" instead would hand out a free
+		 * period (or bill early) depending on how long the suspension lasted.
+		 */
+		$rearm = '';
+
+		if ($date_next !== '') {
+			$rearm = ",
+			`date_next` = '" . $this->db->escape($date_next) . "',
+			`retry_count` = 0";
+		}
+
 		$this->db->query("UPDATE `" . DB_PREFIX . "chip_subscription`
 			SET `recurring_token` = '" . $this->db->escape($recurring_token) . "',
 			`chip_token_id` = " . (int)$chip_token_id . ",
 			`status` = 'active',
 			`date_last_charge` = NOW(),
-			`date_modified` = NOW()
+			`date_modified` = NOW()" . $rearm . "
 			WHERE `chip_subscription_id` = " . (int)$chip_subscription_id);
 	}
 
