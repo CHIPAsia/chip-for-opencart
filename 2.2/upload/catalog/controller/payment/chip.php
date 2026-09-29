@@ -700,6 +700,33 @@ class ControllerPaymentChip extends Controller {
 				continue;
 			}
 
+			/*
+			 * Re-read the row now that the lock is held, and re-check that it
+			 * is still due.
+			 *
+			 * The due list was read ONCE before this loop, so it is a snapshot:
+			 * between that read and this lock being granted, another cron run
+			 * may have already billed this row and advanced its date_next. The
+			 * lock makes the loser WAIT - it does not make the loser NOTICE the
+			 * work is done. Without this check the loser goes on to bill a
+			 * customer whose period was just charged, which the database cannot
+			 * show (each row still advances exactly one cycle) and only the
+			 * gateway's charge log exposes.
+			 */
+			$fresh = $this->model_payment_chip->getSubscription((int)$subscription['chip_subscription_id']);
+
+			if (!$fresh
+				|| $fresh['status'] !== 'active'
+				|| $fresh['date_next'] === '0000-00-00 00:00:00'
+				|| $fresh['date_next'] !== $subscription['date_next']) {
+				// Already billed by the run that beat us to the lock, or no
+				// longer due. Release and skip rather than charge again.
+				$this->db->query("SELECT RELEASE_LOCK('" . $lock . "');");
+				continue;
+			}
+
+			$subscription = $fresh;
+
 			if ($this->chargeSubscription($subscription)) {
 				$done++;
 			}
