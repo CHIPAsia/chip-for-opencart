@@ -304,6 +304,12 @@
     <fieldset>
      <legend>{{ tab_subscription }}</legend>
      <div class="alert alert-info">{{ help_cron_url }}</div>
+     <!--
+      Core's editSetting() deletes the whole settings group before re-inserting
+      the POST array, so the cron token must be submitted by this form or the
+      next save erases it and the merchant's renewal cron starts returning 403.
+     -->
+     <input type="hidden" name="payment_chip_cron_token" value="{{ cron_token }}"/>
      <div class="row mb-3">
        <label class="col-sm-2 col-form-label">{{ entry_cron_url }}</label>
        <div class="col-sm-10">

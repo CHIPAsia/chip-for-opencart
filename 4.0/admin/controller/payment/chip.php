@@ -132,13 +132,39 @@ class Chip extends \Opencart\System\Engine\Controller {
 		$data['payment_chip_failed_behavior'] = $this->config->get('payment_chip_failed_behavior');
 
 		/*
-		 * Renewals are driven by OpenCart's own subscription cron, so all the
-		 * merchant has to do is point their server cron at OpenCart's built-in
-		 * cron entry point. Surfacing the URL (and the active subscription
-		 * count) makes that discoverable instead of a support ticket.
+		 * Renewals need a token, and the URL shown to the merchant must be the
+		 * one that actually renews.
+		 *
+		 * On OpenCart 4.0.x core's subscription cron NEVER calls the payment
+		 * extension: the call is commented out in core's
+		 * catalog/controller/cron/subscription.php
+		 *
+		 *   //$this->load->model('extension/payment/' . $payment_info['code']);
+		 *
+		 * so 'cron/cron' creates a renewal order and then walks away from it.
+		 * Pointing the merchant there (as this page used to) leaves renewals
+		 * silently dead. Our own token endpoint is the only mechanism that
+		 * works on 4.0.x, so that is what we surface.
 		 */
-		$data['cron_url'] = HTTP_CATALOG . 'index.php?route=cron/cron';
+		$this->ensureCronToken();
+
+		$data['cron_url'] = HTTP_CATALOG . 'index.php?route=extension/chip/cron/chip&token='
+			. $this->config->get('payment_chip_cron_token');
 		$data['subscription_total'] = $this->getSubscriptionTotal();
+
+		/*
+		 * Labels for the Subscriptions tab.
+		 *
+		 * The template references these but nothing ever assigned them, so the
+		 * whole tab rendered with a blank legend, a blank label and no help
+		 * text - the merchant saw an unlabelled URL box. 3.0 already fixed this
+		 * shape; 4.0 never got it.
+		 */
+		$data['tab_subscription']           = $this->language->get('tab_subscription');
+		$data['entry_cron_url']             = $this->language->get('entry_cron_url');
+		$data['entry_active_subscriptions'] = $this->language->get('entry_active_subscriptions');
+		$data['help_cron_url']              = $this->language->get('help_cron_url');
+		$data['cron_token']                 = $this->config->get('payment_chip_cron_token');
 
 		$data['report'] = $this->getReport();
 		$data['token'] = $this->getToken();
@@ -149,6 +175,37 @@ class Chip extends \Opencart\System\Engine\Controller {
 		$data['footer'] = $this->load->controller('common/footer');
 
 		$this->response->setOutput($this->load->view('extension/chip/payment/chip', $data));
+	}
+
+	/**
+	 * Make sure a cron token exists, minting one if not.
+	 *
+	 * Core's editSetting() DELETEs the whole settings group before re-inserting
+	 * the POST array, so any field the form does not render is erased on the
+	 * next save. A merchant who already lost their token that way would keep a
+	 * 403 on their renewal cron with no way to notice, so mint a fresh one here
+	 * rather than requiring a reinstall.
+	 *
+	 * @return void
+	 */
+	private function ensureCronToken(): void {
+		if ($this->config->get('payment_chip_cron_token')) {
+			return;
+		}
+
+		$fresh = bin2hex(function_exists('random_bytes')
+			? random_bytes(16)
+			: openssl_random_pseudo_bytes(16));
+
+		$this->load->model('setting/setting');
+
+		$current = $this->model_setting_setting->getSetting('payment_chip');
+		$current['payment_chip_cron_token'] = $fresh;
+
+		$this->model_setting_setting->editSetting('payment_chip', $current);
+
+		// Reflect it in this render too, so the form shows a usable URL.
+		$this->config->set('payment_chip_cron_token', $fresh);
 	}
 
 	/**

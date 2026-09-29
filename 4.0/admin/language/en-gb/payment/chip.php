@@ -81,7 +81,7 @@ $_['help_disable_success_callback'] = 'Default to No. Only tick yes if you are p
 $_['help_canceled_behavior'] = 'Missing Order is the default behavior. If you require the order status to be updated to canceled, change to Cancel Order';
 $_['help_payment_method_whitelist'] = 'This controls what payment method will be available on the payment page. Leave empty to allow all payment methods.';
 $_['help_failed_behavior'] = 'Missing Order is the default behavior. If you require the order status to be updated to failed, change to Fail Order';
-$_['help_cron_url'] = 'CHIP does not auto-renew subscriptions. Renewals run through OpenCart\'s own subscription cron - point your server cron at this URL (e.g. every 5 minutes).';
+$_['help_cron_url'] = 'CHIP does not auto-renew subscriptions. Point your server cron at this URL (e.g. every 5 minutes). On OpenCart 4.0.x this is the ONLY way renewals run - the core subscription cron does not call the payment extension on 4.0.x. Keep the token in the URL: without it the endpoint returns 403.';
 
 $_['error_permission'] = 'Warning: You do not have permission to modify CHIP!';
 $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';
