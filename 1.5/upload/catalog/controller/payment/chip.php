@@ -256,7 +256,7 @@ class ControllerPaymentChip extends Controller {
 
 		$purchase = $this->model_payment_chip->create_purchase($params);
 
-		if ( !array_key_exists('id', $purchase) ) {
+		if ( !is_array($purchase) || !array_key_exists('id', $purchase) ) {
 			$this->session->data['error'] = print_r($purchase, true);
 
 			if ($this->config->get('chip_debug')) {
@@ -374,6 +374,18 @@ class ControllerPaymentChip extends Controller {
 			
 		}
 
+		/*
+		 * Recurring products: ask CHIP for a recurring token, card only.
+		 *
+		 * Deliberately overrides the merchant whitelist above - CHIP issues
+		 * recurring tokens for card payments only, and leaving a non-card
+		 * method in the list would let the customer pick a method that cannot
+		 * be charged on a cycle later.
+		 */
+		if ($this->model_payment_chip->cartHasRecurring()) {
+			$params['force_recurring']          = true;
+			$params['payment_method_whitelist'] = ModelPaymentChip::RECURRING_CARD_METHODS;
+		}
 		if ($this->config->get('chip_disable_success_redirect')) {
 			unset($params['success_redirect']);
 		}
@@ -487,7 +499,7 @@ class ControllerPaymentChip extends Controller {
 
 		$purchase = $this->model_payment_chip->create_purchase($params);
 
-		if ( !array_key_exists('id', $purchase) ) {
+		if ( !is_array($purchase) || !array_key_exists('id', $purchase) ) {
 			$this->session->data['error'] = print_r($purchase, true);
 
 			if ($this->config->get('chip_debug')) {
@@ -515,6 +527,9 @@ class ControllerPaymentChip extends Controller {
 			'amount' => $amount,
 			'environment_type' => $environment_type
 		));
+
+		// Persist any recurring plan before the customer leaves for CHIP.
+		$this->saveRecurringPlan($this->session->data['order_id']);
 
 		$this->redirect($purchase['checkout_url']);
 	}
@@ -568,6 +583,9 @@ class ControllerPaymentChip extends Controller {
 			$this->saveToken($purchase, $order_info['customer_id']);
 		}
 
+		// Attach the recurring token so the renewal cron can charge it.
+		$this->attachSubscriptionToken($purchase, $order_info);
+
 		$this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
 		exit;
@@ -589,7 +607,7 @@ class ControllerPaymentChip extends Controller {
 		$this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
 		$purchase = $this->model_payment_chip->get_purchase($purchase_id);
 
-		if ( !array_key_exists('id', $purchase) ) {
+		if ( !is_array($purchase) || !array_key_exists('id', $purchase) ) {
 			$this->session->data['error'] = print_r($purchase, true);
 
 			if ($this->config->get('chip_debug')) {
@@ -625,6 +643,9 @@ class ControllerPaymentChip extends Controller {
 		if (isset($purchase['is_recurring_token']) && $purchase['is_recurring_token'] === true) {
 			$this->saveToken($purchase, $order_info['customer_id']);
 		}
+
+		// Attach the recurring token so the renewal cron can charge it.
+		$this->attachSubscriptionToken($purchase, $order_info);
 
 		$this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
@@ -731,6 +752,541 @@ class ControllerPaymentChip extends Controller {
 
 
 		$this->response->setOutput($this->render(true));
+	}
+
+	/**
+	 * Recurring renewal cron endpoint.
+	 *
+	 * CHIP does not renew subscriptions, so the merchant must schedule this
+	 * themselves:
+	 *
+	 *   index.php?route=payment/chip/cron&token=<cron_token>
+	 *
+	 * The token is compared with hash_equals() against the value generated at
+	 * install time. This endpoint charges real cards, so an unauthenticated
+	 * request must never reach the charging code.
+	 */
+	public function cron() {
+		$expected = (string)$this->config->get('chip_cron_token');
+		$provided = isset($this->request->get['token']) ? (string)$this->request->get['token'] : '';
+
+		if ($expected === '' || !$this->verifyCronToken($expected, $provided)) {
+			$this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 403 Forbidden');
+			exit('Forbidden');
+		}
+
+		// Renewal strings live in the catalog language file; load it before any
+		// $this->language->get() call below.
+		$this->language->load('payment/chip');
+		$this->load->model('payment/chip');
+		$this->load->model('checkout/order');
+
+		$now  = date('Y-m-d H:i:s');
+		$due  = $this->model_payment_chip->getDueSubscriptions($now, 10);
+		$done = 0;
+
+		foreach ($due as $subscription) {
+			$lock = 'chip_subscription_' . (int)$subscription['chip_subscription_id'];
+
+			$acquired = $this->db->query("SELECT GET_LOCK('" . $lock . "', 5) AS acquired");
+
+			if (!$acquired->row['acquired']) {
+				// Another cron run holds this subscription. Skip, do not double-charge.
+				continue;
+			}
+
+			if ($this->chargeSubscription($subscription)) {
+				$done++;
+			}
+
+			$this->db->query("SELECT RELEASE_LOCK('" . $lock . "');");
+		}
+
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode(array('due' => count($due), 'charged' => $done)));
+	}
+
+	/**
+	 * Charge one renewal, applying the dunning ladder on failure.
+	 *
+	 * @param array $subscription chip_subscription row.
+	 *
+	 * @return bool Whether the charge succeeded.
+	 */
+	private function chargeSubscription($subscription) {
+		$this->load->model('payment/chip');
+
+		/*
+		 * `date_next` may hold a retry time left by the previous attempt
+		 * rather than the date this cycle was due: claimSubscription() and
+		 * recordSubscriptionFailure() both rewrite the column. Recover the real
+		 * due date first, so the 1/3/5 retry ladder is measured from it and the
+		 * claim below advances the billing schedule from it too.
+		 */
+		$due_date        = $this->model_payment_chip->ladderAnchor($subscription['date_next'], (int)$subscription['retry_count']);
+		$frequency       = $subscription['recurring_frequency'];
+		$cycle           = (int)$subscription['recurring_cycle'];
+		$duration        = (int)$subscription['recurring_duration'];
+		$remaining       = (int)$subscription['remaining'];
+		$trial_remaining = (int)$subscription['trial_remaining'];
+		$retry_count     = (int)$subscription['retry_count'];
+
+		/*
+		 * A trial cycle bills the trial price, not the recurring price.
+		 *
+		 * Charging recurring_price while trial cycles remain would overcharge
+		 * the customer for the whole trial period.
+		 */
+		$in_trial   = $trial_remaining > 0;
+		$unit_price = $in_trial ? (float)$subscription['trial_price'] : (float)$subscription['recurring_price'];
+
+		/*
+		 * Claim first, charge second.
+		 *
+		 * Advancing the due date BEFORE the charge is what makes a cron that
+		 * runs more than once per window safe. A crash here costs one cycle and
+		 * is recoverable by hand; a crash the other way round would charge a
+		 * real customer twice.
+		 */
+		if ($in_trial) {
+			$step_frequency = (string)$subscription['trial_frequency'];
+			$step_cycle     = (int)$subscription['trial_cycle'];
+		} else {
+			$step_frequency = $frequency;
+			$step_cycle     = $cycle;
+		}
+
+		$next_cycle = $this->model_payment_chip->nextCycleDate($due_date, $step_frequency, $step_cycle);
+
+		if ($next_cycle === null) {
+			$this->model_payment_chip->recordSubscriptionFailure(
+				$subscription['chip_subscription_id'], '0000-00-00 00:00:00', $retry_count, 'suspended');
+
+			return false;
+		}
+
+		/*
+		 * Fixed-duration plan with no cycles left: close it out.
+		 *
+		 * `remaining` counts cycles still to charge (set to `duration` on
+		 * activation and decremented per successful renewal), so the terminal
+		 * test is <= 0 - not <= 1, which would hand the customer a free final
+		 * period by completing the plan without charging it.
+		 */
+		if ($duration > 0 && $remaining <= 0) {
+			$this->model_payment_chip->recordSubscriptionFailure(
+				$subscription['chip_subscription_id'], '0000-00-00 00:00:00', 0, 'completed');
+
+			return true;
+		}
+
+		$this->model_payment_chip->claimSubscription($subscription['chip_subscription_id'], $next_cycle);
+
+		// Mint a fresh purchase for the renewal amount and charge the token.
+		$params = array(
+			'reference'        => $subscription['order_id'],
+			'platform'         => 'opencart',
+			'creator_agent'    => 'OC15: 1.0.0',
+			'brand_id'         => $this->config->get('chip_brand_id'),
+			'client'           => array(
+				'email' => $subscription['customer_email'],
+			),
+			'purchase'         => array(
+				'timezone' => $this->config->get('chip_time_zone'),
+				'currency' => 'MYR',
+				'products' => array(
+					array(
+						'name'     => substr($subscription['product_name'], 0, 256),
+						'quantity' => (int)$subscription['product_quantity'],
+						'price'    => round($unit_price * 100),
+					),
+				),
+			),
+			'recurring_token'  => $subscription['recurring_token'],
+		);
+
+		$this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
+
+		$purchase = $this->model_payment_chip->create_purchase($params);
+
+		if (!is_array($purchase) || !array_key_exists('id', $purchase)) {
+			return $this->failSubscription($subscription, $due_date, $retry_count, $this->language->get('error_renewal_purchase'), $this->model_payment_chip);
+		}
+
+		$charge = $this->model_payment_chip->chargeRecurring($purchase['id'], $subscription['recurring_token']);
+
+		/*
+		 * An unresolved charge is NOT a failure.
+		 *
+		 * CHIP answers HTTP 200 with `status = 'pending_charge'` when the
+		 * acquirer has not finalised, and follows up with a `purchase.paid`
+		 * or `purchase.payment_failed` callback. Treating that as a decline
+		 * walked the retry ladder and re-charged on the next step while the
+		 * first charge was still settling - a double-charge window.
+		 *
+		 * So: do not start a second charge. Leave the billing date that
+		 * claimSubscription() already advanced (this row is therefore not
+		 * due again in this window), keep the retry ladder untouched since
+		 * nothing failed, and do not consume a cycle.
+		 */
+		if (is_array($charge) && isset($charge['status']) && $charge['status'] === 'pending_charge') {
+			/*
+			 * Logged against the order's CURRENT status, not a paid or failed
+			 * one: a pending charge has resolved to neither, and flipping the
+			 * order either way would misreport it to the merchant.
+			 */
+			$this->load->model('checkout/order');
+
+			$order_info = $this->model_checkout_order->getOrder($subscription['order_id']);
+
+			$order_status_id = isset($order_info['order_status_id']) ? (int)$order_info['order_status_id'] : 0;
+
+			if ($order_status_id) {
+				$this->model_order_addHistory($subscription['order_id'], $order_status_id, $this->language->get('text_renewal_pending'), false);
+			}
+
+			return false;
+		}
+
+		if (!is_array($charge) || !isset($charge['status']) || $charge['status'] !== 'paid') {
+			return $this->failSubscription($subscription, $due_date, $retry_count, $this->language->get('error_renewal_charge'), $this->model_payment_chip);
+		}
+
+		// Success.
+		if ($in_trial) {
+			$new_trial_remaining = max(0, $trial_remaining - 1);
+			$new_remaining       = $remaining;
+		} else {
+			$new_trial_remaining = 0;
+			$new_remaining       = $duration > 0 ? max(0, $remaining - 1) : 0;
+		}
+
+		$this->model_payment_chip->recordSubscriptionPayment(
+			$subscription['chip_subscription_id'], $new_remaining, $new_trial_remaining);
+
+		$this->model_order_addHistory(
+			$subscription['order_id'],
+			$this->config->get('chip_paid_order_status_id'),
+			$this->language->get('text_renewal_success') . ' ' . $charge['id'],
+			true
+		);
+
+		if ($duration > 0 && !$in_trial && $new_remaining <= 0) {
+			$this->model_payment_chip->recordSubscriptionFailure(
+				$subscription['chip_subscription_id'], '0000-00-00 00:00:00', 0, 'completed');
+		}
+
+		return true;
+	}
+
+	/**
+	 * Handle a failed renewal: step down the dunning ladder, or suspend.
+	 *
+	 * @param array  $subscription
+	 * @param string $due_date     The due date this attempt belonged to.
+	 * @param int    $retry_count
+	 * @param string $reason
+	 *
+	 * @return bool Always false.
+	 */
+	private function failSubscription($subscription, $due_date, $retry_count, $reason, $model_payment_chip) {
+		/*
+		 * `model_payment_chip` MUST be the instance that performed the charge.
+		 *
+		 * Loader::model() always builds a NEW object and re-sets the registry,
+		 * so calling it in here would replace the model that recorded
+		 * `last_error_code` with an empty one and silently discard the code -
+		 * which makes the dead-token check below dead code. It is a required
+		 * parameter for that reason: a default would let it regress silently.
+		 */
+
+$next_retry = $model_payment_chip->nextRetryAt($due_date, $retry_count);
+
+		$error_code = (string)$model_payment_chip->getLastErrorCode();
+
+		/*
+		 * A dead or revoked token can never succeed. CHIP documents
+		 * `invalid_recurring_token` as "do not retry, re-prompt the buyer for a new
+		 * card", so suspend now instead of spending the whole ladder on a charge
+		 * that is guaranteed to fail.
+		 */
+		if ($error_code === 'invalid_recurring_token') {
+			$model_payment_chip->recordSubscriptionFailure(
+				$subscription['chip_subscription_id'], '0000-00-00 00:00:00', $retry_count + 1, 'suspended');
+
+			$this->model_order_addHistory(
+				$subscription['order_id'],
+				$this->config->get('chip_failed_order_status_id'),
+				$this->language->get('text_renewal_token_dead'),
+				true
+			);
+
+			return false;
+		}
+
+
+		if ($next_retry === null) {
+			/*
+			 * Ladder exhausted. Suspend rather than cancel: the card is kept so
+			 * the merchant can recover the subscription once the customer tops
+			 * up or replaces the card.
+			 */
+			$model_payment_chip->recordSubscriptionFailure(
+				$subscription['chip_subscription_id'], '0000-00-00 00:00:00', $retry_count + 1, 'suspended');
+
+			$this->model_order_addHistory(
+				$subscription['order_id'],
+				$this->config->get('chip_failed_order_status_id'),
+				$this->language->get('text_renewal_suspended'),
+				true
+			);
+		} else {
+			$model_payment_chip->recordSubscriptionFailure(
+				$subscription['chip_subscription_id'], $next_retry, $retry_count + 1, 'active');
+
+			$this->model_order_addHistory(
+				$subscription['order_id'],
+				$this->config->get('chip_failed_order_status_id'),
+				$this->language->get('text_renewal_failed') . ' ' . $reason . ' - ' . $this->language->get('text_renewal_retry') . ' ' . $next_retry,
+				false
+			);
+		}
+
+		return false;
+	}
+
+	/**
+	 * Record the recurring plans in the cart before the customer is sent to CHIP.
+	 *
+	 * The cart is gone by the time the callback fires, so the plan has to be
+	 * persisted here. The row starts as `pending` and only becomes `active`
+	 * once a recurring token exists - a pending row is never charged.
+	 *
+	 * @param int $order_id
+	 *
+	 * @return void
+	 */
+	private function saveRecurringPlan($order_id) {
+		$this->load->model('payment/chip');
+
+		if (!$this->model_payment_chip->cartHasRecurring()) {
+			return;
+		}
+
+		$order_info = $this->model_checkout_order->getOrder($order_id);
+
+		if (!$order_info) {
+			return;
+		}
+
+		foreach ($this->cart->getProducts() as $product) {
+			if (empty($product['recurring'])) {
+				continue;
+			}
+
+			/*
+			 * OpenCart 1.5 / 2.0 hold the recurring plan flat on the cart line
+			 * (`recurring_*` keys) instead of nested under `recurring` as 3.0
+			 * does, so the values are read straight off $product here.
+			 */
+			$duration  = (int)$product['recurring_duration'];
+			$trial     = (int)$product['recurring_trial'];
+			$trial_len = (int)$product['recurring_trial_duration'];
+
+			/*
+			 * The first cycle follows the trial schedule when the plan has a
+			 * trial, otherwise the normal recurring schedule.
+			 */
+			if ($trial === 1 && $trial_len > 0) {
+				$first_frequency = $product['recurring_trial_frequency'];
+				$first_cycle     = (int)$product['recurring_trial_cycle'];
+			} else {
+				$first_frequency = $product['recurring_frequency'];
+				$first_cycle     = (int)$product['recurring_cycle'];
+			}
+
+			$next = $this->model_payment_chip->nextCycleDate(
+				date('Y-m-d H:i:s'),
+				$first_frequency,
+				$first_cycle
+			);
+
+			if ($next === null) {
+				continue;
+			}
+
+			$this->model_payment_chip->addSubscription(array(
+				'order_id'            => (int)$order_id,
+				'order_recurring_id'  => 0,
+				'customer_id'         => (int)$order_info['customer_id'],
+				'customer_email'      => (string)$order_info['email'],
+				'chip_token_id'       => 0,
+				'recurring_token'     => '',
+				'product_name'        => (string)$product['name'],
+				'product_quantity'    => (int)$product['quantity'],
+				'recurring_frequency' => (string)$product['recurring_frequency'],
+				'recurring_cycle'     => (int)$product['recurring_cycle'],
+				'recurring_duration'  => $duration,
+				'recurring_price'     => (float)$product['recurring_price'],
+				'trial_price'         => (float)$product['recurring_trial_price'],
+				'trial_cycle'         => (int)$product['recurring_trial_cycle'],
+				'trial_frequency'     => (string)$product['recurring_trial_frequency'],
+				'trial_duration'      => (int)$product['recurring_trial_duration'],
+				'remaining'           => $duration,
+				'trial_remaining'     => ($trial === 1 ? $trial_len : 0),
+				'status'              => 'pending',
+				'date_next'           => $next,
+				'date_last_charge'    => '0000-00-00 00:00:00',
+				'retry_count'         => 0,
+			));
+		}
+	}
+
+	/**
+	 * Attach the recurring token once a recurring purchase is paid.
+	 *
+	 * The token is the purchase id. Until this runs the subscription stays
+	 * `pending` and the cron ignores it, so a plan that never completed payment
+	 * can never be charged.
+	 *
+	 * @param array $purchase   Paid CHIP purchase.
+	 * @param array $order_info Order row.
+	 *
+	 * @return void
+	 */
+	private function attachSubscriptionToken($purchase, $order_info) {
+		if (!isset($purchase['is_recurring_token']) || $purchase['is_recurring_token'] !== true) {
+			return;
+		}
+
+		$this->load->model('payment/chip');
+
+		$subscriptions = $this->model_payment_chip->getSubscriptionsByOrderId($order_info['order_id']);
+
+		if (!$subscriptions) {
+			return;
+		}
+
+		$chip_token_id = $this->findTokenIdByPurchase($purchase['id']);
+
+		foreach ($subscriptions as $subscription) {
+			/*
+			 * Re-arm a suspended row in the same call.
+			 *
+			 * Suspension zeroes date_next and leaves the retry ladder spent, so
+			 * activating without restoring the schedule leaves a row that
+			 * getDueSubscriptions() can never select again - the subscription
+			 * reads as active and is never billed.
+			 *
+			 * A `pending` row is a plan that has never been paid; its schedule
+			 * was just written by the checkout, so it is left alone.
+			 */
+			$rearm = ($subscription['status'] === 'suspended')
+				? $this->rearmDate($subscription)
+				: '';
+
+			$this->model_payment_chip->activateSubscription(
+				$subscription['chip_subscription_id'],
+				(string)$purchase['id'],
+				$chip_token_id,
+				$rearm
+			);
+		}
+	}
+
+	/**
+	 * The next charge date for a subscription that is being re-armed.
+	 *
+	 * Mirrors the cron's own step choice: while trial cycles remain the plan
+	 * advances by the trial schedule, otherwise by the recurring one. Computing
+	 * this anywhere else would let the two drift, and a plan that re-arms onto
+	 * the wrong cadence bills the customer on a schedule they never agreed to.
+	 *
+	 * @param array $subscription chip_subscription row.
+	 *
+	 * @return string Date, or '' when the schedule is unusable.
+	 */
+	private function rearmDate($subscription) {
+		if ((int)$subscription['trial_remaining'] > 0) {
+			$frequency = (string)$subscription['trial_frequency'];
+			$cycle     = (int)$subscription['trial_cycle'];
+		} else {
+			$frequency = (string)$subscription['recurring_frequency'];
+			$cycle     = (int)$subscription['recurring_cycle'];
+		}
+
+		$model = $this->model_payment_chip;
+
+		$next = $model->nextCycleDate(date('Y-m-d H:i:s'), $frequency, $cycle);
+
+		return ($next === null) ? '' : $next;
+	}
+
+	/**
+	 * Append an order history entry for a renewal.
+	 *
+	 * 1.5 and 2.0 split this over `update()` (history only) and `confirm()`
+	 * (history plus restock / reward side effects). Renewals must not re-run the
+	 * order-confirmation side effects, so only the history is written.
+	 *
+	 * @param int    $order_id
+	 * @param int    $order_status_id
+	 * @param string $comment
+	 * @param bool   $notify
+	 *
+	 * @return void
+	 */
+	private function model_order_addHistory($order_id, $order_status_id, $comment = '', $notify = false) {
+		$this->model_checkout_order->update($order_id, $order_status_id, $comment, $notify);
+	}
+
+	/**
+	 * Constant-time comparison of the configured cron token.
+	 *
+	 * Delegates to hash_equals() where available. OpenCart 1.5 / 2.0 shops may
+	 * still run PHP 5.5 or older, which has no hash_equals(), and a plain !=
+	 * here would leak the token to a timing attack on an endpoint that charges
+	 * real cards.
+	 *
+	 * @param string $expected
+	 * @param string $provided
+	 *
+	 * @return bool
+	 */
+	private function verifyCronToken($expected, $provided) {
+		if (function_exists('hash_equals')) {
+			return hash_equals($expected, $provided);
+		}
+
+		if (strlen($expected) !== strlen($provided)) {
+			return false;
+		}
+
+		$diff = 0;
+
+		for ($i = 0; $i < strlen($expected); $i++) {
+			$diff |= ord($expected[$i]) ^ ord($provided[$i]);
+		}
+
+		return $diff === 0;
+	}
+
+	/**
+	 * Find the chip_token row the given purchase produced.
+	 *
+	 * @param string $purchase_id
+	 *
+	 * @return int
+	 */
+	private function findTokenIdByPurchase($purchase_id) {
+		$query = $this->db->query("SELECT `chip_token_id` FROM `" . DB_PREFIX . "chip_token`
+			WHERE `token_id` = '" . $this->db->escape($purchase_id) . "' LIMIT 1");
+
+		if ($query->num_rows) {
+			return (int)$query->row['chip_token_id'];
+		}
+
+		return 0;
 	}
 
 	private function saveToken($purchase, $customer_id) {

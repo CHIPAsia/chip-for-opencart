@@ -20,6 +20,7 @@ $_['tab_api_details'] = 'API details';
 $_['tab_checkout'] = 'Customize checkout';
 $_['tab_troubleshoot'] = 'Troubleshoot';
 $_['tab_report'] = 'Report';
+$_['tab_subscription'] = 'Subscriptions';
 
 $_['column_order'] = 'Order';
 $_['column_chip_id'] = 'Purchase ID';
@@ -56,6 +57,8 @@ $_['entry_disable_success_callback'] = 'Disable Success Callback';
 $_['entry_canceled_behavior'] = 'Canceled Order Behavior';
 $_['entry_failed_behavior'] = 'Failed Order Behavior';
 $_['entry_payment_method_whitelist'] = 'Payment Method Whitelist';
+$_['entry_cron_url'] = 'Subscription Cron URL';
+$_['entry_active_subscriptions'] = 'Active Subscriptions';
 
 $_['help_payment_name'] = 'Name that will be displayed on checkout page';
 $_['help_secret_key'] = 'Secret Key can be retrieved from CHIP Collect Dashboard';
@@ -78,6 +81,7 @@ $_['help_disable_success_callback'] = 'Default to No. Only tick yes if you are p
 $_['help_canceled_behavior'] = 'Missing Order is the default behavior. If you require the order status to be updated to canceled, change to Cancel Order';
 $_['help_payment_method_whitelist'] = 'This controls what payment method will be available on the payment page. Leave empty to allow all payment methods.';
 $_['help_failed_behavior'] = 'Missing Order is the default behavior. If you require the order status to be updated to failed, change to Fail Order';
+$_['help_cron_url'] = 'CHIP does not auto-renew subscriptions. Renewals run through OpenCart\'s own subscription cron - point your server cron at this URL (e.g. every 5 minutes).';
 
 $_['error_permission'] = 'Warning: You do not have permission to modify CHIP!';
 $_['error_secret_key'] = 'Error! You are required to set CHIP Secret Key';

@@ -44,6 +44,9 @@ class ControllerPaymentChip extends Controller {
 		$this->data['tab_troubleshooting'] = $this->language->get('tab_troubleshooting');
 		$this->data['tab_report'] = $this->language->get('tab_report');
 
+		// Tab labels referenced by the template (were never assigned).
+		$this->data['tab_token'] = $this->language->get('tab_token');
+
 		$this->data['entry_payment_name'] = $this->language->get('entry_payment_name');
 		$this->data['entry_secret_key'] = $this->language->get('entry_secret_key');
 		$this->data['entry_brand_id'] = $this->language->get('entry_brand_id');
@@ -200,6 +203,57 @@ class ControllerPaymentChip extends Controller {
 		} else {
 			$this->data['chip_refunded_order_status_id'] = $this->config->get('chip_refunded_order_status_id');
 		}
+
+		/*
+		 * Self-heal a missing cron token.
+		 *
+		 * Versions before this one did not render the token as a form field,
+		 * so any settings save wiped it (core's editSetting() deletes the whole
+		 * group first). A merchant who already hit that would keep a 403 on
+		 * their renewal cron with no way to notice, so mint a fresh token here
+		 * rather than requiring a reinstall.
+		 */
+		if (!$this->config->get('chip_cron_token')) {
+			$fresh = bin2hex(function_exists('random_bytes')
+				? random_bytes(16)
+				: openssl_random_pseudo_bytes(16));
+
+			$this->load->model('setting/setting');
+			$current = $this->model_setting_setting->getSetting('chip');
+			$current['chip_cron_token'] = $fresh;
+			$this->model_setting_setting->editSetting('chip', $current);
+
+			// Reflect it in this render too, so the form shows a usable URL.
+			$this->config->set('chip_cron_token', $fresh);
+		}
+
+		/*
+		 * Carry the cron token through the settings form.
+		 *
+		 * editSetting() clears the whole settings group before re-inserting the
+		 * POST array, so a field that is not rendered would be dropped on the
+		 * next save and the merchant's cron would start failing with 403.
+		 */
+		if (isset($this->request->post['chip_cron_token']) && $this->request->post['chip_cron_token'] !== '') {
+			$this->data['chip_cron_token'] = $this->request->post['chip_cron_token'];
+		} else {
+			$this->data['chip_cron_token'] = $this->config->get('chip_cron_token');
+		}
+
+		/*
+		 * The renewal cron URL, with the token already in it.
+		 *
+		 * Core's editSetting() DELETEs the whole settings group before
+		 * re-inserting the POST array, so the token above must also be rendered
+		 * by the template or it is lost on the next save and the merchant's
+		 * cron starts returning 403. Showing the full URL makes the renewal job
+		 * discoverable instead of a support ticket.
+		 */
+		$this->data['chip_cron_url'] = HTTP_CATALOG . 'index.php?route=payment/chip/cron&token=' . $this->data['chip_cron_token'];
+
+		// Tabs and labels live in the language file; the template needs them as data.
+		$this->data['help_cron_url']  = $this->language->get('help_cron_url');
+		$this->data['entry_cron_url'] = $this->language->get('entry_cron_url');
 
 		if (isset($this->request->post['chip_allow_instruction'])) {
 			$this->data['chip_allow_instruction'] = $this->request->post['chip_allow_instruction'];
@@ -510,6 +564,23 @@ class ControllerPaymentChip extends Controller {
 	public function install() {
 		$this->load->model('payment/chip');
 		$this->model_payment_chip->install();
+
+		$this->load->model('setting/setting');
+
+		// A cron token guards the renewal endpoint, which charges real cards.
+		// Generated once so an unauthenticated request can never reach it.
+		//
+		// Read-modify-write rather than editSetting() with only the token:
+		// editSetting() deletes the whole settings group first, which would
+		// wipe an existing configuration on an upgrade.
+		if (!$this->config->get('chip_cron_token')) {
+			$settings = $this->model_setting_setting->getSetting('chip');
+			// random_bytes() is PHP 7+; 1.5 / 2.0 shops may run PHP 5.
+			$settings['chip_cron_token'] = bin2hex(function_exists('random_bytes')
+				? random_bytes(16)
+				: openssl_random_pseudo_bytes(16));
+			$this->model_setting_setting->editSetting('chip', $settings);
+		}
 	}
 
 	public function uninstall() {

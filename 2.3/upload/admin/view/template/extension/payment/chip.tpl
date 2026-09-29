@@ -28,6 +28,9 @@
     </div>
     <div class="panel-body">
     <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form-chip" class="form-horizontal">
+      <!-- Kept so a settings save does not drop the renewal cron token:
+           core's editSetting() deletes the whole settings group first. -->
+      <input type="hidden" name="chip_cron_token" value="<?php echo $chip_cron_token; ?>" />
       <ul class="nav nav-tabs">
       <li class="active"><a href="#tab-api" data-toggle="tab"><?php echo $tab_api_details; ?></a></li>
       <li><a href="#tab-general" data-toggle="tab"><?php echo $tab_general; ?></a></li>
@@ -423,6 +426,14 @@
         <label class="col-sm-2 control-label"><?php echo $tab_token; ?></label>
         <div class="col-sm-10">
           <?php echo $token; ?>
+
+        <div class="alert alert-info"><?php echo $help_cron_url; ?></div>
+        <div class="form-group">
+          <label class="col-sm-2 control-label"><?php echo $entry_cron_url; ?></label>
+          <div class="col-sm-10">
+            <input type="text" value="<?php echo $chip_cron_url; ?>" class="form-control" readonly onclick="this.select();" />
+          </div>
+        </div>
         </div>
         </div>
       </div>
