@@ -490,19 +490,39 @@ class ControllerPaymentChip extends Controller {
 		$this->load->model('payment/chip');
 		$this->language->load('payment/chip');
 
-		$public_key = $this->config->get('chip_general_public_key');
+		/*
+		 * Normalise the stored key before use.
+		 *
+		 * A gateway response that arrives double-encoded leaves LITERAL
+		 * backslash-n sequences in the setting, which openssl_pkey_get_public()
+		 * cannot parse. The old save-side expression was `str_replace('\n',
+		 * "\n", $key)`, which in PHP replaces a newline with a newline and so
+		 * never repaired it - the setting silently disabled this whole check.
+		 * Normalising at the point of USE also rescues merchants who already
+		 * saved a malformed value.
+		 */
+		$public_key = str_replace(array('\\n', '\\r'), array("\n", ''), (string)$this->config->get('chip_general_public_key'));
 
 		if (!isset($this->request->server['HTTP_X_SIGNATURE'])) {
-			exit('No HTTP_X_SIGNATURE detected');
+			$this->refuseCallback('No HTTP_X_SIGNATURE detected');
 		}
 
 		$HTTP_X_SIGNATURE = $this->request->server['HTTP_X_SIGNATURE'];
 
 		$purchase_json = file_get_contents('php://input');
 
+		/*
+		 * A missing or unusable public key must be a REFUSAL, not a PHP warning
+		 * that falls through to a 200. openssl_verify() returns false on a key
+		 * it cannot coerce, and the warning text was previously rendered into
+		 * the response body while the status stayed 200.
+		 */
+		if ($public_key === '' || @openssl_pkey_get_public($public_key) === false) {
+			$this->refuseCallback('Callback signature key is not usable');
+		}
+
 		if (openssl_verify( $purchase_json,  base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption' ) != 1) {
-			$this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401 Unauthorized');
-			exit;
+			$this->refuseCallback('Invalid X-Signature');
 		}
 
 		$purchase = json_decode($purchase_json, true);
@@ -539,6 +559,29 @@ class ControllerPaymentChip extends Controller {
 		$this->db->query("SELECT RELEASE_LOCK('chip_payment_$purchase_id');");
 
 		exit;
+	}
+
+	/**
+	 * Refuse a callback and say so with a real HTTP status.
+	 *
+	 * The previous shape was
+	 * `addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401 Unauthorized')`,
+	 * which builds the header "HTTP/1.1/1.1 401 Unauthorized" - malformed
+	 * because SERVER_PROTOCOL is ALREADY "HTTP/1.1". PHP's header() ignores a
+	 * line that does not start with a valid protocol, so a forged signature
+	 * still produced HTTP 200. A webhook that answers 200 to a forged body
+	 * tells the gateway the delivery succeeded.
+	 *
+	 * PHP 7.4's header() accepts a status LINE directly, so the status is
+	 * passed on its own; the reason phrase is the response body, which is the
+	 * only part a log will preserve.
+	 */
+	private function refuseCallback($reason) {
+		if (!headers_sent()) {
+			header('HTTP/1.1 401 Unauthorized', true, 401);
+		}
+
+		exit($reason);
 	}
 
 	public function success_redirect() {
@@ -678,7 +721,18 @@ class ControllerPaymentChip extends Controller {
 		$provided = isset($this->request->get['token']) ? (string)$this->request->get['token'] : '';
 
 		if ($expected === '' || !hash_equals($expected, $provided)) {
-			$this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 403 Forbidden');
+			/*
+			 * `$this->response->addHeader($this->request->server['SERVER_PROTOCOL']
+			 * . '/1.1 403 Forbidden')` built "HTTP/1.1/1.1 403 Forbidden" -
+			 * malformed, because SERVER_PROTOCOL is ALREADY "HTTP/1.1" - and PHP
+			 * ignored the line, so an unauthenticated caller was told 200 OK.
+			 * The charge was still refused, but the status is what a monitor,
+			 * a WAF or the gateway reads, so it must be truthful.
+			 */
+			if (!headers_sent()) {
+				header('HTTP/1.1 403 Forbidden', true, 403);
+			}
+
 			exit('Forbidden');
 		}
 
@@ -719,7 +773,24 @@ class ControllerPaymentChip extends Controller {
 	 * @return bool Whether the charge succeeded.
 	 */
 	private function chargeSubscription($subscription) {
-		$this->load->model('payment/chip');
+		/*
+		 * Load ONCE and keep the model.
+		 *
+		 * `$this->model_payment_chip` is unusable here: on 2.2 Loader::model()
+		 * registers a Proxy whose every method call re-instantiates the model
+		 * through Action::execute(), so `last_error_code` is written on one
+		 * throwaway object and read from another. See
+		 * probe_loader_instancing.php - the same instance DOES report the code,
+		 * the proxy never can.
+		 *
+		 * A direct instance therefore has to be constructed, and the class is
+		 * not auto-loaded on this page.
+		 */
+		if (!class_exists('ModelPaymentChip')) {
+			include_once DIR_APPLICATION . 'model/payment/chip.php';
+		}
+
+		$model_payment_chip = new ModelPaymentChip($this->registry);
 
 		/*
 		 * `date_next` may hold a retry time left by the previous attempt
@@ -728,7 +799,7 @@ class ControllerPaymentChip extends Controller {
 		 * due date first, so the 1/3/5 retry ladder is measured from it and the
 		 * claim below advances the billing schedule from it too.
 		 */
-		$due_date        = $this->model_payment_chip->ladderAnchor($subscription['date_next'], (int)$subscription['retry_count']);
+		$due_date        = $model_payment_chip->ladderAnchor($subscription['date_next'], (int)$subscription['retry_count']);
 		$frequency       = $subscription['recurring_frequency'];
 		$cycle           = (int)$subscription['recurring_cycle'];
 		$duration        = (int)$subscription['recurring_duration'];
@@ -810,16 +881,39 @@ class ControllerPaymentChip extends Controller {
 			'recurring_token'  => $subscription['recurring_token'],
 		);
 
-		$this->model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
+		$model_payment_chip->set_keys($this->config->get('chip_secret_key'), '');
 
-		$purchase = $this->model_payment_chip->create_purchase($params);
+		$purchase = $model_payment_chip->create_purchase($params);
 
 		if (!is_array($purchase) || !array_key_exists('id', $purchase)) {
-			return $this->failSubscription($subscription, $due_date, $retry_count, $this->language->get('error_renewal_purchase'), $this->model_payment_chip);
+			return $this->failSubscription($subscription, $due_date, $retry_count, $this->language->get('error_renewal_purchase'), $model_payment_chip);
 		}
 
-		$charge = $this->model_payment_chip->chargeRecurring($purchase['id'], $subscription['recurring_token']);
+		$charge = $model_payment_chip->chargeRecurring($purchase['id'], $subscription['recurring_token']);
 
+		return $this->recordChargeOutcome($subscription, $charge, $model_payment_chip, $due_date, $retry_count);
+	}
+
+	/**
+	 * Decide a charge's outcome and record it.
+	 *
+	 * A money-path guard must name all THREE states explicitly - paid, still
+	 * settling, failed - and "paid or else failed" collapses the middle one into
+	 * the last, which retries a charge that may still succeed.
+	 *
+	 * The decision is returned rather than stashed on $this, because PHP does
+	 * not re-dispatch an `exit` inside a helper and the caller must act on the
+	 * result.
+	 *
+	 * @param array  $subscription
+	 * @param mixed  $charge       Gateway charge response (array|null).
+	 * @param object $model        The instance that performed the charge.
+	 * @param string $due_date
+	 * @param int    $retry_count
+	 *
+	 * @return bool Whether the renewal succeeded.
+	 */
+	private function recordChargeOutcome($subscription, $charge, $model, $due_date, $retry_count) {
 		/*
 		 * An unresolved charge is NOT a failure.
 		 *
@@ -854,10 +948,15 @@ class ControllerPaymentChip extends Controller {
 		}
 
 		if (!is_array($charge) || !isset($charge['status']) || $charge['status'] !== 'paid') {
-			return $this->failSubscription($subscription, $due_date, $retry_count, $this->language->get('error_renewal_charge'), $this->model_payment_chip);
+			return $this->failSubscription($subscription, $due_date, $retry_count, $this->language->get('error_renewal_charge'), $model);
 		}
 
 		// Success.
+		$in_trial        = (int)$subscription['trial_remaining'] > 0;
+		$duration        = (int)$subscription['recurring_duration'];
+		$remaining       = (int)$subscription['remaining'];
+		$trial_remaining = (int)$subscription['trial_remaining'];
+
 		if ($in_trial) {
 			$new_trial_remaining = max(0, $trial_remaining - 1);
 			$new_remaining       = $remaining;
@@ -868,6 +967,8 @@ class ControllerPaymentChip extends Controller {
 
 		$this->model_payment_chip->recordSubscriptionPayment(
 			$subscription['chip_subscription_id'], $new_remaining, $new_trial_remaining);
+
+		$this->load->model('checkout/order');
 
 		$this->model_checkout_order->addOrderHistory(
 			$subscription['order_id'],
