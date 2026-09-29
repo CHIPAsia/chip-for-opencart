@@ -30,35 +30,73 @@ class Chip extends \Opencart\System\Engine\Controller {
 	private const ROUTE = 'extension/chip/cron/chip';
 
 	/**
+	 * Is this request carrying the merchant's own cron token?
+	 *
+	 * Mirrors the 1.5-3.0 shape: an unset token is never accepted, and the
+	 * comparison is constant-time. hash_equals() needs a string on both sides,
+	 * so cast the stored value before use.
+	 *
+	 * @return bool
+	 */
+	private function hasValidCronToken(): bool {
+		$expected = (string)$this->config->get('payment_chip_cron_token');
+		$provided = isset($this->request->get['token']) ? (string)$this->request->get['token'] : '';
+
+		if ($expected === '' || $provided === '') {
+			return false;
+		}
+
+		return hash_equals($expected, $provided);
+	}
+
+	/**
 	 * Index
 	 *
-	 * Renewals run ONLY when core's cron invokes us. In OpenCart 4.x core owns
-	 * scheduling and order creation, and reaches this controller internally:
+	 * Renewals are reached one of two ways, and only two.
 	 *
-	 *   $store->load->controller('extension/' . $extension . '/cron/' . $code);
+	 * 1. Core's own scheduler (OpenCart 4.1). Core creates the renewal order
+	 *    and then calls this controller internally:
 	 *
-	 * That internal call carries the OUTER route, not this one. A direct HTTP
-	 * request, by contrast, always arrives with `route` beginning with this
-	 * controller's path — including the `chip.index` spelling the router also
-	 * accepts. The prefix test is what closes that second spelling; an equality
-	 * test against the bare path alone lets `chip.index` through and is a real
-	 * bypass, not a theoretical one.
+	 *      $store->load->controller('extension/' . $extension . '/cron/' . $code);
 	 *
-	 * When cron.php is served over HTTP (a common merchant cron setup) it boots
-	 * outside index.php, so `route` is not set at all and the internal call is
-	 * correctly allowed through.
+	 *    That internal call carries the OUTER route ('cron/cron'), so `route`
+	 *    is set but does not start with this controller's path.
 	 *
-	 * This endpoint charges stored cards and advances the dunning ladder, so
-	 * without the gate a single anonymous GET could drive a paying customer's
-	 * subscription to `suspended` by exhausting its retry ladder.
+	 * 2. The merchant's own cron over HTTP, carrying the token shown in the
+	 *    admin settings.
+	 *
+	 * (2) is not a convenience. On OpenCart 4.0.x core's subscription cron
+	 * never calls the payment extension at all - the call is commented out in
+	 * core's catalog/controller/cron/subscription.php:
+	 *
+	 *      //$this->load->model('extension/payment/' . $payment_info['code']);
+	 *
+	 * so on 4.0.x the oc_cron route creates a renewal order and then does
+	 * nothing with it. The token endpoint is the ONLY mechanism that can
+	 * renew a subscription on 4.0.x. Pointing merchants at core's cron there
+	 * (which the settings page used to do) leaves renewals silently dead.
+	 *
+	 * A direct HTTP request to this route WITHOUT a valid token must never
+	 * run. This endpoint charges stored cards and advances the dunning ladder,
+	 * so a single anonymous GET could drive a paying customer's subscription
+	 * to `suspended` by exhausting its retry ladder.
+	 *
+	 * Note `chip.index`: the router also accepts the dotted spelling, so the
+	 * prefix test is what closes that second spelling. An equality test
+	 * against the bare path alone lets `chip.index` through.
 	 *
 	 * @return void
 	 */
 	public function index(): void {
 		$route = (string)($this->request->get['route'] ?? '');
 
-		if ($route !== '' && str_starts_with($route, self::ROUTE)) {
-			$this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 403 Forbidden');
+		// A direct HTTP hit on THIS controller's route - including the
+		// `chip.index` spelling. Every internal route (core's 'cron/cron') and
+		// the route-less CLI boot of cron.php fall outside this test.
+		$direct = ($route !== '' && str_starts_with($route, self::ROUTE));
+
+		if ($direct && !$this->hasValidCronToken()) {
+			$this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . ' 403 Forbidden');
 			$this->response->setOutput('Forbidden');
 			return;
 		}
