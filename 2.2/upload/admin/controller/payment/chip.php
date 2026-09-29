@@ -499,7 +499,19 @@ class ControllerPaymentChip extends Controller {
 	private function configure_general_public_key() {
 		$this->load->model('payment/chip');
 		$this->model_payment_chip->set_keys($this->request->post['chip_secret_key'], '');
-		$general_public_key = str_replace('\n', "\n", $this->model_payment_chip->get_public_key());
+		$general_public_key = $this->model_payment_chip->get_public_key();
+
+		/*
+		 * CHIP returns the key JSON-encoded, so the newlines arrive as LITERAL
+		 * backslash-n sequences. The old expression here was
+		 * `str_replace('\n', "\n", $key)`, which replaces a newline with a
+		 * newline and therefore did nothing - the malformed value was stored
+		 * and the webhook signature check could never work. Normalise properly,
+		 * and do it again at the point of use so already-saved values recover.
+		 */
+		if (is_string($general_public_key)) {
+			$general_public_key = str_replace(array('\\n', '\\r'), array("\n", ''), $general_public_key);
+		}
 
 		if (isset($general_public_key['__all__'])) {
 			$this->error['secret_key'] = implode('. ', $general_public_key['__all__'][0]);
