@@ -1,4 +1,8 @@
 <?php
+// Version reported to the gateway. Keep in step with install.json.
+if (!defined('CHIP_OPENCART_VERSION')) {
+	define('CHIP_OPENCART_VERSION', '1.2.0');
+}
 class ControllerPaymentChip extends Controller {
 	public function index() {
 		$this->language->load('payment/chip');
@@ -87,7 +91,7 @@ class ControllerPaymentChip extends Controller {
 			'success_redirect' => $this->url->link('payment/chip/success_redirect', '', true),
 			'failure_redirect' => $this->url->link('checkout/checkout', '', true),
 			'cancel_redirect'  => $this->url->link('checkout/cart', '', true),
-			'creator_agent'    => 'OC22: 1.0.0',
+			'creator_agent'    => 'OC22: ' . CHIP_OPENCART_VERSION,
 			'reference'        => $this->session->data['order_id'],
 			'platform'         => 'opencart',
 			'due'              => time() + (abs( (int) $this->config->get('chip_due_strict_timing') ) * 60),
@@ -296,7 +300,7 @@ class ControllerPaymentChip extends Controller {
 			'success_redirect' => $this->url->link('payment/chip/success_redirect', '', true),
 			'failure_redirect' => $this->url->link('checkout/checkout', '', true),
 			'cancel_redirect'  => $this->url->link('checkout/cart', '', true),
-			'creator_agent'    => 'OC22: 1.0.0',
+			'creator_agent'    => 'OC22: ' . CHIP_OPENCART_VERSION,
 			'reference'        => $this->session->data['order_id'],
 			'platform'         => 'opencart',
 			'due'              => time() + (abs( (int) $this->config->get('chip_due_strict_timing') ) * 60),
@@ -787,7 +791,7 @@ class ControllerPaymentChip extends Controller {
 		$params = array(
 			'reference'        => $subscription['order_id'],
 			'platform'         => 'opencart',
-			'creator_agent'    => 'OC22: 1.0.0',
+			'creator_agent'    => 'OC22: ' . CHIP_OPENCART_VERSION,
 			'brand_id'         => $this->config->get('chip_brand_id'),
 			'client'           => array(
 				'email' => $subscription['customer_email'],
