@@ -12,23 +12,53 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # OpenCart refuses any upload whose filename does not end in .ocmod.zip:
+      #   <=2.x  extension/installer.php    substr(name, -10) != '.ocmod.zip' && != '.ocmod.xml'
+      #   3.x    marketplace/installer.php  substr(name, -10) != '.ocmod.zip'
+      #   4.x    marketplace/installer.php  substr(filename, -10) != '.ocmod.zip'
+      #
+      # 4.x goes further: it stores basename($filename, '.ocmod.zip') as the
+      # extension CODE, and that code is both the extraction folder and the
+      # route prefix (core resolves extension/<code>/... against
+      # DIR_EXTENSION . <code> . '/'). This module's routes are
+      # extension/chip/..., so the code must be exactly "chip" - hence
+      # 4.0 ships as chip.ocmod.zip, not a version-named file. A differently
+      # named zip installs the files where no route can reach them, which is
+      # why the README previously had to tell merchants to rename it by hand.
+      #
+      # 1.5 has no extension installer at all (core has no .ocmod support and no
+      # such controller), so its zip stays a plain upload/ tree copied in by hand.
       - name: Create zip files
         run: |
-          # OpenCart 4.0 (ocmod: admin/ + catalog/ + install.json at zip root)
+          # OpenCart 4.0 (ocmod: admin/ + catalog/ + install.json at zip root).
+          # MUST be chip.ocmod.zip - the name becomes the extension code.
           cd 4.0
-          zip -r ../chip-opencart-4.0.zip admin/ catalog/ install.json README.md -x "*.DS_Store" "*.git*"
+          zip -r ../chip.ocmod.zip admin/ catalog/ install.json README.md -x "*.DS_Store" "*.git*"
           cd ..
 
-          # OpenCart 1.5 - 3.0 (manual upload: upload/ folder)
-          for v in 1.5 2.0 2.2 2.3 3.0; do
+          # OpenCart 2.0 - 3.0 (ocmod upload): upload/ at the zip root. Here the
+          # name only has to end in .ocmod.zip - core stores it as a label, not
+          # as the code - so a version-named file is fine.
+          # 2.x reads upload/admin/, upload/catalog/, upload/image/, upload/system/;
+          # 3.x copies the whole upload/ tree.
+          for v in 2.0 2.2 2.3 3.0; do
             cd "$v"
-            zip -r "../chip-opencart-$v.zip" upload/ README.md -x "*.DS_Store" "*.git*"
+            zip -r "../chip-opencart-$v.ocmod.zip" upload/ README.md -x "*.DS_Store" "*.git*"
             cd ..
           done
 
+          # OpenCart 1.5: no extension installer in core, so no .ocmod.zip.
+          cd 1.5
+          zip -r ../chip-opencart-1.5.zip upload/ README.md -x "*.DS_Store" "*.git*"
+          cd ..
+
+
       - name: Upload release assets
         run: |
-          for f in chip-opencart-*.zip; do
+          # Both patterns: chip.ocmod.zip is the 4.0 build (its name is the code
+          # and must not be version-stamped), the rest are version-named.
+          for f in chip-opencart-*.zip chip.ocmod.zip; do
+            [ -f "$f" ] || continue
             gh release upload "${{ github.event.release.tag_name }}" "$f" --clobber
           done
         env:
