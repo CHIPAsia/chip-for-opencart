@@ -62,12 +62,26 @@ customer can pay for a subscription product, but nothing will renew it.
 
 ### Recurring payments
 
-Renewals run from OpenCart's built-in cron, which must be configured on the store's
-server:
+How renewals are driven depends on your OpenCart version:
 
-```
-php /path/to/opencart/cron.php
-```
+* **OpenCart 3.0.x and below** — the module exposes its own endpoint. Add this to
+  your server's cron (the token is generated for you and shown in the gateway
+  settings):
+
+  ```
+  * * * * * curl -s "https://your-store.example/index.php?route=extension/payment/chip/cron&token=<cron_token>" >/dev/null
+  ```
+
+  OpenCart 1.5 and 2.0 – 2.3 use `route=payment/chip/cron` instead.
+
+* **OpenCart 4.0.x and 4.1.x** — renewals are driven by OpenCart's own scheduler:
+
+  ```
+  php /path/to/opencart/cron.php
+  ```
+
+  This requires OpenCart **4.1.0.0 or later**; earlier 4.x releases never call a
+  payment extension's cron controller, so nothing renews a subscription on 4.0.x.
 
 A failed renewal is retried after 1, 3 and 5 days, measured from the original due
 date. After the fourth failed attempt the subscription is **suspended**; the stored
