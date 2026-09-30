@@ -16,6 +16,25 @@ The installation files differ by OpenCart version. Choose your OpenCart version:
 * [OpenCart 4.0.x](https://github.com/CHIPAsia/chip-for-opencart/releases/latest/download/chip.ocmod.zip)
 * OpenCart 4.1.x — use [`chip-for-opencart-4.1`](https://github.com/CHIPAsia/chip-for-opencart-4.1)
 
+Every release also carries a single **bundle**,
+`chip-for-opencart-<version>.zip`, which holds one zip per OpenCart version. The
+files are kept inside the bundle rather than flattened beside it because each
+version needs a different filename and two of them cannot coexist in one folder:
+
+```
+chip-for-opencart-1.4.0.zip
+├── chip-opencart-1.5.zip         OpenCart 1.5.x (plain zip)
+├── chip-opencart-2.0.ocmod.zip   OpenCart 2.0.x / 2.1.x
+├── chip-opencart-2.2.ocmod.zip   OpenCart 2.2.x
+├── chip-opencart-2.3.ocmod.zip   OpenCart 2.3.x
+├── chip-opencart-3.0.ocmod.zip   OpenCart 3.0.x
+├── chip.ocmod.zip                OpenCart 4.0.x (name is the extension code)
+└── README.txt
+```
+
+If you are unsure which file you need, take the bundle and use the one matching
+your store. The individual files above are the same bytes.
+
 Upload the zip through **Extensions → Installer**, then enable the gateway under
 **Extensions → Payments**.
 
@@ -46,7 +65,7 @@ already run it:
 
 | OpenCart version | Repository | Subscription renewals |
 | --- | --- | --- |
-| **3.0.x and below** | this repository | ✅ the build's own endpoint (1.5 live-tested; 2.0 / 3.0 not live-tested) |
+| **3.0.x and below** | this repository | ✅ the build's own endpoint (1.5 and 3.0 live-tested; 2.0 / 2.2 / 2.3 not live-tested) |
 | **4.0.0.0 – 4.0.1.1** | this repository (`4.0`) | ✅ the build's own endpoint (live-tested) |
 | **4.0.2.x** | this repository (`4.0`) | ✅ the build's own endpoint |
 | **4.1.0.x** | [`chip-for-opencart-4.1`](https://github.com/CHIPAsia/chip-for-opencart-4.1) | ✅ via OpenCart's `cron.php` |
