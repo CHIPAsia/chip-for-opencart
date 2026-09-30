@@ -46,19 +46,27 @@ already run it:
 
 | OpenCart version | Repository | Subscription renewals |
 | --- | --- | --- |
-| **4.1.0.x** | [`chip-for-opencart-4.1`](https://github.com/CHIPAsia/chip-for-opencart-4.1) | ✅ |
-| **4.0.2.x** | this repository (`4.0`) or `chip-for-opencart-4.1` | ❌ |
-| **4.0.0.0 – 4.0.1.1** | this repository (`4.0`) or `chip-for-opencart-4.1` | ❌ |
-| **3.0.x and below** | this repository | ✅ |
+| **3.0.x and below** | this repository | ✅ the build's own endpoint (1.5 / 2.0 / 3.0 not live-tested) |
+| **4.0.0.0 – 4.0.1.1** | this repository (`4.0`) | ✅ the build's own endpoint (not live-tested) |
+| **4.0.2.x** | this repository (`4.0`) | ✅ the build's own endpoint |
+| **4.1.0.x** | [`chip-for-opencart-4.1`](https://github.com/CHIPAsia/chip-for-opencart-4.1) | ✅ via OpenCart's `cron.php` |
 
-`chip-for-opencart-4.1` implements both OpenCart 4.x payment entry points
-(`getMethod()` and `getMethods()`), so it now serves the whole 4.0.x – 4.1.x line
-and is the recommended build for all of 4.x.
+The two OpenCart 4.x builds implement the same payment entry points (`getMethod()`
+for 4.0.0.0 – 4.0.1.1, `getMethods()` for 4.0.2.0 and later), so either one takes
+payments. **Renewals are what separate them, and this is why OpenCart 4.0.x must use
+this repository's `4.0` build.**
 
-**Subscription renewals need OpenCart 4.1.0.0 or later**, even though payments work
-everywhere: renewals are scheduled by OpenCart's own `cron/subscription.php`, which
-calls the payment extension back, and only 4.1.0.0 and later do that. On 4.0.x a
-customer can pay for a subscription product, but nothing will renew it.
+This repository's `4.0` build carries its own cron endpoint, so a subscription renews
+whether or not OpenCart's scheduler cooperates. `chip-for-opencart-4.1` relies on
+OpenCart's own `cron/subscription.php` to call the payment extension back, and no
+OpenCart 4.0.x release does that:
+
+* **4.0.0.0 – 4.0.1.1** ship no `cron/subscription.php` at all.
+* **4.0.2.0 – 4.0.2.3** ship one, but the call into the payment extension is
+  commented out (line 319 in 4.0.2.0 / 383 in 4.0.2.3).
+
+So on OpenCart 4.0.x, `chip-for-opencart-4.1` still takes payments but a subscription
+there will never renew. Use the `4.0` build.
 
 ### Recurring payments
 
@@ -74,14 +82,23 @@ How renewals are driven depends on your OpenCart version:
 
   OpenCart 1.5 and 2.0 – 2.3 use `route=payment/chip/cron` instead.
 
-* **OpenCart 4.0.x and 4.1.x** — renewals are driven by OpenCart's own scheduler:
+* **OpenCart 4.0.x** — the module exposes its own endpoint. Add this to your server's
+  cron (the token is generated for you and shown in the gateway settings):
+
+  ```
+  * * * * * curl -s "https://your-store.example/index.php?route=extension/chip/cron/chip&token=<cron_token>" >/dev/null
+  ```
+
+  This is required, not optional: no OpenCart 4.0.x release drives a renewal from
+  OpenCart's own scheduler. See the table above.
+
+* **OpenCart 4.1.x** — renewals are driven by OpenCart's own scheduler:
 
   ```
   php /path/to/opencart/cron.php
   ```
 
-  This requires OpenCart **4.1.0.0 or later**; earlier 4.x releases never call a
-  payment extension's cron controller, so nothing renews a subscription on 4.0.x.
+  Use the `chip-for-opencart-4.1` build there.
 
 A failed renewal is retried after 1, 3 and 5 days, measured from the original due
 date. After the fourth failed attempt the subscription is **suspended**; the stored
@@ -102,6 +119,21 @@ To configure this setting:
 2. Set the **Session SameSite Cookie** to **Lax**
 
 This setting is required for the payment gateway redirects and callbacks to function correctly.
+
+## What has been tested live
+
+Against real OpenCart stores, installed through the Extension Installer:
+
+* **OpenCart 4.0.2.3** (`4.0` build) — subscription/renewal lifecycle, dunning ladder,
+  recovery from a suspended subscription, and the cron token endpoint: 52/52 checks
+  pass, including a negative control that reproduces the double charge when the
+  per-subscription lock is removed.
+* **OpenCart 4.1.0.4** (`chip-for-opencart-4.1`) — the same lifecycle: 36/36 checks pass.
+* **OpenCart 2.2.0.0** — earlier end-to-end run: 67/67 checks pass.
+
+**OpenCart 1.5, 2.0, 3.0, 4.0.0.0 and 4.0.1.1 have not been exercised on a live store.**
+Their renewal code is shared with the versions above; the 4.0.x pair differs only in
+the payment-method entry point, and both builds implement both.
 
 ## Other
 
