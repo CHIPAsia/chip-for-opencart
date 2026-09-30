@@ -1,7 +1,7 @@
 <?php
 // Version reported to the gateway. Keep in step with install.json.
 if (!defined('CHIP_OPENCART_VERSION')) {
-	define('CHIP_OPENCART_VERSION', '1.4.0');
+	define('CHIP_OPENCART_VERSION', '1.4.1');
 }
 class ControllerExtensionPaymentChip extends Controller {
 	public function index() {
