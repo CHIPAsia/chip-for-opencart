@@ -67,9 +67,21 @@ class ModelExtensionPaymentChip extends Model {
 	/**
 	 * Gateway error code from the most recent API call ('' on success).
 	 *
+	 * Deliberately static. OpenCart 2.2 - 3.0 wrap every model in a
+	 * Proxy whose per-method closures each hold their OWN `static $model`
+	 * (see system/engine/loader.php), so the instance that performs the
+	 * charge is NOT the instance that answers getLastErrorCode(). Held as
+	 * an instance property the code was always '' on those versions and
+	 * the dead-token branch in the cron never fired: a revoked card spent
+	 * the whole dunning ladder instead of being suspended at once. A static
+	 * property is shared by every instance, so it survives the proxy hop.
+	 *
+	 * It is cleared at the start of each API call, so a code can never be
+	 * stale: it always describes the call that just ran.
+	 *
 	 * @var string
 	 */
-	private $last_error_code = '';
+	private static $last_error_code = '';
 
 	public function getMethod($address, $total) {
 		$this->language->load('extension/payment/chip');
@@ -640,7 +652,7 @@ return date('Y-m-d H:i:s', strtotime('+' . $offset . ' day', $timestamp));
 	 * @return string
 	 */
 	public function getLastErrorCode() {
-		return $this->last_error_code;
+		return self::$last_error_code;
 	}
 
 	/**
@@ -675,7 +687,7 @@ return date('Y-m-d H:i:s', strtotime('+' . $offset . ' day', $timestamp));
 	}
 
 	private function call($method, $route, $params = []) {
-		$this->last_error_code = '';
+		self::$last_error_code = '';
 
 		$private_key = $this->private_key;
 		if (!empty($params)) {
@@ -694,7 +706,7 @@ return date('Y-m-d H:i:s', strtotime('+' . $offset . ' day', $timestamp));
 
 		$result = json_decode($response, true);
 		if (!$result) {
-			$this->last_error_code = 'invalid_response';
+			self::$last_error_code = 'invalid_response';
 			return null;
 		}
 
@@ -704,7 +716,7 @@ return date('Y-m-d H:i:s', strtotime('+' . $offset . ' day', $timestamp));
 		$error_code = $this->extractErrorCode($result);
 
 		if ($error_code !== '') {
-			$this->last_error_code = $error_code;
+			self::$last_error_code = $error_code;
 			return null;
 		}
 

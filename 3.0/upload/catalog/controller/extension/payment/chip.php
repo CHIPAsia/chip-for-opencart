@@ -1,7 +1,7 @@
 <?php
 // Version reported to the gateway. Keep in step with install.json.
 if (!defined('CHIP_OPENCART_VERSION')) {
-	define('CHIP_OPENCART_VERSION', '1.3.0');
+	define('CHIP_OPENCART_VERSION', '1.4.0');
 }
 class ControllerExtensionPaymentChip extends Controller {
 	public function index() {
@@ -498,8 +498,21 @@ class ControllerExtensionPaymentChip extends Controller {
 		$purchase_json = file_get_contents('php://input');
 
 		if (openssl_verify( $purchase_json,  base64_decode($HTTP_X_SIGNATURE), $public_key, 'sha256WithRSAEncryption' ) != 1) {
-			$this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401 Unauthorized');
-			exit;
+			/*
+			 * Answer with a REAL status. The previous shape,
+			 * `addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401
+			 * Unauthorized')`, was wrong twice over: SERVER_PROTOCOL already IS
+			 * "HTTP/1.1", so the line read "HTTP/1.1/1.1 401 Unauthorized" and
+			 * PHP discarded it; and Response::addHeader() only QUEUES a header -
+			 * Response::output() flushes it, which the exit() below never
+			 * reaches. A forged callback therefore answered 200, which tells the
+			 * gateway the delivery succeeded and stops it retrying.
+			 */
+			if (!headers_sent()) {
+				header('HTTP/1.1 401 Unauthorized', true, 401);
+			}
+
+			exit('Unauthorized');
 		}
 
 		$purchase = json_decode($purchase_json, true);
@@ -675,7 +688,16 @@ class ControllerExtensionPaymentChip extends Controller {
 		$provided = isset($this->request->get['token']) ? (string)$this->request->get['token'] : '';
 
 		if ($expected === '' || !hash_equals($expected, $provided)) {
-			$this->response->addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 403 Forbidden');
+			/*
+			 * As above: the malformed status line was discarded and addHeader()
+			 * was never flushed, so an unauthenticated caller was told 200 OK.
+			 * The charge was refused either way, but the status is what a
+			 * monitor, a WAF or the gateway reads, so it must be truthful.
+			 */
+			if (!headers_sent()) {
+				header('HTTP/1.1 403 Forbidden', true, 403);
+			}
+
 			exit('Forbidden');
 		}
 
@@ -943,9 +965,17 @@ $next_retry = $model_extension_payment_chip->nextRetryAt($due_date, $retry_count
 			$model_extension_payment_chip->recordSubscriptionFailure(
 				$subscription['chip_subscription_id'], '0000-00-00 00:00:00', $retry_count + 1, 'suspended');
 
+			/*
+			 * `payment_chip_failed_order_status_id`, not `chip_failed_order_status_id`:
+			 * 3.0 stores every setting under the `payment_chip_` prefix (the whole
+			 * 3.0 controller and the admin settings form both use it), so an
+			 * unprefixed read returns nothing and addOrderHistory() is handed an
+			 * empty status - the subscription was suspended but the order was
+			 * never moved to the configured failed status.
+			 */
 			$this->model_checkout_order->addOrderHistory(
 				$subscription['order_id'],
-				$this->config->get('chip_failed_order_status_id'),
+				$this->config->get('payment_chip_failed_order_status_id'),
 				$this->language->get('text_renewal_token_dead'),
 				true
 			);

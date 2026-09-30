@@ -52,12 +52,62 @@ jobs:
           zip -r ../chip-opencart-1.5.zip upload/ README.md -x "*.DS_Store" "*.git*"
           cd ..
 
+      # One bundle holding every version's zip. The per-version files above stay
+      # as separate assets for anyone with a direct link, but they also go inside
+      # the bundle so a merchant who takes the single download gets the file for
+      # their own OpenCart without guessing. They cannot be flattened because
+      # each version needs a different filename (and two share none).
+      - name: Create the bundled release
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          BUNDLE="chip-for-opencart-${TAG#v}.zip"
+          mkdir -p bundle
+          cp chip.ocmod.zip chip-opencart-*.zip bundle/
+          cat > bundle/README.txt <<'EOF'
+          CHIP for OpenCart - bundled release
+          ===================================
+
+          This archive contains one zip per OpenCart version. OpenCart's installer
+          is strict about filenames, so each version keeps the name its own
+          installer requires and they are kept in this folder rather than flattened:
+
+            chip-opencart-1.5.zip         OpenCart 1.5.x  (plain zip; 1.5 core has no
+                                                          extension installer - unzip
+                                                          and copy upload/ over your
+                                                          store root)
+            chip-opencart-2.0.ocmod.zip   OpenCart 2.0.x / 2.1.x
+            chip-opencart-2.2.ocmod.zip   OpenCart 2.2.x
+            chip-opencart-2.3.ocmod.zip   OpenCart 2.3.x
+            chip-opencart-3.0.ocmod.zip   OpenCart 3.0.x
+            chip.ocmod.zip                OpenCart 4.0.x  (MUST stay named chip.ocmod.zip:
+                                                           OpenCart 4.x derives the
+                                                           extension CODE from the
+                                                           filename)
+
+          How to install
+          --------------
+          1. Pick the zip for your OpenCart version and keep its filename unchanged.
+          2. OpenCart 1.5.x: unzip and copy the contents of upload/ into your store
+             root, then enable CHIP under Extensions -> Payments.
+             OpenCart 2.x - 4.x: upload the zip through Extensions -> Installer, then
+             enable CHIP under Extensions -> Payments.
+          3. Set your Brand ID and Secret Key on the CHIP settings page.
+
+          A zip that has been renamed does not install: OpenCart rejects any upload
+          whose filename does not end in .ocmod.zip, and on 4.0 the name is also the
+          extension code.
+          EOF
+          (cd bundle && zip -r "../$BUNDLE" .)
+          echo "built $BUNDLE"
+          unzip -Z1 "$BUNDLE"
 
       - name: Upload release assets
         run: |
           # Both patterns: chip.ocmod.zip is the 4.0 build (its name is the code
-          # and must not be version-stamped), the rest are version-named.
-          for f in chip-opencart-*.zip chip.ocmod.zip; do
+          # and must not be version-stamped), the rest are version-named. The
+          # bundle (chip-for-opencart-<version>.zip) is uploaded too - note it does
+          # NOT match `chip-opencart-*.zip`, so it is listed explicitly.
+          for f in chip-opencart-*.zip chip.ocmod.zip chip-for-opencart-*.zip; do
             [ -f "$f" ] || continue
             gh release upload "${{ github.event.release.tag_name }}" "$f" --clobber
           done
