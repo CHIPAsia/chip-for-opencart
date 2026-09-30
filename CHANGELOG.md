@@ -1,5 +1,10 @@
 == Changelog ==
 
+## [1.4.1] - 2026-09-30
+
+### Fixed
+- Corrected the code comments shipped in 1.4.0. They explained the HTTP 200 as the malformed status line being **discarded by PHP**, which is not what happens: measured on PHP 7.4.33 and 8.2.34, `header('HTTP/1.1/1.1 403 Forbidden')` is **repaired** by PHP into a correct 403, and a guard that builds that line but `return`s rather than `exit`s was already answering correctly. The status is lost only when `addHeader()` is followed by `exit()`, because `Response::addHeader()` merely queues the header and `Response::output()` is what sends it. The 1.4.0 fixes are unchanged — they send the status directly, which is correct either way — but the comments now state the mechanism that was actually measured. Comments and docblocks only; no behaviour change. Applies to 1.5, 2.0, 2.2, 2.3, 3.0 and 4.0.
+
 ## [1.4.0] - 2026-09-30
 
 ### Fixed
