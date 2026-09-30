@@ -557,11 +557,16 @@ class ControllerPaymentChip extends Controller {
 			/*
 			 * Answer with a REAL status. The previous shape,
 			 * `addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401
-			 * Unauthorized')`, was wrong twice over: SERVER_PROTOCOL already IS
-			 * "HTTP/1.1", so the line read "HTTP/1.1/1.1 401 Unauthorized" and
-			 * PHP discarded it; and Response::addHeader() only QUEUES a header -
-			 * Response::output() flushes it, which the exit() below never
-			 * reaches. A forged callback therefore answered 200, which tells the
+			 * Unauthorized')`, never reached the client: Response::addHeader()
+			 * only QUEUES a header, and Response::output() is what sends it -
+			 * the exit() below returns before that, so nothing was flushed and a
+			 * forged callback was answered 200.
+			 *
+			 * Note the malformed spelling is NOT the cause. Measured on PHP 7.4
+			 * and 8.2: header("HTTP/1.1/1.1 403 Forbidden") is REPAIRED by PHP
+			 * into a correct 403, and a controller that returns (so output()
+			 * runs) sends it correctly. Only the queued-then-exit shape loses the
+			 * status, which is why this sends it directly instead. A forged callback therefore answered 200, which tells the
 			 * gateway the delivery succeeded and stops it retrying.
 			 */
 			if (!headers_sent()) {
@@ -789,8 +794,10 @@ class ControllerPaymentChip extends Controller {
 
 		if ($expected === '' || !$this->verifyCronToken($expected, $provided)) {
 			/*
-			 * As above: the malformed status line was discarded and addHeader()
-			 * was never flushed, so an unauthenticated caller was told 200 OK.
+			 * As above: addHeader() was never flushed because the exit() below
+			 * returns first, so an unauthenticated caller was told 200 OK. (The
+			 * malformed spelling itself is repaired by PHP - see the callback
+			 * guard; it is the missing flush that loses the status.)
 			 * The charge was refused either way, but the status is what a
 			 * monitor, a WAF or the gateway reads, so it must be truthful.
 			 */
