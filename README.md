@@ -66,7 +66,7 @@ already run it:
 | OpenCart version | Repository | Subscription renewals |
 | --- | --- | --- |
 | **3.0.x and below** | this repository | ✅ the build's own endpoint (1.5 and 3.0 live-tested; 2.0 / 2.2 / 2.3 not live-tested) |
-| **4.0.0.0 – 4.0.1.1** | this repository (`4.0`) | ✅ the build's own endpoint (live-tested) |
+| **4.0.0.0 – 4.0.1.1** | this repository (`4.0`) | ✅ the build's own endpoint (subscriptions, dunning and the callback/cron guards live-tested) |
 | **4.0.2.x** | this repository (`4.0`) | ✅ the build's own endpoint |
 | **4.1.0.x** | [`chip-for-opencart-4.1`](https://github.com/CHIPAsia/chip-for-opencart-4.1) | ✅ via OpenCart's `cron.php` |
 
