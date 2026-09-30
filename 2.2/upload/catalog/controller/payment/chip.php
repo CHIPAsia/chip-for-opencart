@@ -566,11 +566,16 @@ class ControllerPaymentChip extends Controller {
 	 *
 	 * The previous shape was
 	 * `addHeader($this->request->server['SERVER_PROTOCOL'] . '/1.1 401 Unauthorized')`,
-	 * which builds the header "HTTP/1.1/1.1 401 Unauthorized" - malformed
-	 * because SERVER_PROTOCOL is ALREADY "HTTP/1.1". PHP's header() ignores a
-	 * line that does not start with a valid protocol, so a forged signature
-	 * still produced HTTP 200. A webhook that answers 200 to a forged body
-	 * tells the gateway the delivery succeeded.
+	 * which never reached the client: Response::addHeader() only QUEUES a
+	 * header, Response::output() is what sends it, and the exit() this helper
+	 * performs returns before that - so a forged signature still produced
+	 * HTTP 200. A webhook that answers 200 to a forged body tells the gateway
+	 * the delivery succeeded.
+	 *
+	 * The malformed spelling is NOT the cause, and was measured on PHP 7.4 and
+	 * 8.2: header("HTTP/1.1/1.1 403 Forbidden") is REPAIRED by PHP into a
+	 * correct 403, and a controller that returns (so output() runs) sends it
+	 * correctly. Only the queued-then-exit shape loses the status.
 	 *
 	 * PHP 7.4's header() accepts a status LINE directly, so the status is
 	 * passed on its own; the reason phrase is the response body, which is the
@@ -723,11 +728,14 @@ class ControllerPaymentChip extends Controller {
 		if ($expected === '' || !hash_equals($expected, $provided)) {
 			/*
 			 * `$this->response->addHeader($this->request->server['SERVER_PROTOCOL']
-			 * . '/1.1 403 Forbidden')` built "HTTP/1.1/1.1 403 Forbidden" -
-			 * malformed, because SERVER_PROTOCOL is ALREADY "HTTP/1.1" - and PHP
-			 * ignored the line, so an unauthenticated caller was told 200 OK.
-			 * The charge was still refused, but the status is what a monitor,
-			 * a WAF or the gateway reads, so it must be truthful.
+			 * . '/1.1 403 Forbidden')` never reached the client: addHeader() only
+			 * QUEUES a header and the exit() below returns before Response::output()
+			 * flushes it, so an unauthenticated caller was told 200 OK. The charge
+			 * was still refused, but the status is what a monitor, a WAF or the
+			 * gateway reads, so it must be truthful.
+			 *
+			 * (The malformed spelling alone would NOT have caused this - PHP
+			 * repairs it, measured on 7.4 and 8.2; it is the missing flush.)
 			 */
 			if (!headers_sent()) {
 				header('HTTP/1.1 403 Forbidden', true, 403);
