@@ -46,8 +46,8 @@ already run it:
 
 | OpenCart version | Repository | Subscription renewals |
 | --- | --- | --- |
-| **3.0.x and below** | this repository | ✅ the build's own endpoint (1.5 / 2.0 / 3.0 not live-tested) |
-| **4.0.0.0 – 4.0.1.1** | this repository (`4.0`) | ✅ the build's own endpoint (not live-tested) |
+| **3.0.x and below** | this repository | ✅ the build's own endpoint (1.5 live-tested; 2.0 / 3.0 not live-tested) |
+| **4.0.0.0 – 4.0.1.1** | this repository (`4.0`) | ✅ the build's own endpoint (live-tested) |
 | **4.0.2.x** | this repository (`4.0`) | ✅ the build's own endpoint |
 | **4.1.0.x** | [`chip-for-opencart-4.1`](https://github.com/CHIPAsia/chip-for-opencart-4.1) | ✅ via OpenCart's `cron.php` |
 
@@ -130,10 +130,20 @@ Against real OpenCart stores, installed through the Extension Installer:
   per-subscription lock is removed.
 * **OpenCart 4.1.0.4** (`chip-for-opencart-4.1`) — the same lifecycle: 36/36 checks pass.
 * **OpenCart 2.2.0.0** — earlier end-to-end run: 67/67 checks pass.
+* **OpenCart 1.5.6.4** — storefront checkout through to the gateway, paid callback with a
+  negative control on the signature, the 1/3/5 dunning ladder to suspension, an expired card
+  suspending at once instead of walking the ladder, a trial plan stepping by its trial
+  cadence, and two concurrent cron runs producing **exactly one** charge (fast and slow
+  gateway): all pass.
+* **OpenCart 4.0.0.0 and 4.0.1.1** (`4.0` build) — payments, the paid callback (a valid
+  signature verifies; a corrupted signature and a tampered payload both fail), the renewal
+  token endpoint with both an anonymous and a wrong-token request refused without charging,
+  the 1/3/5 dunning ladder to suspension, an expired card suspending at once, recovery from a
+  suspended subscription, and the cron self-guard. Both versions pass every step.
 
-**OpenCart 1.5, 2.0, 3.0, 4.0.0.0 and 4.0.1.1 have not been exercised on a live store.**
-Their renewal code is shared with the versions above; the 4.0.x pair differs only in
-the payment-method entry point, and both builds implement both.
+**OpenCart 2.0 and 3.0 have not been exercised on a live store.** Their code is the same as
+2.2's apart from the platform's own path conventions, and the renewal code is shared with the
+versions above.
 
 ## Other
 
