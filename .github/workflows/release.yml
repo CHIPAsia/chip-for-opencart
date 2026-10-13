@@ -1,16 +1,55 @@
 name: Create Release Zips
 
+# Two ways in, deliberately.
+#
+# `created` alone proved unreliable: the workflow ran for 1.1.0 - 1.4.0 (assets
+# uploaded by github-actions[bot] seconds after publish) and then stayed silent
+# for 1.4.1 and 1.4.2, where the assets were passed to `gh release create`
+# instead. The mechanism was not confirmed, so nothing here should DEPEND on
+# which of these fires.
+#
+# `published` is the type GitHub emits for a normal (non-draft) release, and
+# `created` covers a draft being created; listening to both removes the gap.
+#
+# `workflow_dispatch` is the actual safety net: it makes the assets rebuildable
+# on demand against an existing tag, so a release that quietly published with no
+# assets is a one-command fix rather than a hand-built set of zips. That matters
+# because an empty release page looks correct and is broken for every merchant.
+#
+# When dispatched, the tag to publish against defaults to the ref the workflow
+# is run on, and can be overridden with the `tag` input.
 on:
   release:
-    types: [created]
+    types: [created, published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)build and upload the zips for"
+        required: true
+        type: string
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Resolve the tag under test
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "building assets for tag: $TAG"
+
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # On a release event the tag's own commit is what must be zipped - not
+          # whatever main happens to be, which can be commits ahead of the cut.
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
 
       # OpenCart refuses any upload whose filename does not end in .ocmod.zip:
       #   <=2.x  extension/installer.php    substr(name, -10) != '.ocmod.zip' && != '.ocmod.xml'
@@ -59,7 +98,7 @@ jobs:
       # each version needs a different filename (and two share none).
       - name: Create the bundled release
         run: |
-          TAG="${{ github.event.release.tag_name }}"
+          TAG="${{ steps.tag.outputs.tag }}"
           BUNDLE="chip-for-opencart-${TAG#v}.zip"
           mkdir -p bundle
           cp chip.ocmod.zip chip-opencart-*.zip bundle/
@@ -109,7 +148,7 @@ jobs:
           # NOT match `chip-opencart-*.zip`, so it is listed explicitly.
           for f in chip-opencart-*.zip chip.ocmod.zip chip-for-opencart-*.zip; do
             [ -f "$f" ] || continue
-            gh release upload "${{ github.event.release.tag_name }}" "$f" --clobber
+            gh release upload "${{ steps.tag.outputs.tag }}" "$f" --clobber
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
