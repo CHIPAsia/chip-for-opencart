@@ -19,11 +19,39 @@ class Chip extends \Opencart\System\Engine\Controller {
 		unset($this->session->data['chip']);
 
 		// Card storage: stored token or new card.
+		/*
+		 * Core stores this two different ways, so read both.
+		 *
+		 * 4.0.0.0 - 4.0.1.1 (catalog/model/checkout/payment_method.php, the save
+		 * path) store the BARE CODE, a plain string:
+		 *
+		 *   $session->data['payment_method'] = $request->post['payment_method'];
+		 *
+		 * 4.0.2.0 and later (payment_method.php, getMethods() branch) store the
+		 * option ARRAY that carries code and name:
+		 *
+		 *   $session->data['payment_method'] = [...]['option'][...];
+		 *
+		 * Reading ['code'] straight off the string form is a TypeError on PHP 8
+		 * ("Cannot access offset of type string on string"). It is raised while the
+		 * checkout renders the payment form, so the customer sees HTTP 500 and the
+		 * module never reaches the gateway - on 4.0.0.0/4.0.1.1 the store simply
+		 * cannot be paid through CHIP. Lines 50 and 295 already guard for this; the
+		 * index() reads here did not.
+		 */
 		if (isset($this->session->data['payment_method'])) {
-			$payment_code = $this->session->data['payment_method']['code'];
+			$session_payment_method = $this->session->data['payment_method'];
+
+			if (is_array($session_payment_method)) {
+				$payment_code = (string)$session_payment_method['code'];
+				$payment_name = $session_payment_method['name'];
+			} else {
+				$payment_code = (string)$session_payment_method;
+				$payment_name = $this->language->get('payment_method');
+			}
 
 			if (strpos($payment_code, 'chip.') === 0 && $payment_code != 'chip.chip') {
-				$data['text_title'] = $this->session->data['payment_method']['name'];
+				$data['text_title'] = $payment_name;
 
 				return $this->load->view('extension/chip/payment/stored', $data);
 			}
