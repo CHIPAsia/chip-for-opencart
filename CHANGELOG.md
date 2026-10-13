@@ -9,6 +9,7 @@
   - `error_display` **on**: the TypeError is echoed into the page → **HTTP 200**.
 
   The consequence for the merchant is unchanged and still total — the store cannot be paid through CHIP — but the symptom is a bounce to the error page, not a 500. Verified end-to-end on a live 4.0.0.0 store through core's own checkout, with the pre-fix controller as the negative control: **12/12** checks after, and both pre-fix cells reproduce the failure (302 + `error.html` with display off; 200 + TypeError with display on).
+- **The 4.0.2.x side is measured too.** "No behaviour change on 4.0.2.0 and later" is a claim about the *other* session shape, so it cannot be inferred from the 4.0.0.0 run. Measured on a live **4.0.2.3** store (PHP 8.2.34), module 1.4.2 installed through core's marketplace installer and byte-verified: `oc_session` holds `payment_method` as the **option array** (`{"code": "chip.chip", "name": "Credit / Debit Card"}`), `checkout/confirm` answers **HTTP 200**, the CHIP form renders, and the offset TypeError is absent — **8/8** checks, 0 fail. Note this build differs in two ways a test must respect: the route separator is `.` (not `|`), and core wants the **qualified** code `chip.chip` saved where 4.0.0.0/4.0.1.1 accept the bare `chip`.
 
 ## [1.4.1] - 2026-09-30
 
