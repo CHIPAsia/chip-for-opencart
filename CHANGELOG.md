@@ -1,6 +1,12 @@
 == Changelog ==
 
+## [1.4.2] - 2026-10-13
+
+### Fixed
+- **OpenCart 4.0.0.0 and 4.0.1.1 could not be paid through CHIP at all.** Rendering the payment form raised `TypeError: Cannot access offset of type string on string`, so the customer saw HTTP 500 before the gateway was ever contacted. Core keeps the chosen method in the session in two different shapes depending on the build: `4.0.0.0`/`4.0.1.1` store the **bare code string** (`$session->data['payment_method'] = $request->post['payment_method']`), while `4.0.2.0` and later — and the separate `4.1` repository — store the **option array** carrying `code` and `name` (`= ['option'][$payment[1]]`). `index()` read `['code']` and `['name']` straight off whichever shape arrived, which is a PHP 8 fatal on the string form. It now reads both, using the module's own `payment_method` language string for the title when the session holds only a code. Confirmed against core source per version tag (`4.0.0.0` vs `4.0.2.0` vs `4.1.0.4`) rather than from the report, and the branch was replayed over all four shapes — string/array × normal/stored card — with the unguarded form as a control, which reproduces the `TypeError` and confirms the fix routes each case to the same view as before. **No behaviour change on 4.0.2.0 and later**, where the array path is untouched. Only `index()` was affected: the other reads of the same session key are already behind `is_array` guards at lines 50 and 295. Not yet reproduced end-to-end on a live 4.0.0.0 store — the store used for this repo's other 4.0 evidence was stood up for the 1.4.0 guards, not for this fix.
+
 ## [1.4.1] - 2026-09-30
+
 
 ### Fixed
 - Corrected the code comments shipped in 1.4.0. They explained the HTTP 200 as the malformed status line being **discarded by PHP**, which is not what happens: measured on PHP 7.4.33 and 8.2.34, `header('HTTP/1.1/1.1 403 Forbidden')` is **repaired** by PHP into a correct 403, and a guard that builds that line but `return`s rather than `exit`s was already answering correctly. The status is lost only when `addHeader()` is followed by `exit()`, because `Response::addHeader()` merely queues the header and `Response::output()` is what sends it. The 1.4.0 fixes are unchanged — they send the status directly, which is correct either way — but the comments now state the mechanism that was actually measured. Comments and docblocks only; no behaviour change. Applies to 1.5, 2.0, 2.2, 2.3, 3.0 and 4.0.
